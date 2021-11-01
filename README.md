@@ -5,7 +5,9 @@
 ### Prerequisites
 - Python 3
 - Pip
+- PostgreSQL
 - MySQL
+Note: We are going to be working with MySQL for familiarity, but Heroku uses PostgreSQL. Having PostgreSQL means that our app can automatically migrate our MySQL database to Heroku's PostgreSQL database on deploy.
 
 **Configure MySQL**
 
