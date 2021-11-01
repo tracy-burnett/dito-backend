@@ -5,11 +5,19 @@
 ### Prerequisites
 - Python 3
 - Pip
-- PostgreSQL
-- MySQL
-Note: We are going to be working with MySQL for familiarity, but Heroku uses PostgreSQL. Having PostgreSQL means that our app can automatically migrate our MySQL database to Heroku's PostgreSQL database on deploy.
+- PostgreSQL/MySQL/SQLite
 
-**Configure MySQL**
+**Configuring Environmental Variables**
+
+Edit `.env` based on your environment:
+```
+SECRET_KEY=SECRET_KEY
+DEBUG=False
+DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
+```
+Set `DEBUG=True` locally for more verbose console logging. Set `DATABASE_URL` to be the database url of whatever database service you use. The format shown is for MySQL, but adjust accordingly.
+
+**Configuring MySQL**
 
 Create new database and user with the following queries. Make sure to replace `<password>` with your desired password. This user can also be used to access the database manually through the MySQL console.
 ```
@@ -26,18 +34,6 @@ Query OK, 0 row affected (0.00 sec)
 
 mysql> FLUSH PRIVILEGES;
 Query OK, 0 row affected (0.00 sec)
-```
-
-
-Modify `my.cnf` (usually in `/etc/mysql/my.cnf` for Linux and `/usr/local/etc/my.cnf` for Mac) to the following, again replacing `<password>` with your previously chosen password:
-```
-...
-[client]
-database = xygil
-user = xygil
-password = <password>
-default-character-set = utf8
-
 ```
 
 Restart the MySQL service with `brew services restart mysql` (Mac) or `sudo systemctl restart mysql` (Linux)
