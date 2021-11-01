@@ -10,6 +10,7 @@ dj-static = "*"
 dj-database-url = "*"
 gunicorn = "*"
 psycopg2 = "*"
+python-decouple = "*"
 
 [dev-packages]
 
