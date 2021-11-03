@@ -61,3 +61,47 @@ $ pipenv shell
 (venv) $ python manage.py runserver # Defaults to http://localhost:8000
 ```
 Now, navigate to http://localhost:8000 and you should see the server running!
+
+# Models
+## `Audio`
+```python
+class Audio:
+    class Meta:
+        verbose_name = "audio file"
+        verbose_name_plural = "audio files"
+
+    url             = CharField(max_length=255)
+    title           = CharField(default="Untitled", max_length=255)
+    archived        = BooleanField(default=False)
+
+    # Metadata
+    createdAt       = DateTimeField()
+    updatedAt       = DateTimeField()
+    lastUpdatedBy   = ForeignKey(User, null=True, on_delete=SET_NULL)
+```
+## `Translation`
+```python
+class Translation:
+    class Meta:
+        verbose_name = "translation"
+        verbose_name_plural = "translations"
+
+    title           = CharField(max_length=255)
+    audio           = ForeignKey(Audio, on_delete=CASCADE)
+    published       = BooleanField(default=False)
+
+    # Metadata
+    author          = ForeignKey(User, null=True, on_delete=SET_NULL)
+    createdAt       = DateTimeField()
+    updatedAt       = DateTimeField()
+    lastUpdatedBy   = ForeignKey(User, null=True, on_delete=SET_NULL)
+```
+## `Story`
+```python
+class Story:
+    class Meta:
+        verbose_name = "story"
+        verbose_name_plural = "stories"
+
+    translation     = ForeignKey(Translation, null=True, on_delete=SET_NULL)
+```
