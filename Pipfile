@@ -11,6 +11,9 @@ dj-database-url = "*"
 gunicorn = "*"
 psycopg2 = "*"
 python-decouple = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
 
 [dev-packages]
 
