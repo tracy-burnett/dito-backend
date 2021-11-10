@@ -15,14 +15,13 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
-class AudioListView(generics.ListAPIView):
+class AudioViewSet(viewsets.ModelViewSet):
     """
     Audio API
     """
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'translations__title', 'audio_author', 'translations__translation_author']
+    # permission_classes = [permissions.IsAuthenticated]
 
 class TranslationViewSet(viewsets.ModelViewSet):
     """

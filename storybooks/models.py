@@ -28,8 +28,20 @@ class Translation(models.Model):
         verbose_name = "translation"
         verbose_name_plural = "translations"
 
-class Story(models.Model):
+class Page(models.Model):
     translation     = models.ForeignKey(Translation, on_delete=models.CASCADE)
+    previous_page   = models.ForeignKey("Page", related_name="previous", null=True, on_delete=models.SET_NULL)
+    next_page       = models.ForeignKey("Page", related_name="next", null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        verbose_name = "page"
+        verbose_name_plural = "pages"
+
+class Story(models.Model):
+    page            = models.ForeignKey(Page, null=True, on_delete=models.SET_NULL)
+    word            = models.CharField(max_length=255)
+    index           = models.IntegerField()
+    timestamp       = models.DateTimeField()
 
     class Meta:
         verbose_name = "story"
