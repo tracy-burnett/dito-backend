@@ -105,3 +105,309 @@ class Story:
 
     translation     = ForeignKey(Translation, null=True, on_delete=SET_NULL)
 ```
+
+
+## Xygil API
+
+# Users
+Create, read, update, and delete user.
+
+## Create User
+
+**URL** : `/user/`
+
+**Method** : `POST`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "username": "user1",
+    "name": "Xygil Net",
+    "email": "example@xygil.net",
+    "password": "xygil123",
+    "description": "A dude"
+}
+```
+## Read User
+
+**URL** : `/user/:id`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "email": "example@xygil.net",
+    "name": "Xygil Net",
+    "description": "A dude"
+}
+```
+
+## Update User
+
+**URL** : `/user/:id`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "email": "example@xygil.net",
+    "password": "xygilxygil123"
+}
+```
+
+## Delete User
+
+**URL** : `/user/:id`
+
+**Method** : `DELETE`
+
+**Auth required** : Admin
+
+## Index User Audios
+
+**URL** : `/user/:id/audio`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "num": 2,
+    "audio": [
+        {
+            "name": "Audio1",
+            "id": 1,
+            "description": "War and Peace"
+            "public": true
+        },
+        {
+            "name": "Audio2",
+            "id": 2,
+            "description": "Gettysberg Address"
+            "public": false
+        },
+    ]
+}
+```
+
+# Audio
+Create, read, update, and delete audio.
+
+## Create Audio
+
+**URL** : `/audio/`
+
+**Method** : `POST`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "link": "aws.amazon.com/cloudfront/123456789",
+    "name": "Audio1",
+    "description": "Thirty minutes of people coughing",
+    "public": false
+}
+```
+## Read Audio
+Returns the link, name, description of an audio if public.\
+**URL** : `/audio/:id`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "link": "aws.amazon.com/cloudfront/123456789",
+    "name": "Audio1",
+    "description": "Thirty minutes of people coughing"
+    "public": true
+}
+```
+
+## Update Audio
+
+**URL** : `/audio/:id`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "description": "Twenty-seven minutes of people coughing",
+    "public": true
+}
+```
+
+## Delete Audio
+
+**URL** : `/audio/:id`
+
+**Method** : `DELETE`
+
+**Auth required** : Yes
+
+## Index Audios
+Returns a list of all public audios.\
+**URL** : `/user/:id/audio`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "num": 1,
+    "audio": [
+        {
+            "name": "Audio1",
+            "id": 1,
+            "description": "War and Peace"
+            "public": true
+        }
+    ]
+}
+```
+
+# Translations
+Create, read, update, and delete translations associated with an audio.
+
+## Create Translation
+Returns the translation with language `:lid` of an audio `:id`.\
+**URL** : `/audio/:id/translations/:lid`
+
+**Method** : `POST`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "user": "user1", 
+    "text": "Four score and seven years ago, our fathers brought forth on this continent...",
+    "lid": 5,
+    "public": false
+}
+```
+## Read Translation
+Returns translation if public or authenthenticated and private. If arguments timestamp1(ms) and timestamp2(ms) are provided, returns text between timestamps.\
+**URL** : `/audio/:id/translations/:lid?ts1=int&ts2=int`
+
+**Method** : `GET`
+
+**Auth required** : Yes/No
+
+**Content example**
+
+```json
+{
+    "text": "Four score and seven years ago, our fathers brought forth on this continent...",
+}
+```
+
+## Update Translation
+Updates the text between timestamp1(ms) and timestamp2(ms). If arguments ts1 and ts2 are not provided, overwrites the entire text.\
+**URL** : `/audio/:id/translations/:lid?ts1=int&ts2=int`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "text": "Eighty-seven years ago, our fathers brought forth on this continent...",
+}
+```
+
+## Delete Translation
+
+**URL** : `/audio/:id/translations/:lid`
+
+**Method** : `DELETE`
+
+**Auth required** : Yes
+
+## Index Translation Languages
+Returns a list of all available public languages for the translation.\
+**URL** : `/audio/:id/translations`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "languages": [0, 1, 3, 5, 6]
+}
+```
+
+# Languages
+
+## LanguageID to Language
+
+**URL** : `/languages`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    0: "English",
+    1: "Spanish",
+    2: "Chinese"
+}
+```
+
+# Associations
+
+## Get Associations for Highlighting
+Returns the text between `ts1` and `ts2` along with a dictionary which maps sorted timestamp intervals to highlighted portions of text. Ex. From 0 to 3000 ms, characters between character index 0-9 and 16-20 (inclusive) should be highlighted (Four score/seven). From 3500 to 5000 ms, character from index 11-15 should be highlighted (and).\
+**URL** :  `/audio/:id/translations/:lid/associations?ts1=int&ts2=int`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "text": "Four score and seven years ago, our fathers brought forth on this continent...",
+    "associations": {
+        "0-3000": ["0-9", "15-19"],
+        "3500-5000": ["11-13"]        
+    }
+}
+```
