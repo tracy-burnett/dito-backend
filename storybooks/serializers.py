@@ -10,6 +10,12 @@ class UserSerializer(serializers.ModelSerializer):
 class AudioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Audio
+        fields = ['id', 'url', 'title', 'description']
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = ['id', 'name']
 
 class TranslationSerializer(serializers.ModelSerializer):
     class Meta:

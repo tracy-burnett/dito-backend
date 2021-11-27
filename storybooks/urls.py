@@ -4,10 +4,11 @@ from storybooks.views import *
 
 router = routers.SimpleRouter()
 router.register(r'user', UserViewSet)
-router.register(r'storybooks', AudioViewSet)
+router.register(r'audio', AudioViewSet)
 router.register(r'storybooks/{pk}/stories', StoryViewSet)
-router.register(r'translations', TranslationViewSet)
+router.register(r'audio/{<int:aid>}/translations/<int:lid>', TranslationViewSet)
+router.register(r'languages', LanguageViewSet)
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
 ]
