@@ -189,13 +189,15 @@ Create, read, update, and delete user.
     "num": 2,
     "audio": [
         {
-            "name": "Audio1",
+            "url": "aws.amazon.com/cloudfront/136523",
+            "title": "Audio1",
             "id": 1,
             "description": "War and Peace"
             "public": true
         },
         {
-            "name": "Audio2",
+            "url": "aws.amazon.com/cloudfront/12395323",
+            "title": "Audio2",
             "id": 2,
             "description": "Gettysberg Address"
             "public": false
@@ -219,8 +221,8 @@ Create, read, update, and delete audio.
 
 ```json
 {
-    "link": "aws.amazon.com/cloudfront/123456789",
-    "name": "Audio1",
+    "url": "aws.amazon.com/cloudfront/123456789",
+    "title": "Audio1",
     "description": "Thirty minutes of people coughing",
     "public": false
 }
@@ -237,10 +239,9 @@ Returns the link, name, description of an audio if public.\
 
 ```json
 {
-    "link": "aws.amazon.com/cloudfront/123456789",
-    "name": "Audio1",
+    "url": "aws.amazon.com/cloudfront/123456789",
+    "title": "Audio1",
     "description": "Thirty minutes of people coughing"
-    "public": true
 }
 ```
 
@@ -281,13 +282,12 @@ Returns a list of all public audios.\
 
 ```json
 {
-    "num": 1,
     "audio": [
         {
-            "name": "Audio1",
+            "url": "aws.amazon.com/cloudfront/2151232",
+            "title": "Audio1",
             "id": 1,
             "description": "War and Peace"
-            "public": true
         }
     ]
 }
@@ -315,8 +315,8 @@ Returns the translation with language `:lid` of an audio `:id`.\
 }
 ```
 ## Read Translation
-Returns translation if public or authenthenticated and private. If arguments timestamp1(ms) and timestamp2(ms) are provided, returns text between timestamps.\
-**URL** : `/audio/:id/translations/:lid?ts1=int&ts2=int`
+Returns entire translation if public or authenthenticated and private.\
+**URL** : `/audio/:id/translations/:lid`
 
 **Method** : `GET`
 
@@ -331,8 +331,8 @@ Returns translation if public or authenthenticated and private. If arguments tim
 ```
 
 ## Update Translation
-Updates the text between timestamp1(ms) and timestamp2(ms). If arguments ts1 and ts2 are not provided, overwrites the entire text.\
-**URL** : `/audio/:id/translations/:lid?ts1=int&ts2=int`
+Updates the entire text. This operation will automatically maintain existing associations for words that aren't deleted and insert NULL associations for newly inserted words. \
+**URL** : `/audio/:id/translations/:lid`
 
 **Method** : `PATCH`
 
@@ -393,7 +393,7 @@ Returns a list of all available public languages for the translation.\
 # Associations
 
 ## Get Associations for Highlighting
-Returns the text between `ts1` and `ts2` along with a dictionary which maps sorted timestamp intervals to highlighted portions of text. Ex. From 0 to 3000 ms, characters between character index 0-9 and 16-20 (inclusive) should be highlighted (Four score/seven). From 3500 to 5000 ms, character from index 11-15 should be highlighted (and).\
+Returns the text between `ts1` and `ts2` along with a dictionary which maps sorted timestamp intervals to highlighted portions of text. Ex. From 0 to 3000 ms, characters between character index 0-9 and 16-20 (inclusive) should be highlighted (Four score/seven). From 3500 to 5000 ms, character from index 11-15 should be highlighted (and). If there are no configured associations, returns the entire text.\
 **URL** :  `/audio/:id/translations/:lid/associations?ts1=int&ts2=int`
 
 **Method** : `GET`
@@ -408,6 +408,26 @@ Returns the text between `ts1` and `ts2` along with a dictionary which maps sort
     "associations": {
         "0-3000": ["0-9", "15-19"],
         "3500-5000": ["11-13"]        
+    }
+}
+```
+## Update Associations
+Given a portion of the text, associates particular indexes with timestamps(ms). The specific way how this works is that every portion of exclusive text matching this substring will be updated which is not ideal (since there may be infrequent cases of unintended associations if the "text" is too short) but simplifies the work done front end and the amount of text metadata needed immensely.\
+**URL** :  `/audio/:id/translations/:lid/associations`
+
+**Method** : `POST`
+
+**Auth required** : Yes
+
+**Content example**
+
+```json
+{
+    "text": "seven years ago, our fathers brought forth on this continent",
+    "associations": {
+        15: 2400,
+        23: 1500,
+        34: 3567
     }
 }
 ```
