@@ -66,10 +66,10 @@ class AudioViewSet(viewsets.ModelViewSet):
     def destroy(self, request, pk):
         query = self.queryset.filter(id=pk)
         if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+            return HttpResponse(status=404)
         obj = query.get()
         obj.delete()
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return HttpResponse(status=200)
 
 class LanguageViewSet(viewsets.ModelViewSet):
     """
@@ -92,6 +92,80 @@ class TranslationViewSet(viewsets.ModelViewSet):
     queryset = Translation.objects.all()
     serializer_class = TranslationSerializer
     # permission_classes = [permissions.IsAuthenticated]
+    #Unsafe (can be overridden)
+    def create(self, request, aid, lid):
+        query = Audio.objects.all().filter(id=aid)
+        if not query:
+            return HttpResponse(status=404)
+        audio = query.get()
+        
+        query = Language.objects.all().filter(id=lid)
+        if not query:
+            return HttpResponse(status=404)
+        language = query.get()
+
+        #Check unique
+        if self.queryset.filter(audio_id=aid, language_id=lid):
+            return HttpResponse(status=400)
+
+        data = request.data
+        translation = Translation(title=data['title'], audio=audio, language=language)
+        
+        text_array = []
+        if language.spaced:
+            text_array = data['text'].split(" ")
+        else:
+            text_array = list(data['text'])
+
+        words = []
+        for i in range(len(text_array)):
+            word = text_array[i]
+            words.append(Story(translation=translation, word=word, index=i))
+        
+        translation.save()
+        Story.objects.bulk_create(words)
+        return HttpResponse(status=200)
+
+    def retrieve(self, request, aid, lid):
+        translation = self.queryset.get(audio_id=aid, language_id=lid)
+        if not translation:
+            return HttpResponse(status=404)
+        #if not translation.published:
+        #    return HttpResponse(status=400)
+
+        query = Story.objects.all().filter(translation=translation).order_by('index')
+        serializer = StorySerializer(query, many=True)
+        words = [entry['word'] for entry in serializer.data]
+        text = ""
+        if translation.language.spaced:
+            text = ' '.join(words)
+        else:
+            text = "".join(words)
+        return JsonResponse({"text": text})
+
+    def destroy(self, request, aid, lid):
+        query = self.queryset.filter(audio_id=aid).filter(language_id=lid)
+        if not query:
+            return HttpResponse(status=404)
+        query.get().delete()
+        return HttpResponse(status=200)
+    
+    def list_languages(self, request, aid):
+        query = self.queryset.filter(audio_id=aid).order_by('language')
+        if not query:
+            return HttpResponse(status=404)
+        serializer = self.serializer_class(query, many=True)
+        languages = [entry.language.id for entry in query]
+        return JsonResponse({"languages": languages})
+
+    #Update helper function - finds the closest difference between a and b
+    #Returns: a list with len(a) length containing numbers
+    #If the number is 0, then skip this character from a and b
+    #If the number *i* is strictly positive, insert the *ith* character from b and advance b pointer
+    #If the number *i* is strictly negative, insert the *ith* chracter from a and advance a pointer
+    #a and b is nonempty
+    def closest_difference(a, b):
+        pass
 
 class StoryViewSet(viewsets.ModelViewSet):
     """

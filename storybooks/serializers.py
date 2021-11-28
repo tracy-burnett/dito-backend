@@ -20,7 +20,9 @@ class LanguageSerializer(serializers.ModelSerializer):
 class TranslationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Translation
+        fields = ['title', 'audio', 'published', 'language', 'author']
 
 class StorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Story
+        fields = ['word', 'index', 'timestamp']

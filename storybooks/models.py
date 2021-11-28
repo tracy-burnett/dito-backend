@@ -43,7 +43,7 @@ class Story(models.Model):
     translation     = models.ForeignKey(Translation, on_delete=models.CASCADE)
     word            = models.CharField(max_length=255)
     index           = models.IntegerField()
-    timestamp       = models.DateTimeField()
+    timestamp       = models.IntegerField(null=True)
 
     class Meta:
         verbose_name = "story"
