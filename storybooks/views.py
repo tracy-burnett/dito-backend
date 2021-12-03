@@ -158,14 +158,115 @@ class TranslationViewSet(viewsets.ModelViewSet):
         languages = [entry.language.id for entry in query]
         return JsonResponse({"languages": languages})
 
+
     #Update helper function - finds the closest difference between a and b
-    #Returns: a list with len(a) length containing numbers
-    #If the number is 0, then skip this character from a and b
-    #If the number *i* is strictly positive, insert the *ith* character from b and advance b pointer
-    #If the number *i* is strictly negative, insert the *ith* chracter from a and advance a pointer
-    #a and b is nonempty
-    def closest_difference(a, b):
-        pass
+    #Returns: a list with integers and tuples
+    #If the value is an integer, remove the character with that original index from a
+    #If the value is a tuple (i, v), insert v to that original index from a 
+    def closest(self, a, b):
+        memo = {}
+        self.closest_helper(a, b, 0, 0, memo)
+        return self.trace(a, b, 0, 0, memo)
+
+    def closest_helper(self, a, b, a_index, b_index, memo):
+        if a_index >= len(a) or b_index >= len(b):
+            return 0
+        
+        if not (a_index, b_index) in memo:
+            if a[a_index] == b[b_index]:
+                memo[(a_index, b_index)] = 1 + self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
+            else:
+                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1, b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
+        
+        return memo[(a_index, b_index)]
+
+    def trace(self, a, b, a_index, b_index, memo):
+        path = []
+        while a_index < len(a) and b_index < len(b):
+            if a[a_index] == b[b_index]:
+                a_index += 1
+                b_index += 1
+            else:
+                if a_index + 1 >= len(a):
+                    path.append((a_index, b[b_index]))
+                    b_index += 1
+                elif b_index + 1 >= len(b):
+                    path.append(a_index)
+                    a_index += 1
+                elif memo[(a_index + 1, b_index)] < memo[(a_index, b_index + 1)]:
+                    path.append((a_index, b[b_index]))
+                    b_index += 1
+                else:
+                    path.append(a_index)
+                    a_index += 1
+
+        if a_index >= len(a):
+            for index in range(b_index, len(b)):
+                path.append((a_index, b[index]))
+        elif b_index >= len(b):
+            for index in range(a_index, len(a)):
+                path.append(index)
+        
+        return path
+
+    def update(self, request, aid, lid):
+        translation = self.queryset.get(audio_id=aid, language_id=lid)
+        if not translation:
+            return HttpResponse(status=404)
+
+        query = Language.objects.all().filter(id=lid)
+        if not query:
+            return HttpResponse(status=404)
+        language = query.get()
+
+        query = Story.objects.all().filter(translation=translation).order_by('index')
+        serializer = StorySerializer(query, many=True)
+        a = [entry['word'] for entry in serializer.data]
+        b = []
+        if language.spaced:
+            b = request.data['text'].split(" ")
+        else:
+            b = list(request.data['text'])
+        add = []
+        subtract = []
+        changed = []
+        delta = 0
+        path = self.closest(a, b)
+        #print("path:", path)
+        path_index = 0
+        
+        def traverse_path(i):
+            nonlocal path_index
+            nonlocal delta
+            while path_index < len(path):
+                if isinstance(path[path_index], int):
+                    if path[path_index] == i:
+                        subtract.append(query[i])
+                        delta -= 1
+                        path_index += 1
+                    else:
+                        break
+                else:
+                    if path[path_index][0] == i:
+                        add.append(Story(translation=translation, word=path[path_index][1], index=i + delta))
+                        delta += 1
+                        path_index += 1
+                    else:
+                        break
+        
+        for i in range(len(query)):
+            traverse_path(i)
+            if (delta != 0):
+                query[i].index += delta
+                changed.append(query[i])
+        traverse_path(len(query))
+
+        Story.objects.bulk_update(changed, ['index'])
+        Story.objects.bulk_create(add)
+        for obj in subtract:
+            obj.delete()
+
+        return HttpResponse(status=200)
 
 class StoryViewSet(viewsets.ModelViewSet):
     """

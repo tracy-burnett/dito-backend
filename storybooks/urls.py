@@ -15,6 +15,7 @@ translations_list = TranslationViewSet.as_view({
 })
 translations_detail = TranslationViewSet.as_view({
     'post': 'create',
+    'patch': 'update',
     'get': 'retrieve',
     'delete': 'destroy'
 })
