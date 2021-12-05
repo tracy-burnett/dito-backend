@@ -5,6 +5,8 @@ from django.http.response import HttpResponse
 from storybooks.models import *
 from storybooks.serializers import *
 from rest_framework import viewsets, permissions, generics, filters, status
+from bisect import bisect_left
+import ast
 
 def index(request):
     return JsonResponse({ 'message': 'Xygil Backend', 'success': True })
@@ -53,7 +55,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
-        print(request.data)
+        #print(request.data)
         for key in request.data:
             if hasattr(obj, key):
                 setattr(obj, key, request.data[key])
@@ -141,7 +143,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
             text = ' '.join(words)
         else:
             text = "".join(words)
-        return JsonResponse({"text": text})
+        return JsonResponse({"text": text}, json_dumps_params={'ensure_ascii': False})
 
     def destroy(self, request, aid, lid):
         query = self.queryset.filter(audio_id=aid).filter(language_id=lid)
@@ -268,10 +270,151 @@ class TranslationViewSet(viewsets.ModelViewSet):
 
         return HttpResponse(status=200)
 
-class StoryViewSet(viewsets.ModelViewSet):
+class AssociationViewSet(viewsets.ModelViewSet):
     """
-    Story API
+    Association API
     """
-    queryset = Story.objects.all()
-    serializer_class = StorySerializer
     # permission_classes = [permissions.IsAuthenticated]
+    def retrieve(self, request, aid, lid):
+        translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
+        if not translation:
+            return HttpResponse(status=404)
+        start = int(request.query_params.get('ts1', 0))
+        end = float('inf')
+        if 'ts2' in request.query_params:
+            end = int(request.query_params['ts2'])
+        query = Story.objects.all().filter(translation=translation).order_by('index')
+        timestamp_to_word_groups = {}
+        word_index = 0
+        char_index = 0
+        while word_index < len(query):
+            obj = query[word_index]
+            if obj.timestamp is not None:
+                if not obj.timestamp in timestamp_to_word_groups:
+                    timestamp_to_word_groups[obj.timestamp] = []
+                group = [char_index]
+                char_index += len(obj.word)
+                if translation.language.spaced:
+                    char_index += 1
+                word_index += 1
+
+                while word_index < len(query) and (query[word_index].timestamp is None or query[word_index].timestamp == obj.timestamp): # associate timestamps to those without
+                    char_index += len(query[word_index].word)
+                    if translation.language.spaced:
+                        char_index += 1
+                    word_index += 1
+
+                group.append(char_index - 1) #inclusive (not exclusive)
+                if translation.language.spaced: # remove space at the end
+                    group[1] -= 1
+                timestamp_to_word_groups[obj.timestamp].append(group)
+            else:
+                char_index += len(obj.word)
+                if translation.language.spaced:
+                    char_index += 1
+                word_index += 1
+
+        #print(timestamp_to_word_groups)
+
+        next_timestamp = {} # dictionary of timestamp to next timestamp
+        ts_query = Story.objects.all().filter(translation=translation).order_by('timestamp').exclude(timestamp__isnull=True)
+        for i in range(len(ts_query) - 1):
+            next_timestamp[ts_query[i].timestamp] = ts_query[i + 1].timestamp
+        next_timestamp[ts_query[len(ts_query) - 1].timestamp] = "end"
+
+        #print("next_ts", next_timestamp)
+
+
+        start_index = len(query) - 1
+        start_offset = 0
+        for i in range(len(query)):
+            if query[i].timestamp is not None:
+                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp: # interval crossing logic
+                    start_index = i
+                    break
+            start_offset += len(query[i].word)
+            if translation.language.spaced:
+                start_offset += 1
+
+        end_index = len(query) - 1
+        for i in range(len(query) - 1, -1, -1):
+            if query[i].timestamp is not None:
+                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp:
+                    break
+                else:
+                    end_index = i - 1
+
+        #print("start_index", start_index, "start_offset", start_offset, "end_index", end_index)
+
+
+        #Construct output dictionary from information
+        output = {}
+        associations = {}
+        for timestamp_start in timestamp_to_word_groups:
+            timestamp_end = next_timestamp[timestamp_start]
+            if (timestamp_end == 'end' or timestamp_end > start) and timestamp_start < end:
+                entry = []
+                for interval in timestamp_to_word_groups[timestamp_start]:
+                    entry.append(str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
+                associations[str(timestamp_start) + "-" + str(timestamp_end)] = entry
+
+        text = ""
+        words = [query[i].word for i in range(start_index, end_index + 1)]
+        if translation.language.spaced:
+            text = ' '.join(words)
+        else:
+            text = "".join(words)
+
+        return JsonResponse({"text": text, "associations": associations}, json_dumps_params={'ensure_ascii': False})
+
+
+
+    def update(self, request, aid, lid):
+        translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
+        if not translation:
+            return HttpResponse(status=404)
+
+        query = Story.objects.all().filter(translation=translation).order_by('index')
+        serializer = StorySerializer(query, many=True)
+        words = [entry['word'] for entry in serializer.data]
+        text = ""
+        if translation.language.spaced:
+            text = ' '.join(words)
+        else:
+            text = "".join(words)
+
+        start_index = text.find(request.data['text'])
+        #print("start_index", start_index)
+        if start_index < 0:
+            return HttpResponse(status=400)
+
+        # Scan lengths of elements in words
+        accumulated_lengths = []
+        sum = 0
+        for word in words:
+            sum += len(word)
+            if translation.language.spaced: #account for spaces
+                sum += 1
+            accumulated_lengths.append(sum - 1) #only want to count until right before start of new word
+        if translation.language.spaced: #remove last space at the end
+            accumulated_lengths[-1] -= 1
+        #print("accumulated lengths", accumulated_lengths)
+
+        changed = []
+        #Find corresponding word of index
+        association_dict = ast.literal_eval(request.data['associations'])
+        for key in association_dict:
+            key = int(key)
+            if key >= 0:
+                insertion_point = bisect_left(accumulated_lengths, start_index + key)
+                if insertion_point < len(words): #insertion point may exceed words
+                    query[insertion_point].timestamp = association_dict[key] #make sure is int
+                    changed.append(query[insertion_point])
+        
+        Story.objects.bulk_update(changed, ['timestamp'])
+
+        query = Story.objects.all().filter(translation=translation).order_by('index')
+        serializer = StorySerializer(query, many=True)
+        #print(serializer.data)
+        return HttpResponse(status=200)
+        

@@ -19,6 +19,10 @@ translations_detail = TranslationViewSet.as_view({
     'get': 'retrieve',
     'delete': 'destroy'
 })
+associations_detail = AssociationViewSet.as_view({
+    'get': 'retrieve',
+    'post': 'update'
+})
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -26,5 +30,6 @@ urlpatterns = [
 
 urlpatterns.extend(format_suffix_patterns([
     path('audio/<int:aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
-    path('audio/<int:aid>/translations/', translations_list, name='translations-list')
+    path('audio/<int:aid>/translations/', translations_list, name='translations-list'),
+    path('audio/<int:aid>/translations/<int:lid>/associations', associations_detail, name='associations-detail')
 ]))
