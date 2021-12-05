@@ -412,7 +412,7 @@ Returns the text between `ts1` and `ts2` along with a dictionary which maps sort
 }
 ```
 ## Update Associations
-Given a portion of the text, associates particular indexes with timestamps(ms). The specific way how this works is that every portion of exclusive text matching this substring will be updated which is not ideal (since there may be infrequent cases of unintended associations if the "text" is too short) but simplifies the work done front end and the amount of text metadata needed immensely.\
+Given a portion of the text, associates particular indexes with timestamps(ms). The specific way how this works is the first portion of exclusive text matching this substring will be updated which is not ideal (since there may be infrequent cases of unintended associations if the "text" is too short) but simplifies the work done front end and the amount of text metadata needed immensely.\
 **URL** :  `/audio/:id/translations/:lid/associations`
 
 **Method** : `POST`
