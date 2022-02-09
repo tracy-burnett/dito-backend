@@ -14,6 +14,7 @@ python-decouple = "*"
 djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
+django-heroku = "*"
 
 [dev-packages]
 
