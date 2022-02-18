@@ -15,6 +15,8 @@ djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
 django-heroku = "*"
+firebase-admin = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 
