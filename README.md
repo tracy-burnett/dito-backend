@@ -1,5 +1,9 @@
 # Xygil Backend
 
+## Next Steps
+
+- debug these files in "storybooks" folder: users, views, urls, serializers so that they all sync correctly with one another and we can start using our database.
+
 ## Setup
 
 ### Prerequisites
