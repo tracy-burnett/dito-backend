@@ -154,7 +154,6 @@ django_heroku.settings(locals())
 
 CORS_ALLOWED_ORIGINS = [
     "https://www.xygil.net",
-    "http://localhost:8080",
 ]
 
 
