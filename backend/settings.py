@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 import os
 import django_heroku
+import firebase_admin
+from firebase_admin import credentials
 from decouple import config
 from pathlib import Path
 from dj_database_url import parse as dburl
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
 
     # Other Apps
     'rest_framework',
+    'corsheaders',
 
     # Local Apps
     'storybooks.apps.StorybooksConfig'
@@ -54,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -135,4 +139,38 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ]}
+
+# Heroku setup
+
 django_heroku.settings(locals())
+
+
+# CORS setup
+
+CORS_ALLOWED_ORIGINS = [
+    "https://www.xygil.net",
+]
+
+
+# Firebase setup
+
+cred = credentials.Certificate({
+
+  "type": os.environ.get('FIREBASE_TYPE'),
+  "project_id": os.environ.get('FIREBASE_PROJECT_ID'),
+  "private_key_id": os.environ.get('FIREBASE_PRIVATE_KEY_ID'),
+  "private_key": os.environ.get('FIREBASE_PRIVATE_KEY').replace('\\n', '\n'),
+  "client_email": os.environ.get('FIREBASE_CLIENT_EMAIL'),
+  "client_id": os.environ.get('FIREBASE_CLIENT_ID'),
+  "auth_uri": os.environ.get('FIREBASE_AUTH_URI'),
+  "token_uri": os.environ.get('FIREBASE_TOKEN_URI'),
+  "auth_provider_x509_cert_url": os.environ.get('FIREBASE_AUTH_PROVIDER_CERT_URL'),
+  "client_x509_cert_url": os.environ.get('FIREBASE_CLIENT_CERT_URL'),
+
+})
+firebase_admin.initialize_app(cred)

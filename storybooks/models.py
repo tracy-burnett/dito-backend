@@ -40,7 +40,7 @@ class Translation(models.Model):
 
 
 class Story(models.Model):
-    translation     = models.ForeignKey(Translation, on_delete=models.CASCADE)
+    translation     = models.ForeignKey(Translation, on_delete=models.CASCADE, default=0)
     word            = models.CharField(max_length=255)
     index           = models.IntegerField()
     timestamp       = models.IntegerField(null=True)
