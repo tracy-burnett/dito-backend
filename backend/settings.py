@@ -32,7 +32,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('DEBUG_VALUE') == 'True')
 
-ALLOWED_HOSTS = ['ditotranslationtool.herokuapp.com']
+ALLOWED_HOSTS = [
+    'ditotranslationtool.herokuapp.com',
+    'ditostaging.herokuapp.com'
+    ]
 
 
 # Application definition
@@ -91,9 +94,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 default_dburl = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
 
+
 DATABASES = {
 	'default': config('DATABASE_URL', default=default_dburl, cast=dburl),
 }
+
+
+
+
 
 
 # Password validation
