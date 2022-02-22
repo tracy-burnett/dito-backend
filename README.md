@@ -1,8 +1,6 @@
 # Xygil Backend
 
-## Next Steps
-
-- debug these files in "storybooks" folder: users, views, urls, serializers so that they all sync correctly with one another and we can start using our database.
+## As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysnolimit08 has the ability to run migrations on the database.
 
 ## Setup
 
