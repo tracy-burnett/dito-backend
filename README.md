@@ -212,6 +212,7 @@ Create, read, update, and delete user.
 Create, read, update, and delete audio.
 
 ## Create Audio
+Working on 3/7/2022.  Authentication not tested.
 
 **URL** : `/audio/`
 
@@ -230,7 +231,7 @@ Create, read, update, and delete audio.
 }
 ```
 ## Read Audio
-Returns the link, name, description of an audio if public.\
+Returns the link, name, description of an audio if public.  Working on 3/7/2022.  Authentication not tested.\
 **URL** : `/audio/:id`
 
 **Method** : `GET`
@@ -248,8 +249,9 @@ Returns the link, name, description of an audio if public.\
 ```
 
 ## Update Audio
+Not working as of 3/7/2022.
 
-**URL** : `/audio/:id`
+**URL** : `/audio/:id/`
 
 **Method** : `PATCH`
 
@@ -265,6 +267,7 @@ Returns the link, name, description of an audio if public.\
 ```
 
 ## Delete Audio
+Working on 3/7/2022.  Authentication not tested.
 
 **URL** : `/audio/:id`
 
@@ -299,7 +302,7 @@ Returns a list of all public audios.\
 Create, read, update, and delete translations associated with an audio.
 
 ## Create Translation
-Returns the translation with language `:lid` of an audio `:id`.\
+Returns the translation with language `:lid` of an audio `:id`.  3/7/2022 For this to work, need to comment out the Check unique section of views.py.\
 **URL** : `/audio/:id/translations/:lid`
 
 **Method** : `POST`
@@ -311,13 +314,14 @@ Returns the translation with language `:lid` of an audio `:id`.\
 ```json
 {
     "user": "user1", 
+    "title": "test title",
     "text": "Four score and seven years ago, our fathers brought forth on this continent...",
     "lid": 5,
     "public": false
 }
 ```
 ## Read Translation
-Returns entire translation if public or authenthenticated and private.\
+Returns entire translation if public or authenticated and private.  Working as of 3/7/2022.  Did not test authentication.\
 **URL** : `/audio/:id/translations/:lid`
 
 **Method** : `GET`
@@ -333,8 +337,8 @@ Returns entire translation if public or authenthenticated and private.\
 ```
 
 ## Update Translation
-Updates the entire text. This operation will automatically maintain existing associations for words that aren't deleted and insert NULL associations for newly inserted words. \
-**URL** : `/audio/:id/translations/:lid`
+Updates the entire text. This operation will automatically maintain existing associations for words that aren't deleted and insert NULL associations for newly inserted words.  Working as of 3/7/2022. Did not test authentication.\
+**URL** : `/audio/:id/translations/:lid/`
 
 **Method** : `PATCH`
 
@@ -344,7 +348,7 @@ Updates the entire text. This operation will automatically maintain existing ass
 
 ```json
 {
-    "text": "Eighty-seven years ago, our fathers brought forth on this continent...",
+    "text": "Eighty-seven years ago, our fathers brought forth on this continent..."
 }
 ```
 
