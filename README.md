@@ -22,8 +22,11 @@ $ pip3 --version
 (3 of these commands will work on Windows and 3 will work on Mac)
 
 If you don't have Git, download it from git-scm.com/downloads/
+
 If you don't have Python 3, you can download it from https://www.python.org/downloads/
+
 --on Windows if you install this, you will want to check the box for "add Python to PATH", or else you will have to retroactively do it manually or do it by modifying the install.
+
 Pip or Pip 3 will install automatically when you install Python 3, which is great (unless you uncheck the box, which makes more work for you).
 
 **Installing Dependencies**
@@ -31,8 +34,11 @@ Pip or Pip 3 will install automatically when you install Python 3, which is grea
 $ git clone https://github.com/skysnolimit08/dialecttranslationtool-backend backend
 $ cd backend
 $ pip install pipenv
+$ pip3 install pipenv
 $ pipenv install
 ```
+
+(The pip command will work on Windows; the pip3 command will work on Mac)
 
 **Configuring Environmental Variables**
 
