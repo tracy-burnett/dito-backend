@@ -65,7 +65,7 @@ SECRET_KEY='SECRET_KEY'
 DEBUG_VALUE='True'
 # DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
 ```
-
+Now, restart your terminal.
 
 
 **Connecting MySQL with Django**
