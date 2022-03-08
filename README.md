@@ -9,7 +9,6 @@ As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysn
 - Git
 - Python 3
 - Pip
-- Homebrew (Mac only)
 
 You can check if you have these by typing
 
@@ -25,17 +24,12 @@ $ pip --version
 $ git --version
 $ python3 --version
 $ pip3 --version
-$ brew -v
 ```
 
 - If you don't have Git, download it from git-scm.com/downloads/
 - If you don't have Python 3, you can download it from https://www.python.org/downloads/
 - - on Windows if you install this, you will want to check the box for "add Python to PATH", or else you will have to retroactively do it manually or do it by modifying the install.
 - Pip or Pip 3 will install automatically when you install Python 3, which is great (unless you somehow prevent it, which you shouldn't).
-- If you don't have Homebrew and are on a Mac, run this code in the terminal:
-```
-$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
 
 **Installing Dependencies**
 
@@ -51,10 +45,6 @@ $ pipenv install
 
 (The pip command will work on Windows; the pip3 command will work on Mac)
 
-If you are on a Mac, you will additionally need to run:
-```
-$ brew install mysqlclient
-```
 
 **Configuring Environmental Variables**
 
@@ -71,13 +61,21 @@ Now, restart your terminal.
 **Connecting MySQL with Django**
 
 In the same project directory:
+
+Windows
 ```
 $ pipenv shell
 (venv) $ python manage.py migrate
 ```
+Mac
+```
+$ pipenv shell
+(venv) $ python3 manage.py migrate
+```
 
 **Configuring an administrative "superuser" for MySQL**
 
+Windows
 ```
 $ pipenv shell
 (venv) $ python manage.py createsuperuser
@@ -86,9 +84,24 @@ Email address:
 Password: 
 Password (again):
 ```
+Mac
+```
+$ pipenv shell
+(venv) $ python3 manage.py createsuperuser
+Username: 
+Email address: 
+Password: 
+Password (again):
+```
 
 
 ## Running the Server
+Windows
+```
+$ pipenv shell
+(venv) $ python manage.py runserver # Defaults to http://localhost:8000
+```
+Mac
 ```
 $ pipenv shell
 (venv) $ python manage.py runserver # Defaults to http://localhost:8000
