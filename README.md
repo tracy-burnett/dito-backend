@@ -19,7 +19,7 @@ $ pipenv install
 
 **Configuring Environmental Variables**
 
-Rename ".env-example" to ".env".  Paste the following code into it.  On your local computer, create your own complicated, secret SECRET_KEY to use.  You can use python secrets to help you do that.  Setting debug to True in your local environment will be helpful for debugging your code.  You probably do not need to use the DATABASE_URL environmental variable, since our settings.py file includes a default database URL, but you are welcome to if you want to host your database in a special place.
+Rename ".env-example" to ".env".  Paste the following code into it.  Create your own randomized value for SECRET_KEY.  You can use python secrets to help you do that.  Setting debug to True in your local environment will be helpful for debugging your code.  You probably do not need to use the DATABASE_URL environmental variable, since our settings.py file includes a default database URL, but you are welcome to if you want to host your database in a special place.
 
 ```
 SECRET_KEY='SECRET_KEY'
