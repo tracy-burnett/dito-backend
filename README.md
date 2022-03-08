@@ -224,7 +224,6 @@ Working on 3/7/2022.  Authentication not tested.
     "url": "aws.amazon.com/cloudfront/123456789",
     "title": "Audio1",
     "description": "Thirty minutes of people coughing",
-    "public": false
 }
 ```
 ## Read Audio
