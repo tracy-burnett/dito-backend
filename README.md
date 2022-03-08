@@ -2,44 +2,12 @@
 
 As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysnolimit08 has the ability to run migrations on the database it communicates with.
 
-## Setup
+## Setup updated 3/7/2022
 
 ### Prerequisites
-- Python 3
-- Pip
-- PostgreSQL/MySQL/SQLite
-
-**Configuring Environmental Variables**
-
-Edit `.env` based on your environment:
-```
-SECRET_KEY=SECRET_KEY
-DEBUG=False
-DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
-```
-Set `DEBUG=True` locally for more verbose console logging. Set `DATABASE_URL` to be the database url of whatever database service you use. The format shown is for MySQL, but adjust accordingly.
-
-**Configuring MySQL**
-
-Create new database and user with the following queries. Make sure to replace `<password>` with your desired password. This user can also be used to access the database manually through the MySQL console.
-```
-$ sudo mysql -u root
-
-mysql> CREATE DATABASE xygil;
-Query OK, 1 row affected (0.00 sec)
-
-mysql> CREATE USER 'xygil'@'%' IDENTIFIED WITH mysql_native_password BY '<password>';
-Query OK, 0 row affected (0.00 sec)
-
-mysql> GRANT ALL ON xygil.* TO 'xygil'@'%';
-Query OK, 0 row affected (0.00 sec)
-
-mysql> FLUSH PRIVILEGES;
-Query OK, 0 row affected (0.00 sec)
-```
-
-Restart the MySQL service with `brew services restart mysql` (Mac) or `sudo systemctl restart mysql` (Linux)
-
+- Git (download from git-scm.com/downloads/)
+- Python 3 (you will want to check the box for "add Python to PATH", or else you will have to retroactively do it manually or do it by modifying the install)
+- Pip (unless you declined the option, this probably auto-installed with Python)
 
 **Installing Dependencies**
 ```
@@ -49,6 +17,18 @@ $ pip install pipenv
 $ pipenv install
 ```
 
+**Configuring Environmental Variables**
+
+Rename ".env-example" to ".env".  Paste the following code into it.  On your local computer, create your own complicated, secret SECRET_KEY to use.  You can use python secrets to help you do that.  Setting debug to True in your local environment will be helpful for debugging your code.  You probably do not need to use the DATABASE_URL environmental variable, since our settings.py file includes a default database URL, but you are welcome to if you want to host your database in a special place.
+
+```
+SECRET_KEY=SECRET_KEY
+DEBUG=True
+# DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
+```
+
+
+
 **Connecting MySQL with Django**
 
 In the same project directory:
@@ -56,6 +36,18 @@ In the same project directory:
 $ pipenv shell
 (venv) $ python manage.py migrate
 ```
+
+**Configuring MySQL in Windows**
+
+```
+$ pipenv shell
+(venv) $ python manage.py createsuperuser
+Username: 
+Email address: 
+Password: 
+Password (again):
+```
+
 
 ## Running the Server
 ```
