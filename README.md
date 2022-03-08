@@ -5,6 +5,11 @@ As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysn
 ## Setup updated 3/7/2022
 
 ### Prerequisites
+
+- Git (if you don't have it, download from git-scm.com/downloads/)
+- Python 3 (on Windows if you install this, you will want to check the box for "add Python to PATH", or else you will have to retroactively do it manually or do it by modifying the install)
+- Pip (unless you declined the option, this probably auto-installed with Python 3)
+
 You can check if you have these by typing
 ```
 $ git --version
@@ -14,9 +19,7 @@ $ pip --version
 $ pip3 --version
 ```
 
-- Git (if you don't have it, download from git-scm.com/downloads/)
-- Python 3 (on Windows if you install this, you will want to check the box for "add Python to PATH", or else you will have to retroactively do it manually or do it by modifying the install)
-- Pip (unless you declined the option, this probably auto-installed with Python 3)
+(some of these commands will work on Windows; some will work on Mac)
 
 **Installing Dependencies**
 ```
