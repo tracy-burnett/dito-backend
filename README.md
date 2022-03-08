@@ -60,15 +60,16 @@ Now, restart your terminal.
 
 **Connecting MySQL with Django**
 
-In the same project directory:
 
 Windows
 ```
+$ cd backend
 $ pipenv shell
 (venv) $ python manage.py migrate
 ```
 Mac
 ```
+$ cd backend
 $ pipenv shell
 (venv) $ python3 manage.py migrate
 ```
