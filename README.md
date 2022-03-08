@@ -37,7 +37,7 @@ $ pipenv shell
 (venv) $ python manage.py migrate
 ```
 
-**Configuring MySQL in Windows**
+**Configuring an administrative "superuser" for MySQL**
 
 ```
 $ pipenv shell
