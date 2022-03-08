@@ -115,6 +115,7 @@ class Story:
 Create, read, update, and delete user.
 
 ## Create User
+Working 3/7/2022.  Did not test authentication.  Is not safe and code needs to be deprecated and replaced with Django Auth functions.
 
 **URL** : `/user/`
 
@@ -134,6 +135,7 @@ Create, read, update, and delete user.
 }
 ```
 ## Read User
+Working 3/7/2022.
 
 **URL** : `/user/:id`
 
@@ -152,6 +154,7 @@ Create, read, update, and delete user.
 ```
 
 ## Update User
+Is probably not safe and code needs to be deprecated and replaced with Django Auth functions.
 
 **URL** : `/user/:id`
 
@@ -169,6 +172,7 @@ Create, read, update, and delete user.
 ```
 
 ## Delete User
+May not be safe to the point that code needs to be deprecated and replaced with Django Auth functions.
 
 **URL** : `/user/:id`
 
@@ -177,6 +181,7 @@ Create, read, update, and delete user.
 **Auth required** : Admin
 
 ## Index User Audios
+3/7/2022 Can't get this to work, and not sure where to find the code for it in the backend.
 
 **URL** : `/user/:id/audio`
 
@@ -276,7 +281,7 @@ Working on 3/7/2022.  Authentication not tested.
 **Auth required** : Yes
 
 ## Index Audios
-Returns a list of all public audios.\
+Returns a list of all public audios.  3/7/2022 doesn't seem to work.\
 **URL** : `/user/:id/audio`
 
 **Method** : `GET`
@@ -302,7 +307,7 @@ Returns a list of all public audios.\
 Create, read, update, and delete translations associated with an audio.
 
 ## Create Translation
-Returns the translation with language `:lid` of an audio `:id`.  3/7/2022 For this to work, need to comment out the Check unique section of views.py.\
+Creates translation object.  Returns the translation with language `:lid` of an audio `:id`.  3/7/2022 For this to work, need to comment out the Check unique section of views.py.  But then that breaks some other things down the line.\
 **URL** : `/audio/:id/translations/:lid`
 
 **Method** : `POST`
@@ -353,6 +358,7 @@ Updates the entire text. This operation will automatically maintain existing ass
 ```
 
 ## Delete Translation
+Works 3/7/2022.  But doesn't delete or archive the associated stories.
 
 **URL** : `/audio/:id/translations/:lid`
 
