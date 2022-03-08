@@ -23,7 +23,7 @@ Rename ".env-example" to ".env".  Paste the following code into it.  On your loc
 
 ```
 SECRET_KEY=SECRET_KEY
-DEBUG=True
+DEBUG_VALUE=True
 # DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
 ```
 
