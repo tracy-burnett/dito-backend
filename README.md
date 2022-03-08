@@ -35,10 +35,18 @@ $ pip3 --version
 
 In your terminal, change directories into the folder you want to keep the project in.  Then:
 
+Windows
 ```
 $ git clone https://github.com/skysnolimit08/dialecttranslationtool-backend backend
 $ cd backend
 $ pip install pipenv
+$ pipenv install
+```
+
+Mac
+```
+$ git clone https://github.com/skysnolimit08/dialecttranslationtool-backend backend
+$ cd backend
 $ pip3 install pipenv
 $ pipenv install
 ```
@@ -105,7 +113,7 @@ $ pipenv shell
 Mac
 ```
 $ pipenv shell
-(venv) $ python manage.py runserver # Defaults to http://localhost:8000
+(venv) $ python3 manage.py runserver # Defaults to http://localhost:8000
 ```
 Now, navigate to http://localhost:8000 and you should see the server running!
 
