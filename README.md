@@ -53,6 +53,8 @@ $ pipenv install
 
 (The pip command will work on Windows; the pip3 command will work on Mac)
 
+From now on, if you install a new package for the project, please do so using the command 'pipenv install package-name' from that same backend folder so that the Pipfile keeps track of what package dependencies our project needs for future developers and hosting servers.
+
 
 **Configuring Environmental Variables**
 
