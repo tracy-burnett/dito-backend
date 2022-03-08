@@ -5,11 +5,9 @@ name = "pypi"
 
 [packages]
 django = "*"
-mysqlclient = "*"
 dj-static = "*"
 dj-database-url = "*"
 gunicorn = "*"
-psycopg2 = "*"
 python-decouple = "*"
 djangorestframework = "*"
 markdown = "*"
@@ -17,6 +15,7 @@ django-filter = "*"
 django-heroku = "*"
 firebase-admin = "*"
 django-cors-headers = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
