@@ -246,7 +246,7 @@ Returns the link, name, description of an audio if public.  Working on 3/7/2022.
 ```
 
 ## Update Audio
-Not working as of 3/7/2022.
+As of 3/7/2022, updating description works, but updating public does not.
 
 **URL** : `/audio/:id/`
 
@@ -259,7 +259,6 @@ Not working as of 3/7/2022.
 ```json
 {
     "description": "Twenty-seven minutes of people coughing",
-    "public": true
 }
 ```
 
