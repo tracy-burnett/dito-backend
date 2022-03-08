@@ -245,7 +245,7 @@ Returns the link, name, description of an audio if public.  Working on 3/7/2022.
 ```
 
 ## Update Audio
-As of 3/7/2022, updating description works, but updating public does not.
+As of 3/7/2022, it works.
 
 **URL** : `/audio/:id/`
 
@@ -271,7 +271,7 @@ Working on 3/7/2022.  Authentication not tested.
 **Auth required** : Yes
 
 ## Index Audios
-Returns a list of all public audios.  3/7/2022 doesn't seem to work.\
+Returns a list of all public audios.  3/7/2022 doesn't seem to work, probably because there is no "public" field in audio table.\
 **URL** : `/user/:id/audio`
 
 **Method** : `GET`
