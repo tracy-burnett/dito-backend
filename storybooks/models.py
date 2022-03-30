@@ -1,27 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
-class Audio(models.Model):
-    url = models.CharField(max_length=255)
-    title = models.CharField(default="Untitled Audio", max_length=255)
-    description = models.CharField(default="Empty", max_length=2048)
-    archived = models.BooleanField(default=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_updated_at = models.DateTimeField(auto_now=True)
-    last_updated_by = models.ForeignKey(
-        User, related_name="last_updated_by", null=True, on_delete=models.SET_NULL)
-    uploaded_by = models.ForeignKey(
-        User, related_name="uploaded", null=True, on_delete=models.SET_NULL)
-    shared_with = models.CharField(default="Not shared with anyone")
-    public = models.BooleanField(default=False)
-
-    class Meta:
-        verbose_name = "audio file"
-        verbose_name_plural = "audio files"
-
-
 class Audio(models.Model):
     title = models.CharField(default="Untitled Audio", max_length=255)
     url = models.CharField(max_length=255)
@@ -67,7 +46,7 @@ class Interpretation(models.Model):
         verbose_name_plural = "interepretations"
 
 
-class Interpretations_History(models.Model):
+class Interpretation_History(models.Model):
     id = models.CharField(max_length=255)
     interpretation_id = models.ForeignKey(Interpretation)
     public = models.BooleanField(default=False)
