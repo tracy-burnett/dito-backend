@@ -5,15 +5,15 @@ class Audio(models.Model):
     title = models.CharField(default="Untitled Audio", max_length=255)
     url = models.CharField(max_length=255)
     description = models.CharField(default="Empty", max_length=2048)
-    id = models.CharField(max_length=255)
+    id = models.CharField(primary_key = True,max_length=255)
     archived = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey(
-        User, related_name="uploaded", null=True, on_delete=models.SET_NULL)
+        User, related_name="user_uploaded_by", null=True, on_delete=models.SET_NULL)
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(
-        User, related_name="last_updated_by", null=True, on_delete=models.SET_NULL)
-    shared_with = models.CharField(default="Not shared with anyone")
+        User, related_name="user_last_updated_by", null=True, on_delete=models.SET_NULL)
+    shared_with = models.CharField(default="Not shared with anyone",max_length=2048)
     public = models.BooleanField(default=False)
 
     class Meta:
@@ -22,19 +22,20 @@ class Audio(models.Model):
 
 
 class Interpretation(models.Model):
-    id = models.CharField(max_length=255)
+    id = models.CharField(primary_key = True,max_length=255)
     public = models.BooleanField(default=False)
-    shared_editors = models.CharField(default="Not shared with any editors")
-    shared_viewers = models.CharField(default="Not shared with any editors")
-    audio_id = models.ForeignKey(Audio, on_delete=models.CASCADE)
+    shared_editors = models.CharField(default="Not shared with any editors", max_length=2048)
+    shared_viewers = models.CharField(default="Not shared with any editors", max_length=2048)
+    audio_id = models.ForeignKey(
+    Audio, related_name="audio_id", null=True, on_delete=models.SET_NULL)
     title = models.CharField(max_length=255)
     latest_text = models.CharField(max_length=255)
     archived = models.BooleanField(default=False)
     language_name = models.CharField(max_length=255)
     spaced_by = models.ForeignKey(
-        User, related_name="uploaded", null=True, on_delete=models.SET_NULL)
+        User, related_name="spaced_by_user", null=True, on_delete=models.SET_NULL)
     created_by = models.ForeignKey(
-        User, related_name="created", null=True, on_delete=models.SET_NULL)
+        User, related_name="created_by_user", null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     last_edited_at = models.DateTimeField(null=True, auto_now=True)
     last_edited_by = models.ForeignKey(
@@ -47,24 +48,24 @@ class Interpretation(models.Model):
 
 
 class Interpretation_History(models.Model):
-    id = models.CharField(max_length=255)
-    interpretation_id = models.ForeignKey(Interpretation)
+    id = models.CharField(primary_key = True,max_length=255)
+    interpretation_id = models.ForeignKey(Interpretation, on_delete=models.CASCADE)
     public = models.BooleanField(default=False)
-    shared_editors = models.CharField(default="Not shared with any editors")
-    shared_viewers = models.CharField(default="Not shared with any editors")
+    shared_editors = models.CharField(default="Not shared with any editors", max_length=2048)
+    shared_viewers = models.CharField(default="Not shared with any editors", max_length=2048)
     audio_id = models.ForeignKey(Audio, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     latest_text = models.CharField(max_length=255)
     archived = models.BooleanField(default=False)
     language_name = models.CharField(max_length=255)
     spaced_by = models.ForeignKey(
-        User, related_name="uploaded", null=True, on_delete=models.SET_NULL)
+        User, related_name="spaced_by_interpretation_history_user", null=True, on_delete=models.SET_NULL)
     created_by = models.ForeignKey(
-        User, related_name="created", null=True, on_delete=models.SET_NULL)
+        User, related_name="created_by_interpretation_history_user", null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     last_edited_at = models.DateTimeField(null=True, auto_now=True)
     last_edited_by = models.ForeignKey(
-        User, related_name="last_edited_by", null=True, on_delete=models.SET_NULL)
+        User, related_name="interpretation_history_last_edited_by_user", null=True, on_delete=models.SET_NULL)
     version = models.IntegerField(default=0)
 
     class Meta:
@@ -93,7 +94,7 @@ class Translation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(
-        User, related_name="last_updated_by", null=True, on_delete=models.SET_NULL)
+        User, related_name="user_last_uploaded_by", null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = "translation"
