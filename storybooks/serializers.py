@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from storybooks.models import *
 from rest_framework import serializers
+from storybooks.s3 import *
+
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
