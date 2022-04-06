@@ -18,6 +18,6 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')), # this give normal (non-superuser) users the ability to login at /api/
     path('api/', include('storybooks.urls'))
 ]
