@@ -417,4 +417,40 @@ class AssociationViewSet(viewsets.ModelViewSet):
         serializer = StorySerializer(query, many=True)
         #print(serializer.data)
         return HttpResponse(status=200)
-        
+
+
+class ExtendedUserViewSet(viewsets.ModelViewSet):
+
+    def create(self, request):
+        # permission_classes = [permissions.IsAuthenticated]
+        data = request.data
+        obj = Extended_User(user_ID=data['user_id'],
+                            description=data['description'],
+                            display_name=data['display_name'],
+                            anonymous=data['anonymous'])
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse({"user": serializer.data})
+
+    def update(self, request):
+        data = request.data
+        # permission_classes = [permissions.IsAuthenticated]
+        user = Extended_User.objects.get(user_ID=data['user_id'])
+        if not uid:
+            return HttpResponse(status=404)
+        user.description = data['description']
+        user.display_name = data['display_name']
+        user.anonymous = data['anonymous']
+        user.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse({"user": serializer.data})
+
+    def retrieve(self, request, user_id):
+        # permission_classes = [permissions.IsAuthenticated]
+        user_obj = Extended_User.objects.get(user_ID=user_id)
+        if not user_obj:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        if user_obj.archived:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(user_obj)
+        return JsonResponse(serializer.data)
