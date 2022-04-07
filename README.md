@@ -2,8 +2,9 @@
 
 As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysnolimit08 has the ability to run migrations on the database it communicates with.
 
-## Setup updated 3/7/2022
-(Note: I removed the mysqlclient package from Pipfile because it did not seem necessary and was causing problems for setup on Macs.  Please let me know if this causes any problems down the line.)
+## Updated 4/7/2022
+- 4/7/2022: Added AWS blurb
+- 3/7/2022: Removed the mysqlclient package from Pipfile because it did not seem necessary and was causing problems for setup on Macs.  Please let me know if this causes any problems down the line.
 
 ### Prerequisites
 
