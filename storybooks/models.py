@@ -53,10 +53,10 @@ class Interpretation_History(models.Model):
     archived = models.BooleanField(default=False)
     language_name = models.CharField(max_length=255)
     spaced_by = models.CharField(max_length=255)
-    created_by = models.models.CharField(max_length=255)
+    created_by = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     last_edited_at = models.DateTimeField(null=True, auto_now=True)
-    last_edited_by = models.models.CharField(max_length=255)
+    last_edited_by = models.CharField(max_length=255)
     version = models.IntegerField(default=0)
 
     class Meta:
