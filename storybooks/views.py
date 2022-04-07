@@ -1,6 +1,7 @@
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http.response import HttpResponse
 from storybooks.models import *
 from storybooks.serializers import *
@@ -25,22 +26,74 @@ class AudioViewSet(viewsets.ModelViewSet):
     """
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+
+    #request vs pk
+    #users, time, autopopulate done on backend/frontend
+
+    #Not sure if uploaded_by, uploaded_at will be in request data
 
     def create(self, request):
         data = request.data
-        obj = Audio(url=data['url'], title=data['title'])
+        obj = Audio(url=data['url'], title=data['title'], description=['description'],shared_with=['shared_with'],uploaded_by=['uploaded_by'],uploaded_at=['uploaded_at'])
         obj.save();
         serializer = self.serializer_class(obj)
+        #get url from s3?
         return JsonResponse({"audio": serializer.data});
 
-    def list(self, request):
-        query = self.queryset.filter(archived=False)
+
+    #Unsafe
+    #Which fields do we want the useer to be able to update? Can do this on front end but 
+    #might be nice to have back end verification as well
+
+    def partial_update_owner(self, request, pk):
+        query = self.queryset.filter(Q(archived=False) & Q(id=pk))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        #print(request.data)
+        modifiable_attr = {} #fill in with which attributes owner can update
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key])
+            else:
+                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+    
+    def partial_update_editor(self, request, pk): #extended user
+        query = self.queryset.filter(Q(archived=False) & Q(id=pk))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {} #fill in with which attributes editor can update
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key])
+            else:
+                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+
+    def retrieve_public(self):
+        query = self.queryset.filter(Q(archived=False) & Q(public=True))
         serializer = self.serializer_class(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
-    def retrieve(self, request, pk):
-        query = self.queryset.filter(id=pk)
+    def retrieve_private_user(self,pk):
+        query = self.queryset.filter(Q(archived=False) & Q(id=pk) & (Q(uploaded_by=pk) | Q(shared_with_contains=pk)))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        if obj.archived:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+    
+    def retrieve_public_user(self,pk):
+        query = self.queryset.filter(Q(archived=False) & Q(id=pk) & Q(public=True))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
@@ -49,21 +102,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    #Unsafe
-    def partial_update(self, request, pk):
-        query = self.queryset.filter(id=pk)
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        #print(request.data)
-        for key in request.data:
-            if hasattr(obj, key):
-                setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
+    
 
     def destroy(self, request, pk):
         query = self.queryset.filter(id=pk)
