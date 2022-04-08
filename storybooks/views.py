@@ -8,9 +8,12 @@ from storybooks.serializers import *
 from rest_framework import viewsets, permissions, generics, filters, status
 from bisect import bisect_left
 import ast
+import datetime
+
 
 def index(request):
-    return JsonResponse({ 'message': 'Xygil Backend', 'success': True })
+    return JsonResponse({'message': 'Xygil Backend', 'success': True})
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -20,6 +23,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
+
 class AudioViewSet(viewsets.ModelViewSet):
     """
     Audio API
@@ -28,81 +32,73 @@ class AudioViewSet(viewsets.ModelViewSet):
     serializer_class = AudioSerializer
     permission_classes = [permissions.AllowAny]
 
-    #request vs pk
-    #users, time, autopopulate done on backend/frontend
-
-    #Not sure if uploaded_by, uploaded_at will be in request data
 
     def create(self, request):
         data = request.data
-        obj = Audio(url=data['url'], title=data['title'], description=['description'],shared_with=['shared_with'],uploaded_by=['uploaded_by'],uploaded_at=['uploaded_at'])
-        obj.save();
-        serializer = self.serializer_class(obj)
-        #get url from s3?
-        return JsonResponse({"audio": serializer.data});
-
-
-    #Unsafe
-    #Which fields do we want the useer to be able to update? Can do this on front end but 
-    #might be nice to have back end verification as well
-
-    def partial_update_owner(self, request, pk):
-        query = self.queryset.filter(Q(archived=False) & Q(id=pk))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        #print(request.data)
-        modifiable_attr = {} #fill in with which attributes owner can update
-        for key in request.data:
-            if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        # get url from s3 and user from firebase
+        obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
+                    shared_with=data['shared_with'], uploaded_by=data['uploaded_by'], last_updated_by=data['uploaded_by'], public=data['public'])
         obj.save()
         serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
-    
-    def partial_update_editor(self, request, pk): #extended user
-        query = self.queryset.filter(Q(archived=False) & Q(id=pk))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        modifiable_attr = {} #fill in with which attributes editor can update
-        for key in request.data:
-            if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
-
-    def retrieve_public(self):
-        query = self.queryset.filter(Q(archived=False) & Q(public=True))
-        serializer = self.serializer_class(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
-    def retrieve_private_user(self,pk):
-        query = self.queryset.filter(Q(archived=False) & Q(id=pk) & (Q(uploaded_by=pk) | Q(shared_with_contains=pk)))
+    # Unsafe
+
+    def partial_update_owner(self, request,aid):
+        uid=5 #hardcoded uid
+        query = self.queryset.filter(Q(uploaded_by=uid)& Q(id=aid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
-        if obj.archived:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
-    
-    def retrieve_public_user(self,pk):
-        query = self.queryset.filter(Q(archived=False) & Q(id=pk) & Q(public=True))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        if obj.archived:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        modifiable_attr = {'title', 'public', 'description',
+                           'last_updated_by', 'last_updated_at','archived'}
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+            else:
+                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    
+    def partial_update_editor(self, request,aid):  
+        uid=5 #hardcoded uid
+        query = self.queryset.filter(Q(archived=False) & Q(id=aid) & Q(
+            shared_with=uid))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {'title', 'public', 'description',
+                            'last_updated_by', 'last_updated_at'}
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+            else:
+                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+
+    def retrieve_public(self, pk):
+        query = self.queryset.filter(Q(archived=False) & Q(public=True))
+        serializer = self.serializer_class(query, many=True)
+        return JsonResponse({"audio": serializer.data}) #need to iterate through objects to get the fields we want
+
+    def retrieve_private_user(self, pk):
+        uid = 5 #hardcoded
+        query = self.queryset.filter(Q(uploaded_by=uid) | (Q(archived=False) & Q(shared_with=uid)))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(query, many=True)
+        return JsonResponse({"audio":serializer.data})
+
+    def retrieve_public_user(self, pk,uid):
+        query = self.queryset.filter(
+            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(query, many=True)
+        return JsonResponse({"audio":serializer.data})
 
     def destroy(self, request, pk):
         query = self.queryset.filter(id=pk)
@@ -112,6 +108,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj.delete()
         return HttpResponse(status=200)
 
+
 class LanguageViewSet(viewsets.ModelViewSet):
     """
     Language API
@@ -119,12 +116,14 @@ class LanguageViewSet(viewsets.ModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
     # permission_classes = [permissions.IsAuthenticated]
+
     def list(self, request):
         serializer = self.serializer_class(self.queryset, many=True)
         dict = {}
         for entry in serializer.data:
             dict[entry['id']] = entry['name']
         return JsonResponse(dict)
+
 
 class TranslationViewSet(viewsets.ModelViewSet):
     """
@@ -133,25 +132,27 @@ class TranslationViewSet(viewsets.ModelViewSet):
     queryset = Translation.objects.all()
     serializer_class = TranslationSerializer
     # permission_classes = [permissions.IsAuthenticated]
-    #Unsafe (can be overridden)
+    # Unsafe (can be overridden)
+
     def create(self, request, aid, lid):
         query = Audio.objects.all().filter(id=aid)
         if not query:
             return HttpResponse(status=404)
         audio = query.get()
-        
+
         query = Language.objects.all().filter(id=lid)
         if not query:
             return HttpResponse(status=404)
         language = query.get()
 
-        #Check unique
+        # Check unique
         if self.queryset.filter(audio_id=aid, language_id=lid):
             return HttpResponse(status=400)
 
         data = request.data
-        translation = Translation(title=data['title'], audio=audio, language=language)
-        
+        translation = Translation(
+            title=data['title'], audio=audio, language=language)
+
         text_array = []
         if language.spaced:
             text_array = data['text'].split(" ")
@@ -162,7 +163,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         for i in range(len(text_array)):
             word = text_array[i]
             words.append(Story(translation=translation, word=word, index=i))
-        
+
         translation.save()
         Story.objects.bulk_create(words)
         return HttpResponse(status=200)
@@ -171,7 +172,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         translation = self.queryset.get(audio_id=aid, language_id=lid)
         if not translation:
             return HttpResponse(status=404)
-        #if not translation.published:
+        # if not translation.published:
         #    return HttpResponse(status=400)
 
         query = Story.objects.all().filter(translation=translation).order_by('index')
@@ -190,7 +191,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
             return HttpResponse(status=404)
         query.get().delete()
         return HttpResponse(status=200)
-    
+
     def list_languages(self, request, aid):
         query = self.queryset.filter(audio_id=aid).order_by('language')
         if not query:
@@ -199,11 +200,11 @@ class TranslationViewSet(viewsets.ModelViewSet):
         languages = [entry.language.id for entry in query]
         return JsonResponse({"languages": languages})
 
+    # Update helper function - finds the closest difference between a and b
+    # Returns: a list with integers and tuples
+    # If the value is an integer, remove the character with that original index from a
+    # If the value is a tuple (i, v), insert v to that original index from a
 
-    #Update helper function - finds the closest difference between a and b
-    #Returns: a list with integers and tuples
-    #If the value is an integer, remove the character with that original index from a
-    #If the value is a tuple (i, v), insert v to that original index from a 
     def closest(self, a, b):
         memo = {}
         self.closest_helper(a, b, 0, 0, memo)
@@ -212,13 +213,15 @@ class TranslationViewSet(viewsets.ModelViewSet):
     def closest_helper(self, a, b, a_index, b_index, memo):
         if a_index >= len(a) or b_index >= len(b):
             return 0
-        
+
         if not (a_index, b_index) in memo:
             if a[a_index] == b[b_index]:
-                memo[(a_index, b_index)] = 1 + self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
+                memo[(a_index, b_index)] = 1 + \
+                    self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
             else:
-                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1, b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
-        
+                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
+                                                                   b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
+
         return memo[(a_index, b_index)]
 
     def trace(self, a, b, a_index, b_index, memo):
@@ -247,7 +250,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         elif b_index >= len(b):
             for index in range(a_index, len(a)):
                 path.append(index)
-        
+
         return path
 
     def update(self, request, aid, lid):
@@ -275,7 +278,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         path = self.closest(a, b)
         #print("path:", path)
         path_index = 0
-        
+
         def traverse_path(i):
             nonlocal path_index
             nonlocal delta
@@ -289,12 +292,13 @@ class TranslationViewSet(viewsets.ModelViewSet):
                         break
                 else:
                     if path[path_index][0] == i:
-                        add.append(Story(translation=translation, word=path[path_index][1], index=i + delta))
+                        add.append(Story(translation=translation,
+                                   word=path[path_index][1], index=i + delta))
                         delta += 1
                         path_index += 1
                     else:
                         break
-        
+
         for i in range(len(query)):
             traverse_path(i)
             if (delta != 0):
@@ -309,11 +313,13 @@ class TranslationViewSet(viewsets.ModelViewSet):
 
         return HttpResponse(status=200)
 
+
 class AssociationViewSet(viewsets.ModelViewSet):
     """
     Association API
     """
     # permission_classes = [permissions.IsAuthenticated]
+
     def retrieve(self, request, aid, lid):
         translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
         if not translation:
@@ -337,14 +343,15 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     char_index += 1
                 word_index += 1
 
-                while word_index < len(query) and (query[word_index].timestamp is None or query[word_index].timestamp == obj.timestamp): # associate timestamps to those without
+                # associate timestamps to those without
+                while word_index < len(query) and (query[word_index].timestamp is None or query[word_index].timestamp == obj.timestamp):
                     char_index += len(query[word_index].word)
                     if translation.language.spaced:
                         char_index += 1
                     word_index += 1
 
-                group.append(char_index - 1) #inclusive (not exclusive)
-                if translation.language.spaced: # remove space at the end
+                group.append(char_index - 1)  # inclusive (not exclusive)
+                if translation.language.spaced:  # remove space at the end
                     group[1] -= 1
                 timestamp_to_word_groups[obj.timestamp].append(group)
             else:
@@ -353,22 +360,23 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     char_index += 1
                 word_index += 1
 
-        #print(timestamp_to_word_groups)
+        # print(timestamp_to_word_groups)
 
-        next_timestamp = {} # dictionary of timestamp to next timestamp
-        ts_query = Story.objects.all().filter(translation=translation).order_by('timestamp').exclude(timestamp__isnull=True)
+        next_timestamp = {}  # dictionary of timestamp to next timestamp
+        ts_query = Story.objects.all().filter(translation=translation).order_by(
+            'timestamp').exclude(timestamp__isnull=True)
         for i in range(len(ts_query) - 1):
             next_timestamp[ts_query[i].timestamp] = ts_query[i + 1].timestamp
         next_timestamp[ts_query[len(ts_query) - 1].timestamp] = "end"
 
         #print("next_ts", next_timestamp)
 
-
         start_index = len(query) - 1
         start_offset = 0
         for i in range(len(query)):
             if query[i].timestamp is not None:
-                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp: # interval crossing logic
+                # interval crossing logic
+                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp:
                     start_index = i
                     break
             start_offset += len(query[i].word)
@@ -385,8 +393,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         #print("start_index", start_index, "start_offset", start_offset, "end_index", end_index)
 
-
-        #Construct output dictionary from information
+        # Construct output dictionary from information
         output = {}
         associations = {}
         for timestamp_start in timestamp_to_word_groups:
@@ -394,8 +401,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
             if (timestamp_end == 'end' or timestamp_end > start) and timestamp_start < end:
                 entry = []
                 for interval in timestamp_to_word_groups[timestamp_start]:
-                    entry.append(str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
-                associations[str(timestamp_start) + "-" + str(timestamp_end)] = entry
+                    entry.append(
+                        str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
+                associations[str(timestamp_start) + "-" +
+                             str(timestamp_end)] = entry
 
         text = ""
         words = [query[i].word for i in range(start_index, end_index + 1)]
@@ -405,8 +414,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
             text = "".join(words)
 
         return JsonResponse({"text": text, "associations": associations}, json_dumps_params={'ensure_ascii': False})
-
-
 
     def update(self, request, aid, lid):
         translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
@@ -432,28 +439,31 @@ class AssociationViewSet(viewsets.ModelViewSet):
         sum = 0
         for word in words:
             sum += len(word)
-            if translation.language.spaced: #account for spaces
+            if translation.language.spaced:  # account for spaces
                 sum += 1
-            accumulated_lengths.append(sum - 1) #only want to count until right before start of new word
-        if translation.language.spaced: #remove last space at the end
+            # only want to count until right before start of new word
+            accumulated_lengths.append(sum - 1)
+        if translation.language.spaced:  # remove last space at the end
             accumulated_lengths[-1] -= 1
         #print("accumulated lengths", accumulated_lengths)
 
         changed = []
-        #Find corresponding word of index
+        # Find corresponding word of index
         association_dict = ast.literal_eval(request.data['associations'])
         for key in association_dict:
             key = int(key)
             if key >= 0:
-                insertion_point = bisect_left(accumulated_lengths, start_index + key)
-                if insertion_point < len(words): #insertion point may exceed words
-                    query[insertion_point].timestamp = association_dict[key] #make sure is int
+                insertion_point = bisect_left(
+                    accumulated_lengths, start_index + key)
+                # insertion point may exceed words
+                if insertion_point < len(words):
+                    # make sure is int
+                    query[insertion_point].timestamp = association_dict[key]
                     changed.append(query[insertion_point])
-        
+
         Story.objects.bulk_update(changed, ['timestamp'])
 
         query = Story.objects.all().filter(translation=translation).order_by('index')
         serializer = StorySerializer(query, many=True)
-        #print(serializer.data)
+        # print(serializer.data)
         return HttpResponse(status=200)
-        

@@ -1,29 +1,34 @@
 from django.db import models
+from datetime import datetime
 #from django.contrib.auth.models import User
+
 
 class Audio(models.Model):
     title = models.CharField(default="Untitled Audio", max_length=255)
     url = models.CharField(max_length=255)
     description = models.CharField(default="Empty", max_length=2048)
-    id = models.CharField(primary_key = True,max_length=255)
+    id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_at = models.DateTimeField(default=datetime.now())
     uploaded_by = models.CharField(max_length=255)
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.CharField(max_length=255)
-    shared_with = models.CharField(default="Not shared with anyone",max_length=2048)
+    shared_with = models.JSONField(
+        default="Not shared with anyone", max_length=2048)  # need special encoder
     public = models.BooleanField(default=False)
-    
+
     class Meta:
         verbose_name = "audio file"
         verbose_name_plural = "audio files"
 
 
 class Interpretation(models.Model):
-    id = models.CharField(primary_key = True,max_length=255)
+    id = models.CharField(primary_key=True, max_length=255)
     public = models.BooleanField(default=False)
-    shared_editors = models.CharField(default="Not shared with any editors", max_length=2048)
-    shared_viewers = models.CharField(default="Not shared with any editors", max_length=2048)
+    shared_with = models.JSONField(
+        default="Not shared with anyone", max_length=2048)  # need special encoder
+    shared_with = models.JSONField(
+        default="Not shared with anyone", max_length=2048)  # need special encoder
     audio_id = models.CharField(max_length=255)
     title = models.CharField(max_length=255)
     latest_text = models.CharField(max_length=255)
@@ -42,11 +47,13 @@ class Interpretation(models.Model):
 
 
 class Interpretation_History(models.Model):
-    id = models.CharField(primary_key = True,max_length=255)
+    id = models.CharField(primary_key=True, max_length=255)
     interpretation_id = models.CharField(max_length=255)
     public = models.BooleanField(default=False)
-    shared_editors = models.CharField(default="Not shared with any editors", max_length=2048)
-    shared_viewers = models.CharField(default="Not shared with any editors", max_length=2048)
+    shared_editors = models.CharField(
+        default="Not shared with any editors", max_length=2048)  # not sure what to put here
+    shared_viewers = models.CharField(
+        default="Not shared with any editors", max_length=2048)  # not sure what to put here
     audio_id = models.CharField(max_length=255)
     title = models.CharField(max_length=255)
     latest_text = models.CharField(max_length=255)
