@@ -3,13 +3,38 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.http.response import HttpResponse
 from storybooks.models import *
+from storybooks.s3 import *
 from storybooks.serializers import *
-from rest_framework import viewsets, permissions, generics, filters, status
+from rest_framework import views, viewsets, permissions, generics, filters, status
+from rest_framework.response import Response
 from bisect import bisect_left
 import ast
+import secrets
 
-def index(request):
-    return JsonResponse({ 'message': 'Xygil Backend', 'success': True })
+
+# def index(request):
+#     return JsonResponse({ 'message': 'Xygil Backend', 'success': True })
+# this doesn't work
+
+
+# If somebody visits /s3/ they will receive an upload URL and a new hashed audio ID that will apply to whatever audio they upload to that URL.
+# If somebody posts an audio_ID to /s3/ they will receive a URL to download the audio file with that ID.
+class UploadFileViewSet(viewsets.ViewSet):
+    def presignedposturl(self, request, pk=None):
+        ext = request.data['ext']
+        audio_ID = secrets.token_urlsafe(8) + ext
+        url = S3().get_presigned_url(audio_ID)
+
+        return Response({'url': url, 'audio_ID': audio_ID})
+
+
+class DownloadFileViewSet(viewsets.ViewSet):
+    def presignedgeturl(self, request, pk=None):
+        audio_ID = request.data['audio_ID']
+        url = S3().get_file(audio_ID)
+
+        return Response({'url': url, 'audio_ID': audio_ID})
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -19,14 +44,16 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
+#AudioViewSet class is accessed at /api/audio
 class AudioViewSet(viewsets.ModelViewSet):
     """
     Audio API
     """
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny] # this overrides project-level permission in settings.py
 
+# presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
     def create(self, request):
         data = request.data
         obj = Audio(url=data['url'], title=data['title'])
@@ -34,11 +61,13 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse({"audio": serializer.data});
 
+# if the URL is simply visited by a web browser, it returns a list of the non-archived audio files from the database.
     def list(self, request):
         query = self.queryset.filter(archived=False)
         serializer = self.serializer_class(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
+# presumably, if somebody visits /api/audio/*an-integer-value*, then the audio table will be searched for an ID of that value and return the single desired file if it exists and has not been archived.
     def retrieve(self, request, pk):
         query = self.queryset.filter(id=pk)
         if not query:
@@ -107,8 +136,8 @@ class TranslationViewSet(viewsets.ModelViewSet):
         language = query.get()
 
         #Check unique
-        if self.queryset.filter(audio_id=aid, language_id=lid):
-            return HttpResponse(status=400)
+        # if self.queryset.filter(audio_id=aid, language_id=lid):
+        #     return HttpResponse(status=400)
 
         data = request.data
         translation = Translation(title=data['title'], audio=audio, language=language)

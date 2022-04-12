@@ -2,8 +2,9 @@
 
 As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysnolimit08 has the ability to run migrations on the database it communicates with.
 
-## Setup updated 3/7/2022
-(Note: I removed the mysqlclient package from Pipfile because it did not seem necessary and was causing problems for setup on Macs.  Please let me know if this causes any problems down the line.)
+## Update Notes
+- 4/7/2022: Added AWS blurb
+- 3/7/2022: Removed the mysqlclient package from Pipfile because it did not seem necessary and was causing problems for setup on Macs.  Please let me know if this causes any problems down the line.
 
 ### Prerequisites
 
@@ -59,12 +60,17 @@ From now on, if you install a new package for the project, please do so using th
 
 **Configuring Environmental Variables**
 
-Rename ".env-example" to ".env".  Paste the following code into it.  Create your own randomized value for SECRET_KEY.  You can use python secrets to help you do that.  Setting debug to True in your local environment will be helpful for debugging your code.  You probably do not need to use the DATABASE_URL environmental variable, since our settings.py file includes a default database URL, but you are welcome to if you want to host your database in a special place.
+Rename ".env-example" to ".env".  Paste the following code into it.  Create your own randomized value for SECRET_KEY.  You can use python secrets to help you do that.  Setting debug to True in your local environment will be helpful for debugging your code.  You probably do not need to use the DATABASE_URL environmental variable, since our settings.py file includes a default database URL, but you are welcome to if you want to host your database in a special place. Fill in the `AWS` related variables with values from `dito_env_variables.txt` in the project Google Drive.
 
 ```
 SECRET_KEY='SECRET_KEY'
 DEBUG_VALUE='True'
 # DATABASE_URL=mysql://xygil:<password>@localhost:3306/xygil
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_STORAGE_BUCKET_NAME=...
+AWS_REGION=...
+AWS_S3_ENDPOINT_URL=...
 ```
 Now, restart your terminal.
 
