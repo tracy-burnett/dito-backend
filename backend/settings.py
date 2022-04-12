@@ -169,10 +169,12 @@ django_heroku.settings(locals())
 
 # CORS setup
 
-CORS_ALLOWED_ORIGINS = [
-    "https://xygil.net",
-    "http://localhost:8080"
-]
+CORS_ALLOW_ALL_ORIGINS: true
+
+# CORS_ALLOWED_ORIGINS = [
+#     "https://xygil.net",
+#     "http://localhost:8080"
+# ]
 
 
 # Firebase setup
