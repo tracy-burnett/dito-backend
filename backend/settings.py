@@ -169,7 +169,7 @@ django_heroku.settings(locals())
 
 # CORS setup
 
-CORS_ALLOW_ALL_ORIGINS: true
+CORS_ALLOW_ALL_ORIGINS: True
 
 # CORS_ALLOWED_ORIGINS = [
 #     "https://xygil.net",
