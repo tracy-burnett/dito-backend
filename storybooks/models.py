@@ -9,7 +9,7 @@ class Audio(models.Model):
     description = models.CharField(default="Empty", max_length=2048)
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
-    uploaded_at = models.DateTimeField(default=datetime.now())
+    uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.CharField(max_length=255)
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.CharField(max_length=255)
@@ -37,7 +37,7 @@ class Interpretation(models.Model):
     spaced_by = models.CharField(max_length=255)
     created_by = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_edited_at = models.DateTimeField(null=True, auto_now=True)
+    last_edited_at = models.DateTimeField(auto_now=True)
     last_edited_by = models.CharField(max_length=255)
     version = models.IntegerField(default=0)
 
@@ -62,7 +62,7 @@ class Interpretation_History(models.Model):
     spaced_by = models.CharField(max_length=255)
     created_by = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_edited_at = models.DateTimeField(null=True, auto_now=True)
+    last_edited_at = models.DateTimeField(auto_now=True)
     last_edited_by = models.CharField(max_length=255)
     version = models.IntegerField(default=0)
 
