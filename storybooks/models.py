@@ -49,23 +49,4 @@ class Story(models.Model):
         verbose_name = "story"
         verbose_name_plural = "stories"
 
-class Interpretations(models.Model):
-    id              = models.IntegerField(primary_key=True)
-    public          = models.BooleanField(default=False)
-    shared_editors  = models.ManyToManyField(User)
-    shared_viewers  = models.ManyToManyField(User)
-    audio_ID        = models.ForeignKey(Audio)
-    title           = models.CharField(max_length=50)
-    latest_text     = models.TextField()
-    archived        = models.BooleanField(default=False)
-    language_name   = models.ForeignKey(Language)
-    spaced_by       = models.CharField(default='', max_length=5, null=True)
-    created_by      = models.ForeignKey(User)
-    created_at      = models.DateTimeField(default=None, auto_now_add=True)
-    last_edited_by  = models.ForeignKey(User)
-    last_edited_at  = models.DateTimeField(default=None, auto_now=True)
-    version         = models.IntegerField(default=1)
 
-    class Meta:
-        verbose_name = "interpretation"
-        verbose_name_plural = "interpretations"
