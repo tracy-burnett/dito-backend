@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http.response import HttpResponse
+from firebase_admin import auth
 from storybooks.models import *
 from storybooks.serializers import *
 from rest_framework import viewsets, permissions, generics, filters, status
@@ -38,17 +39,35 @@ class AudioViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         data = request.data
+
+        try:
+          decoded_token = auth.verify_id_token(data["id_token"])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
+<<<<<<< HEAD
                     shared_with=data['shared_with'], uploaded_by=data['uploaded_by'], uploaded_at=datetime.datetime.now(), last_updated_by=data['uploaded_by'], public=data['public'])
+=======
+                    shared_with=data['shared_with'], uploaded_by=uid, last_updated_by=uid, public=data['public'])
+>>>>>>> 76dfc2ab05a6857fa1fc20aae2de68334f4741da
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse({"audio": serializer.data})
 
     # Unsafe
 
-    def partial_update_owner(self, request,aid):
-        uid=5 #hardcoded uid
+    def partial_update_owner(self, request, aid):
+        data = request.data
+
+        try:
+          decoded_token = auth.verify_id_token(data["id_token"])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        
         query = self.queryset.filter(Q(uploaded_by=uid)& Q(id=aid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -65,7 +84,14 @@ class AudioViewSet(viewsets.ModelViewSet):
         return JsonResponse(serializer.data)
 
     def partial_update_editor(self, request,aid):  
-        uid=5 #hardcoded uid
+        data = request.data
+
+        try:
+          decoded_token = auth.verify_id_token(data["id_token"])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
         query = self.queryset.filter(Q(archived=False) & Q(id=aid) & Q(
             shared_with=uid))
         if not query:
@@ -95,7 +121,12 @@ class AudioViewSet(viewsets.ModelViewSet):
         return JsonResponse({"audio":sanitizedList})
 
     def retrieve_private_user(self, pk):
-        uid = 5 #hardcoded
+        try:
+          decoded_token = auth.verify_id_token(data["id_token"])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+          
         query = self.queryset.filter(Q(uploaded_by=uid) | (Q(archived=False) & Q(shared_with=uid)))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
