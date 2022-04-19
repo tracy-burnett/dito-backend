@@ -1,3 +1,5 @@
+from dataclasses import field
+from email.mime import audio
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
 from django.contrib.auth.models import User
@@ -9,6 +11,7 @@ from rest_framework import viewsets, permissions, generics, filters, status
 from bisect import bisect_left
 import ast
 import datetime
+import copy
 
 
 def index(request):
@@ -37,7 +40,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
-                    shared_with=data['shared_with'], uploaded_by=data['uploaded_by'], last_updated_by=data['uploaded_by'], public=data['public'])
+                    shared_with=data['shared_with'], uploaded_by=data['uploaded_by'], uploaded_at=datetime.datetime.now(), last_updated_by=data['uploaded_by'], public=data['public'])
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse({"audio": serializer.data})
@@ -82,7 +85,14 @@ class AudioViewSet(viewsets.ModelViewSet):
     def retrieve_public(self, pk):
         query = self.queryset.filter(Q(archived=False) & Q(public=True))
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse({"audio": serializer.data}) #need to iterate through objects to get the fields we want
+        fieldsToKeep = {'title','description','id','url'}
+        sanitizedList = []
+        for audioModel in serializer.data:
+            sanitizedDict = {}
+            for key in fieldsToKeep:
+                sanitizedDict[key] = audioModel[key]
+            sanitizedList.append(sanitizedDict)
+        return JsonResponse({"audio":sanitizedList})
 
     def retrieve_private_user(self, pk):
         uid = 5 #hardcoded
@@ -98,7 +108,14 @@ class AudioViewSet(viewsets.ModelViewSet):
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse({"audio":serializer.data})
+        fieldsToKeep = {'title','description','id','url'}
+        sanitizedList = []
+        for audioModel in serializer.data:
+            sanitizedDict = {}
+            for key in fieldsToKeep:
+                sanitizedDict[key] = audioModel[key]
+            sanitizedList.append(sanitizedDict)
+        return JsonResponse({"audio":sanitizedList})
 
     def destroy(self, request, pk):
         query = self.queryset.filter(id=pk)

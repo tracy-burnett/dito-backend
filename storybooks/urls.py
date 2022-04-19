@@ -8,7 +8,6 @@ router.register(r'user', UserViewSet)
 #router.register(r'audio', AudioViewSet)
 #router.register(r'storybooks/{pk}/stories', StoryViewSet)
 #router.register(r'audio/{pk}/translations', TranslationViewSet)
-router.register(r'languages', LanguageViewSet)
 
 audio_list = AudioViewSet.as_view({
     'post':'create',
@@ -51,11 +50,11 @@ urlpatterns = [
 ]
 
 urlpatterns.extend(format_suffix_patterns([
-    path('storybooks/audio/', audio_list, name='audio_list'),
-    path('storybooks/audio/<int:aid>/owner/', audio_update_owner, name='audio_update_owner'),
-    path('storybooks/audio/<int:aid>/editor/', audio_update_editor, name='audio_update_editor'),
-    path('storybooks/audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
-    path('storybooks/audio/user/<int:uid>', audio_retrieve_public_user, name='audio_retrieve_public_user'),
+    path('audio/', audio_list, name='audio_list'),
+    path('audio/<int:aid>/owner/', audio_update_owner, name='audio_update_owner'),
+    path('audio/<int:aid>/editor/', audio_update_editor, name='audio_update_editor'),
+    path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
+    path('audio/user/<int:uid>', audio_retrieve_public_user, name='audio_retrieve_public_user'),
 ]))
 
 
