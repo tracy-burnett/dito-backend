@@ -52,7 +52,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
     # Unsafe
 
-    def partial_update_owner(self, request,aid):
+    def partial_update_owner(self, request, aid):
         data = request.data
 
         try:
@@ -107,7 +107,12 @@ class AudioViewSet(viewsets.ModelViewSet):
         return JsonResponse({"audio": serializer.data}) #need to iterate through objects to get the fields we want
 
     def retrieve_private_user(self, pk):
-        uid = 5 #hardcoded
+        try:
+          decoded_token = auth.verify_id_token(data["id_token"])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+          
         query = self.queryset.filter(Q(uploaded_by=uid) | (Q(archived=False) & Q(shared_with=uid)))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
