@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime
-from django.contrib.auth.models import User
+#from django.contrib.auth.models import User
+import datetime
 
 
 class Audio(models.Model):
@@ -9,12 +10,11 @@ class Audio(models.Model):
     description = models.CharField(default="Empty", max_length=2048)
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
-    uploaded_at = models.DateTimeField(default=datetime.now())
+    uploaded_at = models.DateTimeField(auto_now=True)
     uploaded_by = models.CharField(max_length=255)
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.CharField(max_length=255)
-    shared_with = models.JSONField(
-        default="Not shared with anyone", max_length=2048)  # need special encoder
+    shared_with = models.CharField(default="Not shared with anyone", max_length=2048)
     public = models.BooleanField(default=False)
 
     class Meta:
