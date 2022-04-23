@@ -14,12 +14,12 @@ class AudioSerializer(serializers.ModelSerializer):
 
 class InterpretationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Audio
+        model = Interpretation
         fields = ['id','public','shared_editors','shared_viewers','audio_id','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
 
 class InterpretationHistorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Audio
+        model = Interpretation_History
         fields = ['id','interpretation_id','public','shared_editors','shared_viewers','audio_id','title','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
 
 class LanguageSerializer(serializers.ModelSerializer):
