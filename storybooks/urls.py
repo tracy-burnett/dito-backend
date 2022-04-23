@@ -41,7 +41,7 @@ urlpatterns = [
 urlpatterns.extend(format_suffix_patterns([
     path('audio/<int:aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
     path('audio/<int:aid>/translations/', translations_list, name='translations-list'),
-    path('audio/<int:aid>/translations/<int:lid>/associations', associations_detail, name='associations-detail'),
+    path('audio/<int:aid>/translations/<int:lid>/associations/', associations_detail, name='associations-detail'),
     path('s3/presignedposturl', presignedposturl_detail, name='presignedposturl-detail'),
     path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail')
 ]))
