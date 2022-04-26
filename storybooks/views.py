@@ -384,6 +384,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
             if (timestamp_end == 'end' or timestamp_end > start) and timestamp_start < end:
                 entry = []
                 for interval in timestamp_to_word_groups[timestamp_start]:
+                    # entry.append({'bar':"foo"})
+                    # entry.append({'timeStart':str(interval[0] - start_offset),'timeEnd':str(interval[1] - start_offset),'characterStart':str(timestamp_start),'characterEnd':str(timestamp_end)})
+                    # timeStart.append(str(interval[0] - start_offset))
+                    # timeEnd.append(str(interval[1] - start_offset))
+                    # characterStart.append(str(timestamp_start))
+                    # characterEnd.append(str(timestamp_end))
                     entry.append(str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
                 associations[str(timestamp_start) + "-" + str(timestamp_end)] = entry
 
@@ -431,11 +437,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         changed = []
         #Find corresponding word of index
-        association_dict = ast.literal_eval(request.data['associations'])
+        association_dict = request.data['associations']
+        association_dict = {int(k):v for k,v in association_dict.items()} # make sure the keys in the dict are integers
         for key in association_dict:
-            key = int(key)
             if key >= 0:
                 insertion_point = bisect_left(accumulated_lengths, start_index + key)
+                # print("insertion point", insertion_point)
+                # print(query[insertion_point].timestamp)
+                # print(len(words))
                 if insertion_point < len(words): #insertion point may exceed words
                     query[insertion_point].timestamp = association_dict[key] #make sure is int
                     changed.append(query[insertion_point])
