@@ -255,14 +255,14 @@ May not be safe to the point that code needs to be deprecated and replaced with 
             "url": "aws.amazon.com/cloudfront/136523",
             "title": "Audio1",
             "id": 1,
-            "description": "War and Peace"
+            "description": "War and Peace",
             "public": true
         },
         {
             "url": "aws.amazon.com/cloudfront/12395323",
             "title": "Audio2",
             "id": 2,
-            "description": "Gettysberg Address"
+            "description": "Gettysberg Address",
             "public": false
         },
     ]
@@ -273,9 +273,9 @@ May not be safe to the point that code needs to be deprecated and replaced with 
 Create, read, update, and delete audio.
 
 ## Create Audio
-Working on 3/7/2022.  Authentication not tested.
+Working on 4/26/2022.  
 
-**URL** : `/audio/`
+**URL** : `/storybooks/audio/`
 
 **Method** : `POST`
 
@@ -285,58 +285,26 @@ Working on 3/7/2022.  Authentication not tested.
 
 ```json
 {
-    "url": "aws.amazon.com/cloudfront/123456789",
-    "title": "Audio1",
-    "description": "Thirty minutes of people coughing",
+    "id": "1",
+    "url": "aws.amazon.com/cloudfront/1249513",
+    "title": "A random audio file",
+    "description": "a description",
+    "archived": false,
+    "uploaded_at": "2022-04-26T06:29:06.159347Z",
+    "uploaded_by": 1,
+    "last_updated_at": "2022-04-26T06:29:06.159356Z",
+    "last_updated_by": 1,
+    "shared_with": [
+        1,
+        2
+    ],
+    "public": false,
+    "id_token": "randomToken"
 }
 ```
-## Read Audio
-Returns the link, name, description of an audio if public.  Working on 3/7/2022.  Authentication not tested.\
-**URL** : `/audio/:id`
-
-**Method** : `GET`
-
-**Auth required** : No
-
-**Content example**
-
-```json
-{
-    "url": "aws.amazon.com/cloudfront/123456789",
-    "title": "Audio1",
-    "description": "Thirty minutes of people coughing"
-}
-```
-
-## Update Audio
-As of 3/7/2022, it works.
-
-**URL** : `/audio/:id/`
-
-**Method** : `PATCH`
-
-**Auth required** : Yes
-
-**Data example**
-
-```json
-{
-    "description": "Twenty-seven minutes of people coughing",
-}
-```
-
-## Delete Audio
-Working on 3/7/2022.  Authentication not tested.
-
-**URL** : `/audio/:id`
-
-**Method** : `DELETE`
-
-**Auth required** : Yes
-
-## Index Audios
-Returns a list of all public audios.  3/7/2022 doesn't seem to work, probably because there is no "public" field in audio table.\
-**URL** : `/user/:id/audio`
+## Read Public Audio
+Returns a list of public, non- archived audio files.\
+**URL** : `/storybooks/audio/`
 
 **Method** : `GET`
 
@@ -348,14 +316,154 @@ Returns a list of all public audios.  3/7/2022 doesn't seem to work, probably be
 {
     "audio": [
         {
-            "url": "aws.amazon.com/cloudfront/2151232",
-            "title": "Audio1",
-            "id": 1,
-            "description": "War and Peace"
+            "title": "Audio 3",
+            "id": "3",
+            "description": "A description",
+            "url": "aws.amazon.com/cloudfront/12395324"
+        },
+        {
+            "title": "Audio 2",
+            "id": "2",
+            "description": "A description",
+            "url": "aws.amazon.com/cloudfront/12395325"
+        },
+        {
+            "title": "Audio",
+            "id": "5",
+            "description": "A description",
+            "url": "aws.amazon.com/cloudfront/12395326"
         }
     ]
 }
 ```
+
+## Read Public Audio for a User
+Returns a list of public, non- archived audio files for a specific user.\
+**URL** : `/storybooks/audio/user/<int:uid>`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "audio": [
+        {
+            "title": "Audio 1",
+            "id": "3",
+            "description": "A description",
+            "url": "aws.amazon.com/cloudfront/123953124"
+        },
+        {
+            "title": "Audio",
+            "id": "5",
+            "description": "A description",
+            "url": "aws.amazon.com/cloudfront/12313"
+        }
+    ]
+}
+```
+
+## Read Private Audio for a User
+Returns a list of audio files that a user created, or (which have been shared with them and  not archived).\
+**URL** : `/storybooks/audio/user/`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "audio": [
+        {
+            "id": "1",
+            "url": "google.com",
+            "title": "A random audio file",
+            "description": "a description",
+            "archived": false,
+            "uploaded_at": "2022-04-26T06:29:06.159347Z",
+            "uploaded_by": 1,
+            "last_updated_at": "2022-04-26T06:29:06.159356Z",
+            "last_updated_by": 1,
+            "shared_with": [
+                1,
+                2
+            ],
+            "public": false
+        },
+        {
+            "id": "1",
+            "url": "google.com",
+            "title": "A random audio file",
+            "description": "a description",
+            "archived": false,
+            "uploaded_at": "2022-04-26T06:29:06.159347Z",
+            "uploaded_by": 1,
+            "last_updated_at": "2022-04-26T06:29:06.159356Z",
+            "last_updated_by": 1,
+            "shared_with": [
+                1,
+                2
+            ],
+            "public": false
+        }
+    ]
+}
+```
+
+## Update Audio as an editor
+A logged-in user can update some fields of audio entries that have been shared with them and not archived. Working as of 4/26/2022.
+
+**URL** : `/storybooks/audio/<int:audio_id>/editor`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "title": "A new title",
+    "description": "Twenty-seven minutes of people coughing",
+}
+```
+
+## Update Audio as an owner
+A logged-in user can update most fields of audio entries they created. Working as of 4/26/2022.
+
+**URL** : `/storybooks/audio/<int:audio_id>/owner`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "title": "A new title owner",
+    "description": "Making the audio public since I'm an owner",
+    "public": true
+}
+```
+
+
+
+## Delete Audio
+Working on 3/7/2022.  Authentication not tested.
+
+**URL** : `/audio/:id`
+
+**Method** : `DELETE`
+
+**Auth required** : Yes
+
+
 
 # Translations
 Create, read, update, and delete translations associated with an audio.
