@@ -372,7 +372,7 @@ Returns a list of audio files that a user created, or (which have been shared wi
 
 **Method** : `GET`
 
-**Auth required** : No
+**Auth required** : Yes
 
 **Content example**
 
