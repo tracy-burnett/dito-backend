@@ -696,8 +696,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
         serializer = StorySerializer(query, many=True)
         # print(serializer.data)
         return HttpResponse(status=200)
-<<<<<<< HEAD
-=======
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
@@ -735,4 +733,3 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(user_obj)
         return JsonResponse(serializer.data)
->>>>>>> origin/harsh_master

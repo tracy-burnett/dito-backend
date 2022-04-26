@@ -4,13 +4,8 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from storybooks.views import *
 
 router = routers.SimpleRouter()
-<<<<<<< HEAD
-router.register(r'user', UserViewSet)
-#router.register(r'audio', AudioViewSet)
-=======
 router.register(r'user', ExtendedUserViewSet)
 router.register(r'audio', AudioViewSet)
->>>>>>> origin/harsh_master
 #router.register(r'storybooks/{pk}/stories', StoryViewSet)
 #router.register(r'audio/{pk}/translations', TranslationViewSet)
 router.register(r'languages', LanguageViewSet)
