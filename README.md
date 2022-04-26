@@ -381,7 +381,7 @@ Returns a list of audio files that a user created, or (which have been shared wi
     "audio": [
         {
             "id": "1",
-            "url": "google.com",
+            "url": "aws.amazon.com/cloudfront/12313",
             "title": "A random audio file",
             "description": "a description",
             "archived": false,
@@ -397,7 +397,7 @@ Returns a list of audio files that a user created, or (which have been shared wi
         },
         {
             "id": "1",
-            "url": "google.com",
+            "url": "aws.amazon.com/cloudfront/12313",
             "title": "A random audio file",
             "description": "a description",
             "archived": false,
