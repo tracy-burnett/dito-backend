@@ -10,6 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['url', 'username', 'email', 'groups']
 
+class ExtendedUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Extended_User
+        fields = ['user_ID', 'display_name', 'description', 'anonymous', 'created_at']
+
 class AudioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Audio

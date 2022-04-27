@@ -4,7 +4,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from storybooks.views import *
 
 router = routers.SimpleRouter()
-router.register(r'user', ExtendedUserViewSet, basename="user")
+# router.register(r'user', ExtendedUserViewSet, basename="user")
 router.register(r'audio', AudioViewSet)
 #router.register(r'storybooks/{pk}/stories', StoryViewSet)
 #router.register(r'audio/{pk}/translations', TranslationViewSet)
@@ -111,6 +111,6 @@ urlpatterns.extend(format_suffix_patterns([
     path('interpretations/<int:iid>/audio/<int:aid>/owner', interpretations_owner, name='interpretations_owner'),
     path('interpretations/', interpretations, name='interpretations'),
     path('interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user'),
-    path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
+    # path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
     path('user/', extended_user_details, name='extended_user_details'),
 ]))

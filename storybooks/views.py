@@ -728,17 +728,35 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
+    
+    """
+    Extended_User API
+    """
+    queryset = Extended_User.objects.all()
+    serializer_class = ExtendedUserSerializer
+    # permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request):
         # permission_classes = [permissions.IsAuthenticated]
         data = request.data
-        obj = Extended_User(user_ID=data['user_id'],
+        # print(data['id_token'])
+
+        try:
+            decoded_token = auth.verify_id_token(data['id_token'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        
+        obj = Extended_User(user_ID=uid,
                             description=data['description'],
                             display_name=data['display_name'],
                             anonymous=data['anonymous'])
+        
         obj.save()
         serializer = self.serializer_class(obj)
-        return JsonResponse({"user": serializer.data})
+        return Response({'user created'})
 
     def update(self, request):
         data = request.data
