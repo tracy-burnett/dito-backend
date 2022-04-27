@@ -41,7 +41,7 @@ Windows
 ```
 $ git clone https://github.com/skysnolimit08/dialecttranslationtool-backend backend
 $ cd backend
-$ pip install pipenv
+$ python -m pip install pipenv
 $ pipenv install
 ```
 
