@@ -96,28 +96,21 @@ urlpatterns = [
 ]
 
 urlpatterns.extend(format_suffix_patterns([
-    path('storybooks/audio/', audio_list, name='audio_list'),
-    path('storybooks/audio/<int:aid>/owner/', audio_update_owner, name='audio_update_owner'),
-    path('storybooks/audio/<int:aid>/editor/', audio_update_editor, name='audio_update_editor'),
-    path('storybooks/audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
-    path('storybooks/audio/user/<int:uid>', audio_retrieve_public_user, name='audio_retrieve_public_user'),
+    path('audio/', audio_list, name='audio_list'),
+    path('audio/<int:aid>/owner/', audio_update_owner, name='audio_update_owner'),
+    path('audio/<int:aid>/editor/', audio_update_editor, name='audio_update_editor'),
+    path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
+    path('audio/user/<int:uid>', audio_retrieve_public_user, name='audio_retrieve_public_user'),
     path('audio/<int:aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
     path('audio/<int:aid>/translations/', translations_list, name='translations-list'),
     path('audio/<int:aid>/translations/<int:lid>/associations/', associations_detail, name='associations-detail'),
     path('s3/presignedposturl', presignedposturl_detail, name='presignedposturl-detail'),
-    path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail')
-]))
-
-urlpatterns.extend(format_suffix_patterns([
-    path('storybooks/interpretations/audio/<int:aid>/', interpretations_detail, name='interpretations_detail'),
-    path('storybooks/interpretations/<int:iid>/audio/<int:aid>/editor', interpretations_editor, name='interpretations_editor'),    
-    path('storybooks/interpretations/<int:iid>/audio/<int:aid>/owner', interpretations_owner, name='interpretations_owner'),
-    path('storybooks/interpretations/', interpretations, name='interpretations'),
-    path('storybooks/interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user')
-]))
-
-urlpatterns.extend(format_suffix_patterns([
+    path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail'),
+    path('interpretations/audio/<int:aid>/', interpretations_detail, name='interpretations_detail'),
+    path('interpretations/<int:iid>/audio/<int:aid>/editor', interpretations_editor, name='interpretations_editor'),    
+    path('interpretations/<int:iid>/audio/<int:aid>/owner', interpretations_owner, name='interpretations_owner'),
+    path('interpretations/', interpretations, name='interpretations'),
+    path('interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user'),
     path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
     path('user/', extended_user_details, name='extended_user_details'),
 ]))
-

@@ -10,6 +10,7 @@ from . import models
 
 
 admin.site.register(models.Audio)
+admin.site.register(models.Content)
 admin.site.register(models.Interpretation)
 admin.site.register(models.Interpretation_History)
 admin.site.register(models.Language)
