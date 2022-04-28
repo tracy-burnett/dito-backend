@@ -745,25 +745,36 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(data['id_token'])
             uid = decoded_token['uid']
         except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-        
-        obj = Extended_User(user_ID=uid,
+        # check if object already exists - create should only work if there isn't already an extended_user for uid
+        try:
+            user = Extended_User.objects.get(user_ID=uid)
+            if user:
+                return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            obj = Extended_User(user_ID=uid,
                             description=data['description'],
                             display_name=data['display_name'],
                             anonymous=data['anonymous'])
-        
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return Response({'user created'})
+
+            obj.save()
+            serializer = self.serializer_class(obj)
+            return Response({'user created'})
 
     def update(self, request):
         data = request.data
-        # permission_classes = [permissions.IsAuthenticated]
-        user = Extended_User.objects.get(user_ID=data['user_id'])
-        if not user:
-            return HttpResponse(status=404)
+        
+        try:
+            decoded_token = auth.verify_id_token(data['id_token'])
+            uid = decoded_token['uid']
+            user = Extended_User.objects.get(user_ID=uid)
+            assert(user)
+        except:
+            print("bad")
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        
         user.description = data['description']
         user.display_name = data['display_name']
         user.anonymous = data['anonymous']
@@ -771,12 +782,18 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(user)
         return JsonResponse({"user": serializer.data})
 
-    def retrieve(self, request, user_id):
-        # permission_classes = [permissions.IsAuthenticated]
-        user_obj = Extended_User.objects.get(user_ID=user_id)
-        if not user_obj:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        if user_obj.archived:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(user_obj)
+    def retrieve(self, request):
+        data = request.data
+        
+        try:
+            decoded_token = auth.verify_id_token(data['id_token'])
+            uid = decoded_token['uid']
+            user = Extended_User.objects.get(user_ID=uid)
+            assert(user)
+        except:
+            return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if user.archived:
+        #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(user)
         return JsonResponse(serializer.data)
