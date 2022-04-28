@@ -5,7 +5,7 @@ from storybooks.views import *
 
 router = routers.SimpleRouter()
 # router.register(r'user', ExtendedUserViewSet, basename="user")
-router.register(r'audio', AudioViewSet)
+# router.register(r'audio', AudioViewSet)
 #router.register(r'storybooks/{pk}/stories', StoryViewSet)
 #router.register(r'audio/{pk}/translations', TranslationViewSet)
 router.register(r'languages', LanguageViewSet)

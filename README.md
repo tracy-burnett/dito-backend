@@ -18,7 +18,7 @@ You can check if you have these by typing
 ```
 $ git --version
 $ python --version
-$ pip --version
+$ python -m pip --version
 ```
 
 (Mac)
@@ -41,7 +41,7 @@ Windows
 ```
 $ git clone https://github.com/skysnolimit08/dialecttranslationtool-backend backend
 $ cd backend
-$ pip install pipenv
+$ python -m pip install pipenv
 $ pipenv install
 ```
 
