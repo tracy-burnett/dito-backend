@@ -255,14 +255,15 @@ class AudioViewSet(viewsets.ModelViewSet):
           decoded_token = auth.verify_id_token(data["id_token"])
           uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+          return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
-                    shared_with=data['shared_with'], uploaded_by=uid, uploaded_at=datetime.datetime.now(), last_updated_by=uid, public=data['public'])
+                 uploaded_by=Extended_User.objects.get(user_ID=uid), uploaded_at=datetime.datetime.now(), last_updated_by=Extended_User.objects.get(user_ID=uid))
         obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse({"audio": serializer.data})
+        # serializer = self.serializer_class(obj)
+        # return JsonResponse('{"audio": serializer.data}')
+        return Response('audio created')
 
     # Unsafe
 
@@ -327,18 +328,19 @@ class AudioViewSet(viewsets.ModelViewSet):
             sanitizedList.append(sanitizedDict)
         return JsonResponse({"audio":sanitizedList})
 
-    def retrieve_private_user(self, request, pk):
-        data = request.data
+    def retrieve_private_user(self, request):
+        data = request.headers # FOR DEMONSTRATION
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(data['Authorization']) # FOR DEMONSTRATION
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        query = self.queryset.filter(Q(uploaded_by=uid) | (Q(archived=False) & Q(shared_with=uid)))
+        author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
+        query = self.queryset.filter(Q(uploaded_by=author) | (Q(archived=False) & Q(shared_with=author))) # FOR DEMONSTRATION
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse({"audio":serializer.data})
+        return JsonResponse({"audio files":serializer.data})
     
     def retrieve_public_user(self, pk,uid):
         query = self.queryset.filter(
@@ -738,11 +740,12 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         # permission_classes = [permissions.IsAuthenticated]
-        data = request.data
+        authdata=request.headers # FOR DEMONSTRATION
+        data = request.data # FOR DEMONSTRATION
         # print(data['id_token'])
 
         try:
-            decoded_token = auth.verify_id_token(data['id_token'])
+            decoded_token = auth.verify_id_token(authdata['Authorization']) # FOR DEMONSTRATION
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
