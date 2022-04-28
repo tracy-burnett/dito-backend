@@ -652,3 +652,189 @@ Given a portion of the text, associates particular indexes with timestamps(ms). 
     }
 }
 ```
+
+
+# Interpretations
+Create, retrieve, update, and delete interpretations associated with an audio.
+
+## Create
+Creates interpretation object. Have not completed after HTTP request endpoints as of 4/27/22.
+
+**URL** : `/storybooks/interpretations/audio/<int:audio_id>/`
+
+**Method** : `POST`
+
+**Auth required** : Yes
+
+**Data example**
+
+```json
+{
+    "id": "5", 
+    "public": true,
+    "shared_editors": [1, 2, 3],
+    "shared_viewers": [1, 2, 3],
+    "audio_ID": "5",
+    "title": "test title",
+    "latest_text": "Four score and seven years ago, our fathers brought forth on this continent...",
+    "archived": false,
+    "language_name": "English",
+    "spaced_by": "_",
+    "created_by": "me",
+    "created_at": "2022-04-29T07:39:06.159347Z",
+    "last_edited_by": "him",
+    "last_edited_at": "2022-04-26T08:29:06.159347Z",
+    "version": 1
+}
+```
+## Retrieve Audios
+For a given audio file, a user can get a list of interpretations that they created, or which are shared with them for viewing and not archived, or which are shared with them for editing and not archived, or which are public and not archived. As of 4/27/2022, returns the entire interpretation, but should only return ID, title, created_by, language_name. Have not completed after HTTP request endpoints as of 4/27/22.
+
+**URL** : `/storybooks/interpretations/audio/<int:audio_id>/`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Content example**
+
+```json
+{
+    "id": "5", 
+    "title": "test title",
+    "language_name": "English",
+    "created_by": "me"
+}
+```
+
+## Retrieve Editors
+A user can view an interpretation that is shared with them for editing and not archived. As of 4/27/2022, returns the entire interpretation, but should only return ID, public, title, latest_text, created_by, language_name, audio_id, last_edited_at.
+
+**URL** : `/storybooks/interpretations/<int:interpretation_id>/audio/<int:audio_id>/editor`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Content example**
+
+```json
+{
+    "id": "5", 
+    "public": true,
+    "audio_ID": "5",
+    "title": "test title",
+    "latest_text": "Four score and seven years ago, our fathers brought forth on this continent...",
+    "language_name": "English",
+    "created_by": "me",
+    "last_edited_at": "2022-04-26T06:29:06.159347Z",
+}
+```
+
+## Update Editors
+If interpretation is not archived and shared_editors includes the current user, they can edit some fields of the interpretation. Title, public, language_name, and latest_text should be populated by logged-in user. Last_updated_by and last_updated_at should be autopopulated with logged-in user's uid and the timestamp of the fetch. Version should increment by 1. Have not completed after HTTP request endpoints as of 4/27/22.
+
+**URL** : `/storybooks/interpretations/<int:interpretation_id>/audio/<int:audio_id>/editor`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+
+## Retrieve Owners
+A user can view an interpretation that they created. Returns all attributes of the interpretation.
+
+**URL** : `/storybooks/interpretations/<int:interpretation_id>/audio/<int:audio_id>/owner`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Content example**
+
+```json
+{
+    "id": "5", 
+    "public": true,
+    "shared_editors": [1, 2, 3],
+    "shared_viewers": [1, 2, 3],
+    "audio_ID": "5",
+    "title": "test title",
+    "latest_text": "Four score and seven years ago, our fathers brought forth on this continent...",
+    "archived": false,
+    "language_name": "English",
+    "spaced_by": "_",
+    "created_by": "me",
+    "created_at": "2022-04-26T06:29:06.159347Z",
+    "last_edited_by": "him",
+    "last_edited_at": "2022-04-26T06:29:06.159347Z",
+    "version": 1
+}
+```
+
+## Update Owners
+A logged-in user can edit all of the information about an interpretation that they created. Public, shared_editors, shared_viewers, audio_id, title, latest_text, archived, language_name, and spaced_by can be populated by the logged-in user. Last_updated_by and last_updated_at should be autopopulated with logged-in user's uid and the timestamp of the fetch. Version should increment by 1. Have not completed after HTTP request endpoints as of 4/27/22.
+
+**URL** : `/storybooks/interpretations/<int:interpretation_id>/audio/<int:audio_id>/owner`
+
+**Method** : `PATCH`
+
+**Auth required** : Yes
+
+
+## Destroy
+A logged-in user can delete all of the information about an interpretation that they created. Have not completed after HTTP request endpoints as of 4/27/22.
+
+**URL** : `/storybooks/interpretations/<int:interpretation_id>/audio/<int:audio_id>/owner`
+
+**Method** : `DELETE`
+
+**Auth required** : Yes
+
+
+## Retrieve All
+A user can get a list of interpretations that they created, or which are shared_with them for viewing and not archived, or which are shared_with them for editing and not archived. As of 4/27/2022, returns the entire interpretation, but should only return ID, public, title, archived, spaced_by, created_by, language_name, audio_id, last_edited_at.
+
+**URL** : `/storybooks/interpretations/`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Content example**
+
+```json
+{
+    "id": "5", 
+    "public": true,
+    "audio_ID": "5",
+    "title": "test title",
+    "archived": false,
+    "language_name": "English",
+    "spaced_by": "_",
+    "created_by": "me",
+    "created_at": "2022-04-26T06:29:06.159347Z",
+    "last_edited_at": "2022-05-01T06:29:06.159347Z",
+}
+```
+
+## Retrieve User
+Anybody can get a list of interpretations created by a user and public and not archived. As of 4/27/2022, returns the entire interpretation, but should only return ID, title, created_by, language_name, audio_id.
+
+**URL** : `/storybooks/interpretations/`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Content example**
+
+```json
+{
+    "id": "5", 
+    "audio_ID": "5",
+    "title": "test title",
+    "language_name": "English",
+    "created_by": "me",
+}
+```
