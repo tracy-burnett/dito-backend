@@ -127,6 +127,20 @@ $ pipenv shell
 Now, navigate to http://localhost:8000 and you should see the server running!
 
 # Models
+## `Extended_User`
+
+```python
+class Extended_User(models.Model):
+    # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
+    user_ID = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True) # basically adds the timestamp when the record is added
+    anonymous = models.BooleanField(default=False)
+
+```
+Note: Other files changed due to this model include `views.py` for the request handling, `urls.py` to point URL to function. 
+
 ## `Audio`
 ```python
 class Audio:
@@ -172,6 +186,33 @@ class Story:
 
 
 ## Xygil API
+
+# Extended Users 
+Create, update, and retrieve 
+
+### Create User 
+It takes the following payload JSON and then creates a 
+user for the request. 
+```python
+user_ID=data['user_id'], 
+description=data['description']
+display_name=data['display_name'],
+anonymous=data['anonymous']
+```
+This will return a JSON serialized object and the user object will be saved.
+
+### Update User 
+Update the fields in the User object. Currently, the `permission_classes` is commented. It also returns the serialized, updated User object. 
+
+The request payload can have the following fields: 
+1. Description
+2. Display Name 
+3. Anonymous
+
+### Retrieve/Get User 
+Return the user object. This function call requires the user_id to be passed in. Otherwise, the request payload must contain the user_id. 
+
+This function returns the serialized, JSON User object for that specific user_id. 
 
 # Users
 Create, read, update, and delete user.
