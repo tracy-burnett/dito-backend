@@ -64,7 +64,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def create(self, request, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -88,7 +88,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_audios(self, request, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -105,7 +105,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_editors(self, request, iid, aid):
         data = request.data
         try:
-             decoded_token = auth.verify_id_token(data["id_token"])
+             decoded_token = auth.verify_id_token(request.headers['Authorization'])
              uid = decoded_token['uid']
         except:
              return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -120,7 +120,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def update_editors(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -152,7 +152,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_owners(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -166,7 +166,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def update_owners(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -199,7 +199,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def destroy(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -220,7 +220,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_all(self, request):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -252,7 +252,7 @@ class AudioViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
           return Response('no valid user logged in')
@@ -271,7 +271,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -295,7 +295,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -740,22 +740,20 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         # permission_classes = [permissions.IsAuthenticated]
-        authdata=request.headers # FOR DEMONSTRATION
-        data = request.data # FOR DEMONSTRATION
-        # print(data['id_token'])
+        data = request.data
 
         try:
-            decoded_token = auth.verify_id_token(authdata['Authorization']) # FOR DEMONSTRATION
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
-        try:
+        if Extended_User.objects.filter(user_ID=uid).exists():
             user = Extended_User.objects.get(user_ID=uid)
             if user:
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
+        else:
             obj = Extended_User(user_ID=uid,
                             description=data['description'],
                             display_name=data['display_name'],
@@ -769,7 +767,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         data = request.data
         
         try:
-            decoded_token = auth.verify_id_token(data['id_token'])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
             user = Extended_User.objects.get(user_ID=uid)
             assert(user)
@@ -789,7 +787,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         data = request.data
         
         try:
-            decoded_token = auth.verify_id_token(data['id_token'])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
             user = Extended_User.objects.get(user_ID=uid)
             assert(user)
