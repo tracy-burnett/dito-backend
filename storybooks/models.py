@@ -3,7 +3,7 @@ from django.db import models
 
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
-    user_ID = models.CharField(max_length=255, primary_key=True)
+    user_ID = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True) # basically adds the timestamp when the record is added
