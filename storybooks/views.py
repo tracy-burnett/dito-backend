@@ -64,7 +64,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def create(self, request, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -88,7 +88,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_audios(self, request, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -105,7 +105,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_editors(self, request, iid, aid):
         data = request.data
         try:
-             decoded_token = auth.verify_id_token(data["id_token"])
+             decoded_token = auth.verify_id_token(request.headers['Authorization'])
              uid = decoded_token['uid']
         except:
              return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -120,7 +120,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def update_editors(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -152,7 +152,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_owners(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -166,7 +166,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def update_owners(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -199,7 +199,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def destroy(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -220,7 +220,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_all(self, request):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(data["id_token"])
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -253,17 +253,18 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
         # print(request.headers['Authorization'])
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+          return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
                  uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse({"audio": serializer.data})
+        # serializer = self.serializer_class(obj)
+        # return JsonResponse('{"audio": serializer.data}')
+        return Response('audio created')
 
     # Unsafe
 
@@ -271,7 +272,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -295,7 +296,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -328,10 +329,10 @@ class AudioViewSet(viewsets.ModelViewSet):
             sanitizedList.append(sanitizedDict)
         return JsonResponse({"audio":sanitizedList})
 
-    def retrieve_private_user(self, request, pk):
-        data = request.data
+    def retrieve_private_user(self, request):
+        data = request.headers # FOR DEMONSTRATION
         try:
-          decoded_token = auth.verify_id_token(data["id_token"])
+          decoded_token = auth.verify_id_token(data['Authorization']) # FOR DEMONSTRATION
           uid = decoded_token['uid']
         except:
           return JsonResponse({"login expired; try refreshing the app or loggin in again":status.HTTP_400_BAD_REQUEST})
@@ -341,7 +342,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         if not query:
           return JsonResponse({"no storybooks found":status.HTTP_400_BAD_REQUEST})
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse({"audio":serializer.data})
+        return JsonResponse({"audio files":serializer.data})
     
     def retrieve_public_user(self, pk,uid):
         query = self.queryset.filter(
@@ -754,24 +755,52 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
+    
+    """
+    Extended_User API
+    """
+    queryset = Extended_User.objects.all()
+    serializer_class = ExtendedUserSerializer
+    # permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request):
         # permission_classes = [permissions.IsAuthenticated]
         data = request.data
-        obj = Extended_User(user_ID=data['user_id'],
+
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # check if object already exists - create should only work if there isn't already an extended_user for uid
+        if Extended_User.objects.filter(user_ID=uid).exists():
+            user = Extended_User.objects.get(user_ID=uid)
+            if user:
+                return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            obj = Extended_User(user_ID=uid,
                             description=data['description'],
                             display_name=data['display_name'],
                             anonymous=data['anonymous'])
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse({"user": serializer.data})
+
+            obj.save()
+            serializer = self.serializer_class(obj)
+            return Response({'user created'})
 
     def update(self, request):
         data = request.data
-        # permission_classes = [permissions.IsAuthenticated]
-        user = Extended_User.objects.get(user_ID=data['user_id'])
-        if not user:
-            return HttpResponse(status=404)
+        
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            uid = decoded_token['uid']
+            user = Extended_User.objects.get(user_ID=uid)
+            assert(user)
+        except:
+            print("bad")
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        
         user.description = data['description']
         user.display_name = data['display_name']
         user.anonymous = data['anonymous']
@@ -779,12 +808,18 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(user)
         return JsonResponse({"user": serializer.data})
 
-    def retrieve(self, request, user_id):
-        # permission_classes = [permissions.IsAuthenticated]
-        user_obj = Extended_User.objects.get(user_ID=user_id)
-        if not user_obj:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        if user_obj.archived:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(user_obj)
+    def retrieve(self, request):
+        data = request.data
+        
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            uid = decoded_token['uid']
+            user = Extended_User.objects.get(user_ID=uid)
+            assert(user)
+        except:
+            return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if user.archived:
+        #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(user)
         return JsonResponse(serializer.data)

@@ -3,7 +3,7 @@ from django.db import models
 
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
-    user_ID = models.CharField(max_length=255)
+    user_ID = models.CharField(max_length=255, primary_key=True)
     display_name = models.CharField(max_length=255)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True) # basically adds the timestamp when the record is added
@@ -16,7 +16,7 @@ class Audio(models.Model):
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now=True)
-    uploaded_by = models.ForeignKey(Extended_User, related_name="audio_uploaded_by", on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(Extended_User, related_name="audio_uploaded_by", null=True, on_delete=models.SET_NULL) # FOR DEMONSTRATION
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(Extended_User, related_name="audio_last_updated_by", null=True, on_delete=models.SET_NULL)
     shared_with = models.ManyToManyField(Extended_User, blank=True)
@@ -46,11 +46,11 @@ class Interpretation(models.Model):
     title           = models.CharField(max_length=255)
     latest_text     = models.TextField()
     archived        = models.BooleanField(default=False)
-    language_name   = models.ForeignKey(Language, related_name="interpretation_language_name",on_delete=models.CASCADE)
+    language_name   = models.ForeignKey(Language, related_name="interpretation_language_name", null=True, on_delete=models.SET_NULL)
     spaced_by       = models.CharField(default='', max_length=255, null=True)
-    created_by      = models.ForeignKey(Extended_User, related_name="interpretation_created_by", on_delete=models.CASCADE)
+    created_by      = models.ForeignKey(Extended_User, related_name="interpretation_created_by", null=True, on_delete=models.SET_NULL)
     created_at      = models.DateTimeField(auto_now_add=True)
-    last_edited_by  = models.ForeignKey(Extended_User, related_name="interpretation_last_edited_by",on_delete=models.CASCADE)
+    last_edited_by  = models.ForeignKey(Extended_User, related_name="interpretation_last_edited_by", null=True, on_delete=models.SET_NULL)
     last_edited_at  = models.DateTimeField(auto_now=True)
     version         = models.IntegerField(default=1)
 
@@ -61,14 +61,14 @@ class Interpretation(models.Model):
 
 class Content(models.Model):
     value_index = models.IntegerField()
-    audio_id = models.ForeignKey(Audio, related_name="content_audio_id",on_delete=models.CASCADE)
+    audio_id = models.ForeignKey(Audio, related_name="content_audio_id", null=True, on_delete=models.SET_NULL)
     interpretation_id = models.ForeignKey(Interpretation, on_delete=models.CASCADE)
     value = models.CharField(max_length=255)
     audio_time = models.TimeField(default=None)
     created_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(Extended_User, related_name="content_created_by",on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Extended_User, related_name="content_created_by", null=True, on_delete=models.SET_NULL)
     updated_at = models.DateTimeField(default=None)
-    updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by",on_delete=models.CASCADE, null=True)
+    updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by", null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = "content"
@@ -84,11 +84,11 @@ class Interpretation_History(models.Model):
     title           = models.CharField(max_length=255)
     latest_text     = models.TextField()
     archived        = models.BooleanField(default=False)
-    language_name   = models.ForeignKey(Language, related_name="interpretation_history_language_name",on_delete=models.CASCADE)
+    language_name   = models.ForeignKey(Language, related_name="interpretation_history_language_name", null=True, on_delete=models.SET_NULL)
     spaced_by       = models.CharField(default='', max_length=255, null=True)
-    created_by      = models.ForeignKey(Extended_User, related_name="interpretation_history_created_by", on_delete=models.CASCADE)
+    created_by      = models.ForeignKey(Extended_User, related_name="interpretation_history_created_by", null=True, on_delete=models.SET_NULL)
     created_at      = models.DateTimeField(auto_now_add=True)
-    last_edited_by  = models.ForeignKey(Extended_User, related_name="interpretation_history_last_edited_by",on_delete=models.CASCADE)
+    last_edited_by  = models.ForeignKey(Extended_User, related_name="interpretation_history_last_edited_by", null=True, on_delete=models.SET_NULL)
     last_edited_at  = models.DateTimeField(auto_now=True)
     version         = models.IntegerField(default=1)
 
