@@ -251,6 +251,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 # presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
     def create(self, request):
         data = request.data
+        # print(request.headers['Authorization'])
         try:
           decoded_token = auth.verify_id_token(data["id_token"])
           uid = decoded_token['uid']
@@ -259,7 +260,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
-                    shared_with=data['shared_with'], uploaded_by=uid, uploaded_at=datetime.datetime.now(), last_updated_by=uid, public=data['public'])
+                 uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse({"audio": serializer.data})
@@ -333,10 +334,12 @@ class AudioViewSet(viewsets.ModelViewSet):
           decoded_token = auth.verify_id_token(data["id_token"])
           uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        query = self.queryset.filter(Q(uploaded_by=uid) | (Q(archived=False) & Q(shared_with=uid)))
+          return JsonResponse({"login expired; try refreshing the app or loggin in again":status.HTTP_400_BAD_REQUEST})
+        # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
+        query = self.queryset.filter(Q(uploaded_by_id=uid) | (Q(archived=False) & Q(shared_with=uid))) # FOR DEMONSTRATION
+
         if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+          return JsonResponse({"no storybooks found":status.HTTP_400_BAD_REQUEST})
         serializer = self.serializer_class(query, many=True)
         return JsonResponse({"audio":serializer.data})
     
@@ -389,12 +392,21 @@ class TranslationViewSet(viewsets.ModelViewSet):
     # Unsafe (can be overridden)
 
     def create(self, request, aid, lid):
+        try:
+          decoded_token = auth.verify_id_token(request.headers['Authorization'])
+          uid = decoded_token['uid']
+        except:
+          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        print(aid)
+        print(lid)
         query = Audio.objects.all().filter(id=aid)
+        print(len(query), "hi")
         if not query:
             return HttpResponse(status=404)
         audio = query.get()
-
+        print(lid)
         query = Language.objects.all().filter(id=lid)
+        print(query, "2")
         if not query:
             return HttpResponse(status=404)
         language = query.get()
@@ -404,8 +416,10 @@ class TranslationViewSet(viewsets.ModelViewSet):
         #     return HttpResponse(status=400)
 
         data = request.data
+        print(data, "hidata")
         translation = Translation(
-            title=data['title'], audio=audio, language=language)
+            title=data['title'], text=data['text'], audio_id=aid, language=language, author_id=uid, last_updated_by=uid)
+        print(translation)
 
         text_array = []
         if language.spaced:
@@ -417,13 +431,17 @@ class TranslationViewSet(viewsets.ModelViewSet):
         for i in range(len(text_array)):
             word = text_array[i]
             words.append(Story(translation=translation, word=word, index=i))
-
+        print(translation, "2")
         translation.save()
         Story.objects.bulk_create(words)
-        return HttpResponse(status=200)
+        return Response({'translation created'})
 
     def retrieve(self, request, aid, lid):
-        translation = self.queryset.get(audio_id=aid, language_id=lid)
+        print(aid)
+        print(lid)
+        # translation = self.queryset.get(audio_id=aid, language=lid)
+        translation = self.queryset.get(audio_id=aid)
+        print(translation)
         if not translation:
             return HttpResponse(status=404)
         # if not translation.published:
@@ -508,7 +526,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         return path
 
     def update(self, request, aid, lid):
-        translation = self.queryset.get(audio_id=aid, language_id=lid)
+        translation = self.queryset.get(audio_id=aid)
         if not translation:
             return HttpResponse(status=404)
 
@@ -575,7 +593,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def retrieve(self, request, aid, lid):
-        translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
+        print("trying to retrieve associations")
+        print(aid)
+        print(lid)
+        translation = Translation.objects.all().get(audio_id=aid)
+        print(translation)
         if not translation:
             return HttpResponse(status=404)
         start = int(request.query_params.get('ts1', 0))
@@ -621,7 +643,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
             'timestamp').exclude(timestamp__isnull=True)
         for i in range(len(ts_query) - 1):
             next_timestamp[ts_query[i].timestamp] = ts_query[i + 1].timestamp
-        next_timestamp[ts_query[len(ts_query) - 1].timestamp] = "end"
+        if ts_query:
+            next_timestamp[ts_query[len(ts_query) - 1].timestamp] = "end"
+        else:
+            return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
+
 
         #print("next_ts", next_timestamp)
 
@@ -674,7 +700,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         return JsonResponse({"text": text, "associations": associations}, json_dumps_params={'ensure_ascii': False})
 
     def update(self, request, aid, lid):
-        translation = Translation.objects.all().get(audio_id=aid, language_id=lid)
+        translation = Translation.objects.all().get(audio_id=aid)
         if not translation:
             return HttpResponse(status=404)
 

@@ -18,8 +18,8 @@ class Audio(models.Model):
     uploaded_at = models.DateTimeField(auto_now=True)
     uploaded_by = models.ForeignKey(Extended_User, related_name="audio_uploaded_by", on_delete=models.CASCADE)
     last_updated_at = models.DateTimeField(auto_now=True)
-    last_updated_by = models.ForeignKey(Extended_User, related_name="audio_last_updated_by", on_delete=models.CASCADE)
-    shared_with = models.ManyToManyField(Extended_User)
+    last_updated_by = models.ForeignKey(Extended_User, related_name="audio_last_updated_by", null=True, on_delete=models.SET_NULL)
+    shared_with = models.ManyToManyField(Extended_User, blank=True)
     public = models.BooleanField(default=False)
 
     class Meta:
@@ -40,9 +40,9 @@ class Interpretation(models.Model):
 
     id              = models.IntegerField(primary_key=True)
     public          = models.BooleanField(default=False)
-    shared_editors  = models.ManyToManyField(Extended_User,related_name="interpretation_shared_editors")
-    shared_viewers  = models.ManyToManyField(Extended_User,related_name="interpretation_shared_viewers")
-    audio_ID        = models.ForeignKey(Audio, related_name="interpretation_audio_ID",on_delete=models.CASCADE)
+    shared_editors  = models.ManyToManyField(Extended_User,related_name="interpretation_shared_editors", blank=True)
+    shared_viewers  = models.ManyToManyField(Extended_User,related_name="interpretation_shared_viewers", blank=True)
+    audio_ID        = models.ForeignKey(Audio, related_name="interpretation_audio_ID", null=True, on_delete=models.SET_NULL)
     title           = models.CharField(max_length=255)
     latest_text     = models.TextField()
     archived        = models.BooleanField(default=False)
@@ -78,9 +78,9 @@ class Content(models.Model):
 class Interpretation_History(models.Model):
     id              = models.IntegerField(primary_key=True)
     public          = models.BooleanField(default=False)
-    shared_editors  = models.ManyToManyField(Extended_User,related_name="interpretation_history_shared_editors")
-    shared_viewers  = models.ManyToManyField(Extended_User,related_name="interpretation_history_shared_viewers")
-    audio_ID        = models.ForeignKey(Audio, related_name="interpretation_history_audio_ID",on_delete=models.CASCADE)
+    shared_editors  = models.ManyToManyField(Extended_User,related_name="interpretation_history_shared_editors", blank=True)
+    shared_viewers  = models.ManyToManyField(Extended_User,related_name="interpretation_history_shared_viewers", blank=True)
+    audio_ID        = models.ForeignKey(Audio, related_name="interpretation_history_audio_ID", null=True, on_delete=models.SET_NULL)
     title           = models.CharField(max_length=255)
     latest_text     = models.TextField()
     archived        = models.BooleanField(default=False)
@@ -99,9 +99,9 @@ class Interpretation_History(models.Model):
 
 class Translation(models.Model):
     title = models.CharField(default="Untitled Storybook", max_length=255)
-    audio_id = models.CharField(max_length=255)
+    audio_id = models.CharField(max_length=255, primary_key=True)
     published = models.BooleanField(default=False)
-
+    text     = models.TextField(null=True)
     language = models.ForeignKey(
         Language, related_name="translation_language", null=True, on_delete=models.SET_NULL)
     author_id = models.CharField(max_length=255)
