@@ -196,10 +196,26 @@ class TranslationViewSet(viewsets.ModelViewSet):
     #If the value is a tuple (i, v), insert v to that original index from a 
     def closest(self, a, b):
         memo = {}
-        self.closest_helper(a, b, 0, 0, memo)
+        print(a)
+        print(b)
+        if (a == b):
+            print(" dsdf")
+            self.sameText(a,b,memo)
+            print(memo)
+        else:
+            self.closest_helper(a, b, 0, 0, memo)
         return self.trace(a, b, 0, 0, memo)
+    
+    def sameText(self,a,b,memo):
+        count = len(a)
+        for i in range(len(a)): 
+            memo[(i,i)] = count
+            count -= 1
 
     def closest_helper(self, a, b, a_index, b_index, memo):
+        #print(a_index)
+        #print(b_index)
+        #print(memo)
         if a_index >= len(a) or b_index >= len(b):
             return 0
         
@@ -209,6 +225,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
             else:
                 memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1, b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
         
+        print(memo)
         return memo[(a_index, b_index)]
 
     def trace(self, a, b, a_index, b_index, memo):
