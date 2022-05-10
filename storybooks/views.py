@@ -480,10 +480,25 @@ class TranslationViewSet(viewsets.ModelViewSet):
 
     def closest(self, a, b):
         memo = {}
-        self.closest_helper(a, b, 0, 0, memo)
+        
+        if (a == b):
+           
+            self.sameText(a,b,memo)
+       
+        else:
+            self.closest_helper(a, b, 0, 0, memo)
         return self.trace(a, b, 0, 0, memo)
+    
+    def sameText(self,a,b,memo):
+        count = len(a)
+        for i in range(len(a)): 
+            memo[(i,i)] = count
+            count -= 1
 
     def closest_helper(self, a, b, a_index, b_index, memo):
+        #print(a_index)
+        #print(b_index)
+        #print(memo)
         if a_index >= len(a) or b_index >= len(b):
             return 0
 
@@ -492,8 +507,8 @@ class TranslationViewSet(viewsets.ModelViewSet):
                 memo[(a_index, b_index)] = 1 + \
                     self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
             else:
-                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
-                                                                   b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
+
+                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1, b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo)) 
 
         return memo[(a_index, b_index)]
 
