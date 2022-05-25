@@ -16,8 +16,8 @@ class ExtendedUserSerializer(serializers.ModelSerializer):
         fields = ['user_ID', 'display_name', 'description', 'anonymous', 'created_at']
 
 class AudioSerializer(serializers.ModelSerializer):
-    uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
-    last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+    # uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+    # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
 
     class Meta:
         model = Audio
@@ -26,7 +26,7 @@ class AudioSerializer(serializers.ModelSerializer):
 class InterpretationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interpretation
-        fields = ['id','public','shared_editors','shared_viewers','audio_id','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
+        fields = ['id','title', 'public','shared_editors','shared_viewers','audio_ID','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
 
 class InterpretationHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,3 +47,8 @@ class StorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Story
         fields = ['word', 'index', 'timestamp']
+
+class ContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Content
+        fields = ['value_index', 'audio_id', 'interpretation_id', 'value', 'audio_time', 'created_at', 'created_by', 'updated_at', 'updated_by']

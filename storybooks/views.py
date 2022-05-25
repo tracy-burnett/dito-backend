@@ -61,7 +61,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     serializer_class = InterpretationSerializer
     permission_classes = [permissions.AllowAny]
 
-    def create(self, request, aid):
+    def create(self, request, aid):  #updated by skysnolimit 5/9/22
         data = request.data
         try:
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
@@ -69,38 +69,54 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not Audio.objects.filter(Q(id=aid), (Q(public=True) & Q(archived=False))
-                    | (Q(shared_with=uid) & Q(archived=False))):
+        if not Audio.objects.filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
+                    | (Q(shared_with=uid) & Q(archived=False)) | Q(uploaded_by_id=uid)):
             return HttpResponse(status=404)
 
-        audio = Audio.objects.get(id=aid)
+
+        newinterpretationid=secrets.token_urlsafe(8)
         try:
-            obj = Interpretation(public=audio.public, shared_editors=data['shared_editors'],
-                    shared_viewers=data['shared_viewers'], audio_id=audio,
+            obj = Interpretation(id=newinterpretationid, public=data['public'],
+                    # shared_editors=data.get('shared_editors', None),
+                    # shared_viewers=data.get('shared_viewers', None),
+                    audio_ID_id=aid,
                     title=data['title'], latest_text=data['latest_text'],
-                    language_name=data['language_name'], spaced_by=data.get('spaced_by', None),
-                    created_by=User.get(id=uid), last_edited_by=User.get(id=uid))
+                    language_name=data['language_name'],
+                    spaced_by=data.get('spaced_by', None),
+                    created_by_id=uid, last_edited_by_id=uid)
         except:
-            return JsonResponse({}, status=status.HTTP_404_BAD_REQUEST)
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        text_array = []
+        if data['spaced_by']:
+            text_array = data['latest_text'].split(data['spaced_by'])
+        else:
+            text_array = list(data['latest_text'])
+
+        words = []
+        for i in range(len(text_array)):
+            word = text_array[i]
+            words.append(Content(interpretation_id_id=newinterpretationid, audio_id_id=aid, value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
         obj.save()
-        return HttpResponse(status=200)
+        Content.objects.bulk_create(words)
+        return Response({'translation created'})
 
     def retrieve_audios(self, request, aid):
-        data = request.data
         try:
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
-        query = self.queryset.filter(Q(audio_id__id=aid) | Q(created_by__id=uid) 
-                                | (Q(shared_viewers__id=uid) & Q(archived=False))
-                                | (Q(shared_editors__id=uid) & Q(archived=False))
-                                | (Q(public=True) & Q(archived=False)))
+        
+        query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid) 
+                                | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                | (Q(public=True) & Q(archived=False))))
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data) #TODO
+        print(serializer.data)
+        return JsonResponse({"interpretations": serializer.data})
 
     def retrieve_editors(self, request, iid, aid):
         data = request.data
@@ -149,21 +165,26 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         obj.save()
         return HttpResponse(status=200)
 
-    def retrieve_owners(self, request, iid, aid):
-        data = request.data
+    def retrieve_owners(self, request, iid, aid): # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
+        print(iid)
+        print(aid)
+        print("hi")
         try:
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid)& Q(created_by__id=uid) & Q(id=iid))
+        query = self.queryset.get(Q(audio_ID_id=aid)& Q(created_by_id=uid) & Q(id=iid))
+        print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data) #TODO 
+        serializer = self.serializer_class(query)
+        return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
-    def update_owners(self, request, iid, aid):
+
+
+    def update_owners(self, request, iid, aid): # UPDATED TO WORK BY SKYSNOLIMIT08 ON 5/11/22
         data = request.data
         try:
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
@@ -171,17 +192,18 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid) & Q(created_by__id=uid) & Q(id=iid))
+        query = self.queryset.filter(Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
-        cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
-                    shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title, 
+        cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title, 
                     latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
                     spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
+        Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+        Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
 
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id'
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
@@ -190,12 +212,113 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 setattr(obj, key, request.data[key]) #set last updated by/at automatically
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        print(obj)
         obj.version += 1
-        obj.last_updated_by = User.objects.get(id=uid)
-        obj.last_updated_at = datetime.now()
+        obj.last_updated_by = uid
+        print(obj)
         obj.save()
+		
+        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
+        serializer = ContentSerializer(query, many=True)
+        a = [entry['value'] for entry in serializer.data]
+        b = []
+        if obj.spaced_by:
+            b = request.data['latest_text'].split(obj.spaced_by)
+        else:
+            b = list(request.data['latest_text'])
+        add = []
+        subtract = []
+        changed = []
+        delta = 0
+        path = self.closest(a, b)
+        #print("path:", path)
+        path_index = 0
+
+        def traverse_path(i):
+            nonlocal path_index
+            nonlocal delta
+            while path_index < len(path):
+                if isinstance(path[path_index], int):
+                    if path[path_index] == i:
+                        subtract.append(query[i])
+                        delta -= 1
+                        path_index += 1
+                    else:
+                        break
+                else:
+                    if path[path_index][0] == i:
+                        add.append(Content(interpretation_id_id=iid,
+                                   value=path[path_index][1], value_index=i + delta))
+                        delta += 1
+                        path_index += 1
+                    else:
+                        break
+
+        for i in range(len(query)):
+            traverse_path(i)
+            if (delta != 0):
+                query[i].value_index += delta
+                changed.append(query[i])
+        traverse_path(len(query))
+
+        Content.objects.bulk_update(changed, ['value_index'])
+        Content.objects.bulk_create(add)
+        for obj in subtract:
+            obj.delete()
+
         return HttpResponse(status=200)
 
+    def closest(self, a, b):
+        memo = {}
+        self.closest_helper(a, b, 0, 0, memo)
+        return self.trace(a, b, 0, 0, memo)
+
+    def closest_helper(self, a, b, a_index, b_index, memo):
+        if a_index >= len(a) or b_index >= len(b):
+            return 0
+
+        if not (a_index, b_index) in memo:
+            if a[a_index] == b[b_index]:
+                memo[(a_index, b_index)] = 1 + \
+                    self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
+            else:
+                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
+                                                                   b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
+
+        return memo[(a_index, b_index)]
+
+    def trace(self, a, b, a_index, b_index, memo):
+        path = []
+        while a_index < len(a) and b_index < len(b):
+            if a[a_index] == b[b_index]:
+                a_index += 1
+                b_index += 1
+            else:
+                if a_index + 1 >= len(a):
+                    path.append((a_index, b[b_index]))
+                    b_index += 1
+                elif b_index + 1 >= len(b):
+                    path.append(a_index)
+                    a_index += 1
+                elif memo[(a_index + 1, b_index)] < memo[(a_index, b_index + 1)]:
+                    path.append((a_index, b[b_index]))
+                    b_index += 1
+                else:
+                    path.append(a_index)
+                    a_index += 1
+
+        if a_index >= len(a):
+            for index in range(b_index, len(b)):
+                path.append((a_index, b[index]))
+        elif b_index >= len(b):
+            for index in range(a_index, len(a)):
+                path.append(index)
+
+        return path
+
+		
+		
+		
     def destroy(self, request, iid, aid):
         data = request.data
         try:
@@ -593,59 +716,59 @@ class AssociationViewSet(viewsets.ModelViewSet):
     """
     # permission_classes = [permissions.IsAuthenticated]
 
-    def retrieve(self, request, aid, lid):
+    def retrieve(self, request, aid, iid):     # UPDATED BY SKYSNOLIMIT08 TO WORK
         print("trying to retrieve associations")
         print(aid)
-        print(lid)
-        translation = Translation.objects.all().get(audio_id=aid)
-        print(translation)
-        if not translation:
+        print(iid)
+        interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
+        print(interpretation)
+        if not interpretation:
             return HttpResponse(status=404)
         start = int(request.query_params.get('ts1', 0))
         end = float('inf')
         if 'ts2' in request.query_params:
             end = int(request.query_params['ts2'])
-        query = Story.objects.all().filter(translation=translation).order_by('index')
+        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
         timestamp_to_word_groups = {}
         word_index = 0
         char_index = 0
         while word_index < len(query):
             obj = query[word_index]
-            if obj.timestamp is not None:
-                if not obj.timestamp in timestamp_to_word_groups:
-                    timestamp_to_word_groups[obj.timestamp] = []
+            if obj.audio_time is not None:
+                if not obj.audio_time in timestamp_to_word_groups:
+                    timestamp_to_word_groups[obj.audio_time] = []
                 group = [char_index]
-                char_index += len(obj.word)
-                if translation.language.spaced:
+                char_index += len(obj.value)
+                if interpretation.spaced_by:
                     char_index += 1
                 word_index += 1
 
                 # associate timestamps to those without
-                while word_index < len(query) and (query[word_index].timestamp is None or query[word_index].timestamp == obj.timestamp):
-                    char_index += len(query[word_index].word)
-                    if translation.language.spaced:
+                while word_index < len(query) and (query[word_index].audio_time is None or query[word_index].audio_time == obj.audio_time):
+                    char_index += len(query[word_index].value)
+                    if interpretation.spaced_by:
                         char_index += 1
                     word_index += 1
 
                 group.append(char_index - 1)  # inclusive (not exclusive)
-                if translation.language.spaced:  # remove space at the end
+                if interpretation.spaced_by:  # remove space at the end
                     group[1] -= 1
-                timestamp_to_word_groups[obj.timestamp].append(group)
+                timestamp_to_word_groups[obj.audio_time].append(group)
             else:
-                char_index += len(obj.word)
-                if translation.language.spaced:
+                char_index += len(obj.value)
+                if interpretation.spaced_by:
                     char_index += 1
                 word_index += 1
 
         # print(timestamp_to_word_groups)
 
         next_timestamp = {}  # dictionary of timestamp to next timestamp
-        ts_query = Story.objects.all().filter(translation=translation).order_by(
-            'timestamp').exclude(timestamp__isnull=True)
+        ts_query = Content.objects.all().filter(interpretation_id_id=iid).order_by(
+            'audio_time').exclude(audio_time__isnull=True)
         for i in range(len(ts_query) - 1):
-            next_timestamp[ts_query[i].timestamp] = ts_query[i + 1].timestamp
+            next_timestamp[ts_query[i].audio_time] = ts_query[i + 1].audio_time
         if ts_query:
-            next_timestamp[ts_query[len(ts_query) - 1].timestamp] = "end"
+            next_timestamp[ts_query[len(ts_query) - 1].audio_time] = "end"
         else:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
@@ -655,19 +778,19 @@ class AssociationViewSet(viewsets.ModelViewSet):
         start_index = len(query) - 1
         start_offset = 0
         for i in range(len(query)):
-            if query[i].timestamp is not None:
+            if query[i].audio_time is not None:
                 # interval crossing logic
-                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp:
+                if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
                     start_index = i
                     break
-            start_offset += len(query[i].word)
-            if translation.language.spaced:
+            start_offset += len(query[i].value)
+            if interpretation.spaced_by:
                 start_offset += 1
 
         end_index = len(query) - 1
         for i in range(len(query) - 1, -1, -1):
-            if query[i].timestamp is not None:
-                if (next_timestamp[query[i].timestamp] == 'end' or start < next_timestamp[query[i].timestamp]) and end > query[i].timestamp:
+            if query[i].audio_time is not None:
+                if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
                     break
                 else:
                     end_index = i - 1
@@ -691,31 +814,32 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     entry.append(str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
                 associations[str(timestamp_start) + "-" + str(timestamp_end)] = entry
 
-        text = ""
-        words = [query[i].word for i in range(start_index, end_index + 1)]
-        if translation.language.spaced:
-            text = ' '.join(words)
-        else:
-            text = "".join(words)
+        # text = ""
+        # words = [query[i].word for i in range(start_index, end_index + 1)]
+        # if translation.language.spaced:
+        #     text = ' '.join(words)
+        # else:
+        #     text = "".join(words)
 
-        return JsonResponse({"text": text, "associations": associations}, json_dumps_params={'ensure_ascii': False})
+        return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
-    def update(self, request, aid, lid):
-        translation = Translation.objects.all().get(audio_id=aid)
-        if not translation:
+    def update(self, request, aid, iid):      #UPDATED 5/11/22 BY SKYSNOLIMIT08 TO WORK
+        interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
+        if not interpretation:
             return HttpResponse(status=404)
 
-        query = Story.objects.all().filter(translation=translation).order_by('index')
-        serializer = StorySerializer(query, many=True)
-        words = [entry['word'] for entry in serializer.data]
+        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
+        serializer = ContentSerializer(query, many=True)
+        words = [entry['value'] for entry in serializer.data]
         text = ""
-        if translation.language.spaced:
-            text = ' '.join(words)
+        if interpretation.spaced_by:
+            text = interpretation.spaced_by.join(words)
         else:
             text = "".join(words)
 
         start_index = text.find(request.data['text'])
-        #print("start_index", start_index)
+        # print(text)
+        # print("start_index", start_index)
         if start_index < 0:
             return HttpResponse(status=400)
 
@@ -724,11 +848,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
         sum = 0
         for word in words:
             sum += len(word)
-            if translation.language.spaced:  # account for spaces
+            if interpretation.spaced_by:  # account for spaces
                 sum += 1
             # only want to count until right before start of new word
             accumulated_lengths.append(sum - 1)
-        if translation.language.spaced:  # remove last space at the end
+        if interpretation.spaced_by:  # remove last space at the end
             accumulated_lengths[-1] -= 1
         #print("accumulated lengths", accumulated_lengths)
 
@@ -743,13 +867,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(query[insertion_point].timestamp)
                 # print(len(words))
                 if insertion_point < len(words): #insertion point may exceed words
-                    query[insertion_point].timestamp = association_dict[key] #make sure is int
+                    query[insertion_point].audio_time = association_dict[key] #make sure is int
                     changed.append(query[insertion_point])
 
-        Story.objects.bulk_update(changed, ['timestamp'])
+        Content.objects.bulk_update(changed, ['audio_time'])
 
-        query = Story.objects.all().filter(translation=translation).order_by('index')
-        serializer = StorySerializer(query, many=True)
+        query = Content.objects.all().filter(interpretation_id_id=interpretation).order_by('value_index')
+        serializer = ContentSerializer(query, many=True)
         # print(serializer.data)
         return HttpResponse(status=200)
 
