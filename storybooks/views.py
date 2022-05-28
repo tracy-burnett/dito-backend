@@ -27,6 +27,10 @@ import copy
 # If somebody posts an audio_ID to /s3/ they will receive a URL to download the audio file with that ID.
 class UploadFileViewSet(viewsets.ViewSet):
     def presignedposturl(self, request, pk=None):
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         ext = request.data['ext']
         audio_ID = secrets.token_urlsafe(8) + ext
         url = S3().get_presigned_url(audio_ID)
@@ -36,6 +40,10 @@ class UploadFileViewSet(viewsets.ViewSet):
 
 class DownloadFileViewSet(viewsets.ViewSet):
     def presignedgeturl(self, request, pk=None):
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         audio_ID = request.data['audio_ID']
         url = S3().get_file(audio_ID)
 
@@ -99,7 +107,14 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             words.append(Content(interpretation_id_id=newinterpretationid, audio_id_id=aid, value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
         obj.save()
         Content.objects.bulk_create(words)
-        return Response({'translation created'})
+        return JsonResponse({"interpretation": {"id": newinterpretationid, "public": data['public'],
+                    "shared_editors": None,
+                    "shared_viewers": None,
+                    "audio_ID": aid,
+                    "title": data['title'], "latest_text": data['latest_text'],
+                    "language_name": data['language_name'],
+                    "spaced_by": None,
+                    "created_by": uid, "last_edited_by": uid}}) # ACTUALLY SHOULD RETURN THE ACTUAL OBJECT, THIS IS KIND OF FAKE
 
     def retrieve_audios(self, request, aid):
         try:
