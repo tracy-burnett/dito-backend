@@ -219,10 +219,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         cpy.save()
         Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
         Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
-
-        modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id'
+        
+        modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
+        print(request.data)
         for key in request.data:
+            
             if hasattr(obj, key) and key in modifiable_attr:
                 setattr(obj, key, request.data[key]) #set last updated by/at automatically
             else:
