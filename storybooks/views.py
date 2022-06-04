@@ -218,7 +218,6 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
         Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-        Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
         
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
