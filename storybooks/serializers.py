@@ -16,7 +16,7 @@ class ExtendedUserSerializer(serializers.ModelSerializer):
         fields = ['user_ID', 'display_name', 'description', 'anonymous', 'created_at']
 
 class AudioSerializer(serializers.ModelSerializer):
-    # uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+    uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
     # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
 
     class Meta:
