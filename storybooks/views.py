@@ -130,7 +130,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
-        print(serializer.data)
+        # print(serializer.data)
         return JsonResponse({"interpretations": serializer.data})
 
     def retrieve_editors(self, request, iid, aid):
@@ -181,9 +181,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         return HttpResponse(status=200)
 
     def retrieve_owners(self, request, iid, aid): # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
-        print(iid)
-        print(aid)
-        print("hi")
+        # print(iid)
+        # print(aid)
+        # print("hi")
         try:
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
             uid = decoded_token['uid']
@@ -191,7 +191,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.get(Q(audio_ID_id=aid)& Q(created_by_id=uid) & Q(id=iid))
-        print(query)
+        # print(query)
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query)
@@ -221,17 +221,17 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
-        print(request.data)
+        # print(request.data)
         for key in request.data:
             
             if hasattr(obj, key) and key in modifiable_attr:
                 setattr(obj, key, request.data[key]) #set last updated by/at automatically
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        print(obj)
+        # print(obj)
         obj.version += 1
         obj.last_updated_by = uid
-        print(obj)
+        # print(obj)
         obj.save()
 		
         query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
@@ -247,7 +247,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         changed = []
         delta = 0
         path = self.closest(a, b)
-        #print("path:", path)
+        print("path:", path)
         path_index = 0
 
         def traverse_path(i):
@@ -296,12 +296,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if not (a_index, b_index) in memo:
             if a[a_index] == b[b_index]:
                 memo[(a_index, b_index)] = 1 + \
-                    self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
+                    self.closest_helper(a, b, a_index + 1, b_index + 1, memo) # this is probably mutating memo in-place, without depending on any "return" statement
             else:
                 memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
                                                                    b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
 
-        return memo[(a_index, b_index)]
+        print("memo: ", memo)
+        return memo[(a_index, b_index)] # I think this is returning for the sake of the recursive use, not for use outside of the function itself
 
     def trace(self, a, b, a_index, b_index, memo):
         path = []
@@ -537,16 +538,16 @@ class TranslationViewSet(viewsets.ModelViewSet):
           uid = decoded_token['uid']
         except:
           return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        print(aid)
-        print(lid)
+        # print(aid)
+        # print(lid)
         query = Audio.objects.all().filter(id=aid)
-        print(len(query), "hi")
+        # print(len(query), "hi")
         if not query:
             return HttpResponse(status=404)
         audio = query.get()
-        print(lid)
+        # print(lid)
         query = Language.objects.all().filter(id=lid)
-        print(query, "2")
+        # print(query, "2")
         if not query:
             return HttpResponse(status=404)
         language = query.get()
@@ -556,10 +557,10 @@ class TranslationViewSet(viewsets.ModelViewSet):
         #     return HttpResponse(status=400)
 
         data = request.data
-        print(data, "hidata")
+        # print(data, "hidata")
         translation = Translation(
             title=data['title'], text=data['text'], audio_id=aid, language=language, author_id=uid, last_updated_by=uid)
-        print(translation)
+        # print(translation)
 
         text_array = []
         if language.spaced:
@@ -571,17 +572,17 @@ class TranslationViewSet(viewsets.ModelViewSet):
         for i in range(len(text_array)):
             word = text_array[i]
             words.append(Story(translation=translation, word=word, index=i))
-        print(translation, "2")
+        # print(translation, "2")
         translation.save()
         Story.objects.bulk_create(words)
         return Response({'translation created'})
 
     def retrieve(self, request, aid, lid):
-        print(aid)
-        print(lid)
+        # print(aid)
+        # print(lid)
         # translation = self.queryset.get(audio_id=aid, language=lid)
         translation = self.queryset.get(audio_id=aid)
-        print(translation)
+        # print(translation)
         if not translation:
             return HttpResponse(status=404)
         # if not translation.published:
@@ -620,19 +621,19 @@ class TranslationViewSet(viewsets.ModelViewSet):
     def closest(self, a, b):
         memo = {}
         
-        if (a == b):
+        # if (a == b):
            
-            self.sameText(a,b,memo)
+            # self.sameText(a,b,memo)
        
-        else:
-            self.closest_helper(a, b, 0, 0, memo)
+        # else:
+        self.closest_helper(a, b, 0, 0, memo)
         return self.trace(a, b, 0, 0, memo)
     
-    def sameText(self,a,b,memo):
-        count = len(a)
-        for i in range(len(a)): 
-            memo[(i,i)] = count
-            count -= 1
+    # def sameText(self,a,b,memo):
+    #     count = len(a)
+    #     for i in range(len(a)): 
+    #         memo[(i,i)] = count
+    #         count -= 1
 
     def closest_helper(self, a, b, a_index, b_index, memo):
         #print(a_index)
@@ -703,7 +704,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
         changed = []
         delta = 0
         path = self.closest(a, b)
-        #print("path:", path)
+        # print("path:", path)
         path_index = 0
 
         def traverse_path(i):
@@ -748,11 +749,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def retrieve(self, request, aid, iid):     # UPDATED BY SKYSNOLIMIT08 TO WORK
-        print("trying to retrieve associations")
-        print(aid)
-        print(iid)
+        # print("trying to retrieve associations")
+        # print(aid)
+        # print(iid)
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
-        print(interpretation)
+        # print(interpretation)
         if not interpretation:
             return HttpResponse(status=404)
         start = int(request.query_params.get('ts1', 0))
@@ -952,7 +953,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             user = Extended_User.objects.get(user_ID=uid)
             assert(user)
         except:
-            print("bad")
+            # print("bad")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         
