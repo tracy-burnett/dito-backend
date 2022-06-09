@@ -847,8 +847,15 @@ class AssociationViewSet(viewsets.ModelViewSet):
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
-        interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
-        if not interpretation:
+        
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not Interpretation.objects.filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
+                                                      | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
         query = Content.objects.all().filter(
