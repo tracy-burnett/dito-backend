@@ -28,7 +28,8 @@ import copy
 class UploadFileViewSet(viewsets.ViewSet):
     def presignedposturl(self, request, pk=None):
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         ext = request.data['ext']
@@ -41,15 +42,14 @@ class UploadFileViewSet(viewsets.ViewSet):
 class DownloadFileViewSet(viewsets.ViewSet):
     def presignedgeturl(self, request, pk=None):
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         audio_ID = request.data['audio_ID']
         url = S3().get_file(audio_ID)
 
         return Response({'url': url, 'audio_ID': audio_ID})
-
-
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -69,29 +69,29 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     serializer_class = InterpretationSerializer
     permission_classes = [permissions.AllowAny]
 
-    def create(self, request, aid):  #updated by skysnolimit 5/9/22
+    def create(self, request, aid):  # updated by skysnolimit 5/9/22
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         if not Audio.objects.filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
-                    | (Q(shared_with=uid) & Q(archived=False)) | Q(uploaded_by_id=uid)):
+                                                      | (Q(shared_with=uid) & Q(archived=False)) | Q(uploaded_by_id=uid)):
             return HttpResponse(status=404)
 
-
-        newinterpretationid=secrets.token_urlsafe(8)
+        newinterpretationid = secrets.token_urlsafe(8)
         try:
             obj = Interpretation(id=newinterpretationid, public=data['public'],
-                    # shared_editors=data.get('shared_editors', None),
-                    # shared_viewers=data.get('shared_viewers', None),
-                    audio_ID_id=aid,
-                    title=data['title'], latest_text=data['latest_text'],
-                    language_name=data['language_name'],
-                    spaced_by=data.get('spaced_by', None),
-                    created_by_id=uid, last_edited_by_id=uid)
+                                 # shared_editors=data.get('shared_editors', None),
+                                 # shared_viewers=data.get('shared_viewers', None),
+                                 audio_ID_id=aid,
+                                 title=data['title'], latest_text=data['latest_text'],
+                                 language_name=data['language_name'],
+                                 spaced_by=data.get('spaced_by', None),
+                                 created_by_id=uid, last_edited_by_id=uid)
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -104,29 +104,31 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         words = []
         for i in range(len(text_array)):
             word = text_array[i]
-            words.append(Content(interpretation_id_id=newinterpretationid, audio_id_id=aid, value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
+            words.append(Content(interpretation_id_id=newinterpretationid, audio_id_id=aid,
+                         value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
         obj.save()
         Content.objects.bulk_create(words)
         return JsonResponse({"interpretation": {"id": newinterpretationid, "public": data['public'],
-                    "shared_editors": None,
-                    "shared_viewers": None,
-                    "audio_ID": aid,
-                    "title": data['title'], "latest_text": data['latest_text'],
-                    "language_name": data['language_name'],
-                    "spaced_by": None,
-                    "created_by": uid, "last_edited_by": uid}}) # ACTUALLY SHOULD RETURN THE ACTUAL OBJECT, THIS IS KIND OF FAKE
+                                                "shared_editors": None,
+                                                "shared_viewers": None,
+                                                "audio_ID": aid,
+                                                "title": data['title'], "latest_text": data['latest_text'],
+                                                "language_name": data['language_name'],
+                                                "spaced_by": None,
+                                                "created_by": uid, "last_edited_by": uid}})  # ACTUALLY SHOULD RETURN THE ACTUAL OBJECT, THIS IS KIND OF FAKE
 
     def retrieve_audios(self, request, aid):
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        
-        query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid) 
-                                | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
-                                | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                | (Q(public=True) & Q(archived=False))))
+
+        query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
+                                                           | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                           | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                           | (Q(public=True) & Q(archived=False))))
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
@@ -136,42 +138,46 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_editors(self, request, iid, aid):
         data = request.data
         try:
-             decoded_token = auth.verify_id_token(request.headers['Authorization'])
-             uid = decoded_token['uid']
-        except:
-             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        
-        query = self.queryset.filter(Q(audio_id__id=aid)& Q(created_by__id=uid) 
-                                & Q(id=iid) & Q(shared_editors__id=uid) & Q(archived=False))
-        if not query:
-            return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data) #TODO
-
-    def update_editors(self, request, iid, aid):
-        data = request.data
-        try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid) & Q(shared_editors__id=uid) & Q(id=iid) & Q(archived=False))
+        query = self.queryset.filter(Q(audio_id__id=aid) & Q(created_by__id=uid)
+                                     & Q(id=iid) & Q(shared_editors__id=uid) & Q(archived=False))
+        if not query:
+            return HttpResponse(status=404)
+        serializer = self.serializer_class(query, many=True)
+        return JsonResponse(serializer.data)  # TODO
+
+    def update_editors(self, request, iid, aid):
+        data = request.data
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = self.queryset.filter(Q(audio_id__id=aid) & Q(
+            shared_editors__id=uid) & Q(id=iid) & Q(archived=False))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
         cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
-                    shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title, 
-                    latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
-                    spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
-                    last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+                                     shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
+                                     latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
+                                     spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
+                                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
 
         modifiable_attr = {'title', 'public', 'language_name', 'latest_text'}
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.version += 1
@@ -180,65 +186,75 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         obj.save()
         return HttpResponse(status=200)
 
-    def retrieve_owners(self, request, iid, aid): # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
+    # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
+    def retrieve_owners(self, request, iid, aid):
         # print(iid)
         # print(aid)
         # print("hi")
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.get(Q(audio_ID_id=aid)& Q(created_by_id=uid) & Q(id=iid))
+        query = self.queryset.get(
+            Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         # print(query)
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
-
-
-    def update_owners(self, request, iid, aid): # UPDATED TO WORK BY SKYSNOLIMIT08 ON 5/11/22
+    # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
+    def update_owners(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
+        query = self.queryset.filter(
+            Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
-        cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title, 
-                    latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
-                    spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
-                    last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+        # make a copy of the former version of the interpretation into the archive
+
+        cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title,
+                                     latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
+                                     spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
+                                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
-        Interpretation_History.objects.get(interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-        
+        Interpretation_History.objects.get(
+            interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+
+        # edit the interpretation to reflect the new user entered version
+
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
-        # print(request.data)
-        
-        # print(request.data)
+
         for key in request.data:
-            
             if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
             elif key == 'instructions':
+                # this is the instructions for updating the content table
                 path = request.data[key]
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
         # print(obj)
         obj.version += 1
         obj.last_updated_by = uid
         # print(obj)
         obj.save()
-		
-        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
+
+        query = Content.objects.all().filter(
+            interpretation_id_id=iid).order_by('value_index')
         serializer = ContentSerializer(query, many=True)
         a = [entry['value'] for entry in serializer.data]
         b = []
@@ -247,149 +263,71 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         else:
             b = list(request.data['latest_text'])
 
-
-
         # print(path)
 
         add = []
         subtract = []
         changed = []
-        # delta = 0
-        # path = self.closest(a, b)
-        # print("path:", path)
-        # path_index = 0
 
         def traverse_path(path):
-            # nonlocal path_index # already set to 0 outside this function
-            # nonlocal delta
-            i=0
-            # print(path[i])
+            i = 0
             while i < len(path):
                 if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                    # print("in number 1")
-                    useful = [x for x in path if 'moved' in x and not x['bIndex']== -1 and not x['aIndex'] == -1]
+                    useful = [x for x in path if 'moved' in x and not x['bIndex']
+                              == -1 and not x['aIndex'] == -1]
                     # print("useful, ", useful)
-                    query[path[i]['aIndex']].value_index=useful[0]['bIndex']
+                    query[path[i]['aIndex']].value_index = useful[0]['bIndex']
                     changed.append(query[path[i]['aIndex']])
                 elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
-                    # print("in number 2")
-                    # print(path[i]['bIndex'])
-                    add.append(Content(interpretation_id_id=iid, value=path[i]['line'], value_index = path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                    add.append(Content(interpretation_id_id=iid,
+                               value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                 elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
-                    # print("in number 3")
-                    # print(hasattr(path[i], 'moved'))
-                    # print(path[i]['moved'])
                     subtract.append(query[path[i]['aIndex']])
                 elif not 'moved' in path[i]:
-                    # print("in number 4")
                     query[path[i]['aIndex']].value_index = path[i]['bIndex']
                     changed.append(query[path[i]['aIndex']])
 
                 i += 1
-                    # if path[path_index][0] == i:
-                    #     add.append(Content(interpretation_id_id=iid,
-                    #                value=path[path_index][1], value_index=i + delta))
-                    #     delta += 1
-                    #     path_index += 1
-                    # else:
-                    #     break
-
-        # for i in range(len(query)):
-        #     traverse_path(i)
-        #     if (delta != 0):
-        #         query[i].value_index += delta
-        #         changed.append(query[i])
         traverse_path(path['lines'])
 
         # print("changed, ", changed[0].__dict__)
         # print("add, ", add[0].__dict__)
         # print("subtract, ", subtract[0].__dict__)
 
-
         Content.objects.bulk_update(changed, ['value_index'])
         for obj in subtract:
             obj.delete()
         Content.objects.bulk_create(add)
 
-        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
-        serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
-        a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+        # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+        # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+        # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
         # print("".join(a))
         # print(" ")
         # print("".join(b))
-        print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
+        # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
 
         return HttpResponse(status=200)
 
-    # def closest(self, a, b):
-    #     memo = {}
-    #     self.closest_helper(a, b, 0, 0, memo)
-    #     return self.trace(a, b, 0, 0, memo)
-
-    # def closest_helper(self, a, b, a_index, b_index, memo):
-    #     if a_index >= len(a) or b_index >= len(b):
-    #         return 0
-
-    #     if not (a_index, b_index) in memo:
-    #         if a[a_index] == b[b_index]:
-    #             memo[(a_index, b_index)] = 1 + \
-    #                 self.closest_helper(a, b, a_index + 1, b_index + 1, memo) # this is probably mutating memo in-place, without depending on any "return" statement
-    #         else:
-    #             memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
-    #                                                                b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
-
-    #     print("memo: ", memo)
-    #     return memo[(a_index, b_index)] # I think this is returning for the sake of the recursive use, not for use outside of the function itself
-
-    # def trace(self, a, b, a_index, b_index, memo):
-    #     path = []
-    #     while a_index < len(a) and b_index < len(b):
-    #         if a[a_index] == b[b_index]:
-    #             a_index += 1
-    #             b_index += 1
-    #         else:
-    #             if a_index + 1 >= len(a):
-    #                 path.append((a_index, b[b_index]))
-    #                 b_index += 1
-    #             elif b_index + 1 >= len(b):
-    #                 path.append(a_index)
-    #                 a_index += 1
-    #             elif memo[(a_index + 1, b_index)] < memo[(a_index, b_index + 1)]:
-    #                 path.append((a_index, b[b_index]))
-    #                 b_index += 1
-    #             else:
-    #                 path.append(a_index)
-    #                 a_index += 1
-
-    #     if a_index >= len(a):
-    #         for index in range(b_index, len(b)):
-    #             path.append((a_index, b[index]))
-    #     elif b_index >= len(b):
-    #         for index in range(a_index, len(a)):
-    #             path.append(index)
-
-    #     return path
-
-		
-		
-		
     def destroy(self, request, iid, aid):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid) & Q(id=iid) & Q(created_by__id=uid))
+        query = self.queryset.filter(
+            Q(audio_id__id=aid) & Q(id=iid) & Q(created_by__id=uid))
         if not query:
             return HttpResponse(status=404)
         obj = query.get()
         cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
-                    shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title, 
-                    latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
-                    spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
-                    last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+                                     shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
+                                     latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
+                                     spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
+                                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
         obj.delete()
         return HttpResponse(status=200)
@@ -397,25 +335,28 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     def retrieve_all(self, request):
         data = request.data
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(created_by__id=uid) 
-                | (Q(shared_viewers__id=uid) & Q(archived=False)) 
-                | (Q(shared_editors__id=uid) & Q(archived=False)))
+        query = self.queryset.filter(Q(created_by__id=uid)
+                                     | (Q(shared_viewers__id=uid) & Q(archived=False))
+                                     | (Q(shared_editors__id=uid) & Q(archived=False)))
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data) #TODO
+        return JsonResponse(serializer.data)  # TODO
 
     def retrieve_user(self, request, uid):
-        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(created_by__id=uid))
+        query = self.queryset.filter(Q(archived=False) & Q(
+            public=True) & Q(created_by__id=uid))
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data) #TODO
+        return JsonResponse(serializer.data)  # TODO
+
 
 class AudioViewSet(viewsets.ModelViewSet):
     """
@@ -423,21 +364,23 @@ class AudioViewSet(viewsets.ModelViewSet):
     """
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
-    permission_classes = [permissions.AllowAny] # this overrides project-level permission in settings.py
+    # this overrides project-level permission in settings.py
+    permission_classes = [permissions.AllowAny]
 
 # presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
     def create(self, request):
         data = request.data
         # print(request.headers['Authorization'])
         try:
-          decoded_token = auth.verify_id_token(request.headers['Authorization'])
-          uid = decoded_token['uid']
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
         except:
-          return Response('no valid user logged in')
+            return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
-                 uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
+                    uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
         # serializer = self.serializer_class(obj)
         # return JsonResponse('{"audio": serializer.data}')
@@ -449,45 +392,49 @@ class AudioViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(request.headers['Authorization'])
-          uid = decoded_token['uid']
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(uploaded_by=uid)& Q(id=aid))
+        query = self.queryset.filter(Q(uploaded_by=uid) & Q(id=aid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
-                           'last_updated_by', 'last_updated_at','archived'}
+                           'last_updated_by', 'last_updated_at', 'archived'}
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    def partial_update_editor(self, request,aid):  
+    def partial_update_editor(self, request, aid):
         data = request.data
 
         try:
-          decoded_token = auth.verify_id_token(request.headers['Authorization'])
-          uid = decoded_token['uid']
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.filter(Q(archived=False) & Q(id=aid) & Q(
-            shared_with = uid))
+            shared_with=uid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
-                            'last_updated_by', 'last_updated_at'}
+                           'last_updated_by', 'last_updated_at'}
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key]) #set last updated by/at automatically
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
@@ -497,44 +444,47 @@ class AudioViewSet(viewsets.ModelViewSet):
     def retrieve_public(self, pk):
         query = self.queryset.filter(Q(archived=False) & Q(public=True))
         serializer = self.serializer_class(query, many=True)
-        fieldsToKeep = {'title','description','id','url'}
+        fieldsToKeep = {'title', 'description', 'id', 'url'}
         sanitizedList = []
         for audioModel in serializer.data:
             sanitizedDict = {}
             for key in fieldsToKeep:
                 sanitizedDict[key] = audioModel[key]
             sanitizedList.append(sanitizedDict)
-        return JsonResponse({"audio":sanitizedList})
+        return JsonResponse({"audio": sanitizedList})
 
     def retrieve_private_user(self, request):
-        data = request.headers # FOR DEMONSTRATION
+        data = request.headers  # FOR DEMONSTRATION
         try:
-          decoded_token = auth.verify_id_token(data['Authorization']) # FOR DEMONSTRATION
-          uid = decoded_token['uid']
+            decoded_token = auth.verify_id_token(
+                data['Authorization'])  # FOR DEMONSTRATION
+            uid = decoded_token['uid']
         except:
-          return JsonResponse({"login expired; try refreshing the app or loggin in again":status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({"login expired; try refreshing the app or loggin in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.filter(Q(uploaded_by_id=uid) | (Q(archived=False) & Q(shared_with=uid))) # FOR DEMONSTRATION
+        query = self.queryset.filter(Q(uploaded_by_id=uid) | (
+            Q(archived=False) & Q(shared_with=uid)))  # FOR DEMONSTRATION
 
         if not query:
-          return JsonResponse({"no storybooks found":status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
         serializer = self.serializer_class(query, many=True)
-        return JsonResponse({"audio files":serializer.data})
-    
-    def retrieve_public_user(self, pk,uid):
+        return JsonResponse({"audio files": serializer.data})
+
+    def retrieve_public_user(self, pk, uid):
         query = self.queryset.filter(
             Q(archived=False) & Q(uploaded_by=uid) & Q(public=True))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
-        fieldsToKeep = {'title','description','id','url'}
+        fieldsToKeep = {'title', 'description', 'id', 'url'}
         sanitizedList = []
         for audioModel in serializer.data:
             sanitizedDict = {}
             for key in fieldsToKeep:
                 sanitizedDict[key] = audioModel[key]
             sanitizedList.append(sanitizedDict)
-        return JsonResponse({"audio":sanitizedList})
+        return JsonResponse({"audio": sanitizedList})
+
     def destroy(self, request, pk):
         query = self.queryset.filter(id=pk)
         if not query:
@@ -571,10 +521,11 @@ class TranslationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, aid, lid):
         try:
-          decoded_token = auth.verify_id_token(request.headers['Authorization'])
-          uid = decoded_token['uid']
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
         except:
-          return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         # print(aid)
         # print(lid)
         query = Audio.objects.all().filter(id=aid)
@@ -589,7 +540,7 @@ class TranslationViewSet(viewsets.ModelViewSet):
             return HttpResponse(status=404)
         language = query.get()
 
-        #Check unique
+        # Check unique
         # if self.queryset.filter(audio_id=aid, language_id=lid):
         #     return HttpResponse(status=400)
 
@@ -657,25 +608,25 @@ class TranslationViewSet(viewsets.ModelViewSet):
 
     def closest(self, a, b):
         memo = {}
-        
+
         # if (a == b):
-           
-            # self.sameText(a,b,memo)
-       
+
+        # self.sameText(a,b,memo)
+
         # else:
         self.closest_helper(a, b, 0, 0, memo)
         return self.trace(a, b, 0, 0, memo)
-    
+
     # def sameText(self,a,b,memo):
     #     count = len(a)
-    #     for i in range(len(a)): 
+    #     for i in range(len(a)):
     #         memo[(i,i)] = count
     #         count -= 1
 
     def closest_helper(self, a, b, a_index, b_index, memo):
-        #print(a_index)
-        #print(b_index)
-        #print(memo)
+        # print(a_index)
+        # print(b_index)
+        # print(memo)
         if a_index >= len(a) or b_index >= len(b):
             return 0
 
@@ -685,7 +636,8 @@ class TranslationViewSet(viewsets.ModelViewSet):
                     self.closest_helper(a, b, a_index + 1, b_index + 1, memo)
             else:
 
-                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1, b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo)) 
+                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
+                                                                   b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
 
         return memo[(a_index, b_index)]
 
@@ -797,7 +749,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
         end = float('inf')
         if 'ts2' in request.query_params:
             end = int(request.query_params['ts2'])
-        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
+        query = Content.objects.all().filter(
+            interpretation_id_id=iid).order_by('value_index')
         timestamp_to_word_groups = {}
         word_index = 0
         char_index = 0
@@ -841,7 +794,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
         else:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
-
         #print("next_ts", next_timestamp)
 
         start_index = len(query) - 1
@@ -880,8 +832,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     # timeEnd.append(str(interval[1] - start_offset))
                     # characterStart.append(str(timestamp_start))
                     # characterEnd.append(str(timestamp_end))
-                    entry.append(str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
-                associations[str(timestamp_start) + "-" + str(timestamp_end)] = entry
+                    entry.append(
+                        str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
+                associations[str(timestamp_start) + "-" +
+                             str(timestamp_end)] = entry
 
         # text = ""
         # words = [query[i].word for i in range(start_index, end_index + 1)]
@@ -892,12 +846,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
-    def update(self, request, aid, iid):      #UPDATED 5/11/22 BY SKYSNOLIMIT08 TO WORK
+    def update(self, request, aid, iid):  # UPDATED 5/11/22 BY SKYSNOLIMIT08 TO WORK
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
         if not interpretation:
             return HttpResponse(status=404)
 
-        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index')
+        query = Content.objects.all().filter(
+            interpretation_id_id=iid).order_by('value_index')
         serializer = ContentSerializer(query, many=True)
         words = [entry['value'] for entry in serializer.data]
         text = ""
@@ -926,29 +881,34 @@ class AssociationViewSet(viewsets.ModelViewSet):
         #print("accumulated lengths", accumulated_lengths)
 
         changed = []
-        #Find corresponding word of index
+        # Find corresponding word of index
         association_dict = request.data['associations']
-        association_dict = {int(k):v for k,v in association_dict.items()} # make sure the keys in the dict are integers
+        # make sure the keys in the dict are integers
+        association_dict = {int(k): v for k, v in association_dict.items()}
         for key in association_dict:
             if key >= 0:
-                insertion_point = bisect_left(accumulated_lengths, start_index + key)
+                insertion_point = bisect_left(
+                    accumulated_lengths, start_index + key)
                 # print("insertion point", insertion_point)
                 # print(query[insertion_point].timestamp)
                 # print(len(words))
-                if insertion_point < len(words): #insertion point may exceed words
-                    query[insertion_point].audio_time = association_dict[key] #make sure is int
+                # insertion point may exceed words
+                if insertion_point < len(words):
+                    # make sure is int
+                    query[insertion_point].audio_time = association_dict[key]
                     changed.append(query[insertion_point])
 
         Content.objects.bulk_update(changed, ['audio_time'])
 
-        query = Content.objects.all().filter(interpretation_id_id=interpretation).order_by('value_index')
+        query = Content.objects.all().filter(
+            interpretation_id_id=interpretation).order_by('value_index')
         serializer = ContentSerializer(query, many=True)
         # print(serializer.data)
         return HttpResponse(status=200)
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
-    
+
     """
     Extended_User API
     """
@@ -961,7 +921,8 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         data = request.data
 
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
@@ -973,9 +934,9 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             obj = Extended_User(user_ID=uid,
-                            description=data['description'],
-                            display_name=data['display_name'],
-                            anonymous=data['anonymous'])
+                                description=data['description'],
+                                display_name=data['display_name'],
+                                anonymous=data['anonymous'])
 
             obj.save()
             serializer = self.serializer_class(obj)
@@ -983,9 +944,10 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
     def update(self, request):
         data = request.data
-        
+
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
             user = Extended_User.objects.get(user_ID=uid)
             assert(user)
@@ -993,7 +955,6 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             # print("bad")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        
         user.description = data['description']
         user.display_name = data['display_name']
         user.anonymous = data['anonymous']
@@ -1003,15 +964,16 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request):
         data = request.data
-        
+
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
             user = Extended_User.objects.get(user_ID=uid)
             assert(user)
         except:
             return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # if user.archived:
         #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(user)
