@@ -222,10 +222,14 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
         # print(request.data)
+        
+        # print(request.data)
         for key in request.data:
             
             if hasattr(obj, key) and key in modifiable_attr:
                 setattr(obj, key, request.data[key]) #set last updated by/at automatically
+            elif key == 'instructions':
+                path = request.data[key]
             else:
                 return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         # print(obj)
@@ -242,96 +246,129 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             b = request.data['latest_text'].split(obj.spaced_by)
         else:
             b = list(request.data['latest_text'])
+
+
+
+        # print(path)
+
         add = []
         subtract = []
         changed = []
-        delta = 0
-        path = self.closest(a, b)
-        print("path:", path)
-        path_index = 0
+        # delta = 0
+        # path = self.closest(a, b)
+        # print("path:", path)
+        # path_index = 0
 
-        def traverse_path(i):
-            nonlocal path_index
-            nonlocal delta
-            while path_index < len(path):
-                if isinstance(path[path_index], int):
-                    if path[path_index] == i:
-                        subtract.append(query[i])
-                        delta -= 1
-                        path_index += 1
-                    else:
-                        break
-                else:
-                    if path[path_index][0] == i:
-                        add.append(Content(interpretation_id_id=iid,
-                                   value=path[path_index][1], value_index=i + delta))
-                        delta += 1
-                        path_index += 1
-                    else:
-                        break
+        def traverse_path(path):
+            # nonlocal path_index # already set to 0 outside this function
+            # nonlocal delta
+            i=0
+            # print(path[i])
+            while i < len(path):
+                if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                    # print("in number 1")
+                    useful = [x for x in path if 'moved' in x and not x['bIndex']== -1 and not x['aIndex'] == -1]
+                    # print("useful, ", useful)
+                    query[path[i]['aIndex']].value_index=useful[0]['bIndex']
+                    changed.append(query[path[i]['aIndex']])
+                elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                    # print("in number 2")
+                    # print(path[i]['bIndex'])
+                    add.append(Content(interpretation_id_id=iid, value=path[i]['line'], value_index = path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                    # print("in number 3")
+                    # print(hasattr(path[i], 'moved'))
+                    # print(path[i]['moved'])
+                    subtract.append(query[path[i]['aIndex']])
+                elif not 'moved' in path[i]:
+                    # print("in number 4")
+                    query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                    changed.append(query[path[i]['aIndex']])
 
-        for i in range(len(query)):
-            traverse_path(i)
-            if (delta != 0):
-                query[i].value_index += delta
-                changed.append(query[i])
-        traverse_path(len(query))
+                i += 1
+                    # if path[path_index][0] == i:
+                    #     add.append(Content(interpretation_id_id=iid,
+                    #                value=path[path_index][1], value_index=i + delta))
+                    #     delta += 1
+                    #     path_index += 1
+                    # else:
+                    #     break
+
+        # for i in range(len(query)):
+        #     traverse_path(i)
+        #     if (delta != 0):
+        #         query[i].value_index += delta
+        #         changed.append(query[i])
+        traverse_path(path['lines'])
+
+        # print("changed, ", changed[0].__dict__)
+        # print("add, ", add[0].__dict__)
+        # print("subtract, ", subtract[0].__dict__)
+
 
         Content.objects.bulk_update(changed, ['value_index'])
-        Content.objects.bulk_create(add)
         for obj in subtract:
             obj.delete()
+        Content.objects.bulk_create(add)
+
+        query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+        serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+        a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+        # print("".join(a))
+        # print(" ")
+        # print("".join(b))
+        print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
 
         return HttpResponse(status=200)
 
-    def closest(self, a, b):
-        memo = {}
-        self.closest_helper(a, b, 0, 0, memo)
-        return self.trace(a, b, 0, 0, memo)
+    # def closest(self, a, b):
+    #     memo = {}
+    #     self.closest_helper(a, b, 0, 0, memo)
+    #     return self.trace(a, b, 0, 0, memo)
 
-    def closest_helper(self, a, b, a_index, b_index, memo):
-        if a_index >= len(a) or b_index >= len(b):
-            return 0
+    # def closest_helper(self, a, b, a_index, b_index, memo):
+    #     if a_index >= len(a) or b_index >= len(b):
+    #         return 0
 
-        if not (a_index, b_index) in memo:
-            if a[a_index] == b[b_index]:
-                memo[(a_index, b_index)] = 1 + \
-                    self.closest_helper(a, b, a_index + 1, b_index + 1, memo) # this is probably mutating memo in-place, without depending on any "return" statement
-            else:
-                memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
-                                                                   b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
+    #     if not (a_index, b_index) in memo:
+    #         if a[a_index] == b[b_index]:
+    #             memo[(a_index, b_index)] = 1 + \
+    #                 self.closest_helper(a, b, a_index + 1, b_index + 1, memo) # this is probably mutating memo in-place, without depending on any "return" statement
+    #         else:
+    #             memo[(a_index, b_index)] = max(self.closest_helper(a, b, a_index + 1,
+    #                                                                b_index, memo), self.closest_helper(a, b, a_index, b_index + 1, memo))
 
-        print("memo: ", memo)
-        return memo[(a_index, b_index)] # I think this is returning for the sake of the recursive use, not for use outside of the function itself
+    #     print("memo: ", memo)
+    #     return memo[(a_index, b_index)] # I think this is returning for the sake of the recursive use, not for use outside of the function itself
 
-    def trace(self, a, b, a_index, b_index, memo):
-        path = []
-        while a_index < len(a) and b_index < len(b):
-            if a[a_index] == b[b_index]:
-                a_index += 1
-                b_index += 1
-            else:
-                if a_index + 1 >= len(a):
-                    path.append((a_index, b[b_index]))
-                    b_index += 1
-                elif b_index + 1 >= len(b):
-                    path.append(a_index)
-                    a_index += 1
-                elif memo[(a_index + 1, b_index)] < memo[(a_index, b_index + 1)]:
-                    path.append((a_index, b[b_index]))
-                    b_index += 1
-                else:
-                    path.append(a_index)
-                    a_index += 1
+    # def trace(self, a, b, a_index, b_index, memo):
+    #     path = []
+    #     while a_index < len(a) and b_index < len(b):
+    #         if a[a_index] == b[b_index]:
+    #             a_index += 1
+    #             b_index += 1
+    #         else:
+    #             if a_index + 1 >= len(a):
+    #                 path.append((a_index, b[b_index]))
+    #                 b_index += 1
+    #             elif b_index + 1 >= len(b):
+    #                 path.append(a_index)
+    #                 a_index += 1
+    #             elif memo[(a_index + 1, b_index)] < memo[(a_index, b_index + 1)]:
+    #                 path.append((a_index, b[b_index]))
+    #                 b_index += 1
+    #             else:
+    #                 path.append(a_index)
+    #                 a_index += 1
 
-        if a_index >= len(a):
-            for index in range(b_index, len(b)):
-                path.append((a_index, b[index]))
-        elif b_index >= len(b):
-            for index in range(a_index, len(a)):
-                path.append(index)
+    #     if a_index >= len(a):
+    #         for index in range(b_index, len(b)):
+    #             path.append((a_index, b[index]))
+    #     elif b_index >= len(b):
+    #         for index in range(a_index, len(a)):
+    #             path.append(index)
 
-        return path
+    #     return path
 
 		
 		
