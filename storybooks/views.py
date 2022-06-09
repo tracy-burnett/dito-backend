@@ -846,66 +846,25 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
-    def update(self, request, aid, iid):  # UPDATED 5/11/22 BY SKYSNOLIMIT08 TO WORK
+    def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
         if not interpretation:
             return HttpResponse(status=404)
 
         query = Content.objects.all().filter(
             interpretation_id_id=iid).order_by('value_index')
-        serializer = ContentSerializer(query, many=True)
-        # words = [entry['value'] for entry in serializer.data]
-        # text = ""
-        # if interpretation.spaced_by:
-        #     text = interpretation.spaced_by.join(words)
-        # else:
-        #     text = "".join(words)
-
-        # start_index = text.find(request.data['text'])
-        # print(text)
-        # print("start_index", start_index)
-        # if start_index < 0:
-        #     return HttpResponse(status=400)
-
-        # # Scan lengths of elements in words
-        # accumulated_lengths = []
-        # sum = 0
-        # for word in words:
-        #     sum += len(word)
-        #     if interpretation.spaced_by:  # account for spaces
-        #         sum += 1
-        #     # only want to count until right before start of new word
-        #     accumulated_lengths.append(sum - 1)
-        # if interpretation.spaced_by:  # remove last space at the end
-        #     accumulated_lengths[-1] -= 1
-        # print("accumulated lengths", accumulated_lengths)
-
-        accumulated_lengths = [entry['value_index'] for entry in serializer.data] # array of indices
 
         changed = []
-        # Find corresponding word of index
         association_dict = request.data['associations']
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
         for key in association_dict:
             if key >= 0:
-                # insertion_point = bisect_left(
-                #     accumulated_lengths, start_index + key)
-                # print("insertion point", insertion_point)
-                # print(query[insertion_point].timestamp)
-                # print(len(words))
-                # insertion point may exceed words
-                # if insertion_point < len(words):
-                    # make sure is int
                     query[key].audio_time = association_dict[key]
                     changed.append(query[key])
 
         Content.objects.bulk_update(changed, ['audio_time'])
 
-        # query = Content.objects.all().filter(
-        #     interpretation_id_id=interpretation).order_by('value_index')
-        # serializer = ContentSerializer(query, many=True)
-        # print(serializer.data)
         return HttpResponse(status=200)
 
 
