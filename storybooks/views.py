@@ -859,17 +859,21 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return HttpResponse(status=404)
 
         query = Content.objects.all().filter(
-            interpretation_id_id=iid).order_by('value_index')
+            interpretation_id_id=iid)
 
         changed = []
         association_dict = request.data['associations']
+        print(association_dict)
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
         for key in association_dict:
             if key >= 0:
-                    query[key].audio_time = association_dict[key]
-                    changed.append(query[key])
-
+                print(association_dict[key])
+                print(query[key].audio_time)
+                query[key].audio_time = 316
+                print("why is this not updating", query[key].audio_time)
+                changed.append(query[key])
+        print(changed[0].__dict__)
         Content.objects.bulk_update(changed, ['audio_time'])
 
         return HttpResponse(status=200)
