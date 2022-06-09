@@ -864,13 +864,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
         changed = []
         association_dict = request.data['associations']
         print(association_dict)
+
+        serializer = ContentSerializer(query, many=True)
+
+        indices_array = [entry['value_index'] for entry in serializer.data] # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
+
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
         for key in association_dict:
             if key >= 0:
                 print(association_dict[key])
                 print(query[key].audio_time)
-                query[key].audio_time = 316
+                query[key].audio_time = association_dict[key]
                 print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
         print(changed[0].__dict__)
