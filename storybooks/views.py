@@ -251,63 +251,67 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         obj.version += 1
         obj.last_updated_by = uid
         # print(obj)
-        obj.save()
-
-        query = Content.objects.all().filter(
-            interpretation_id_id=iid).order_by('value_index')
-        serializer = ContentSerializer(query, many=True)
-        a = [entry['value'] for entry in serializer.data]
-        b = []
-        if obj.spaced_by:
-            b = request.data['latest_text'].split(obj.spaced_by)
-        else:
-            b = list(request.data['latest_text'])
-
-        # print(path)
-
-        add = []
-        subtract = []
-        changed = []
-
-        def traverse_path(path):
-            i = 0
-            while i < len(path):
-                if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                    useful = [x for x in path if 'moved' in x and not x['bIndex']
-                              == -1 and not x['aIndex'] == -1]
-                    # print("useful, ", useful)
-                    query[path[i]['aIndex']].value_index = useful[0]['bIndex']
-                    changed.append(query[path[i]['aIndex']])
-                elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
-                    add.append(Content(interpretation_id_id=iid,
-                               value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
-                elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
-                    subtract.append(query[path[i]['aIndex']])
-                elif not 'moved' in path[i]:
-                    query[path[i]['aIndex']].value_index = path[i]['bIndex']
-                    changed.append(query[path[i]['aIndex']])
-
-                i += 1
-        traverse_path(path['lines'])
-
-        # print("changed, ", changed[0].__dict__)
-        # print("add, ", add[0].__dict__)
-        # print("subtract, ", subtract[0].__dict__)
-
-        Content.objects.bulk_update(changed, ['value_index'])
-        for obj in subtract:
+        if obj.title == "" and obj.latest_text == "" and obj.language_name == "":
             obj.delete()
-        Content.objects.bulk_create(add)
+            return Response('interpretation deleted')
+        else:
+            obj.save()
 
-        # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
-        # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
-        # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
-        # print("".join(a))
-        # print(" ")
-        # print("".join(b))
-        # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
+            query = Content.objects.all().filter(
+                interpretation_id_id=iid).order_by('value_index')
+            serializer = ContentSerializer(query, many=True)
+            a = [entry['value'] for entry in serializer.data]
+            b = []
+            if obj.spaced_by:
+                b = request.data['latest_text'].split(obj.spaced_by)
+            else:
+                b = list(request.data['latest_text'])
 
-        return HttpResponse(status=200)
+            # print(path)
+
+            add = []
+            subtract = []
+            changed = []
+
+            def traverse_path(path):
+                i = 0
+                while i < len(path):
+                    if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                        useful = [x for x in path if 'moved' in x and not x['bIndex']
+                                == -1 and not x['aIndex'] == -1]
+                        # print("useful, ", useful)
+                        query[path[i]['aIndex']].value_index = useful[0]['bIndex']
+                        changed.append(query[path[i]['aIndex']])
+                    elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                        add.append(Content(interpretation_id_id=iid,
+                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                    elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                        subtract.append(query[path[i]['aIndex']])
+                    elif not 'moved' in path[i]:
+                        query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                        changed.append(query[path[i]['aIndex']])
+
+                    i += 1
+            traverse_path(path['lines'])
+
+            # print("changed, ", changed[0].__dict__)
+            # print("add, ", add[0].__dict__)
+            # print("subtract, ", subtract[0].__dict__)
+
+            Content.objects.bulk_update(changed, ['value_index'])
+            for obj in subtract:
+                obj.delete()
+            Content.objects.bulk_create(add)
+
+            # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+            # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+            # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+            # print("".join(a))
+            # print(" ")
+            # print("".join(b))
+            # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
+
+            return Response('interpretation updated')
 
     def destroy(self, request, iid, aid):
         data = request.data
