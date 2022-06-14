@@ -21,7 +21,7 @@ class AudioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Audio
-        fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','shared_with','public']
+        fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','shared_editors','shared_viewers','public']
 
 class InterpretationSerializer(serializers.ModelSerializer):
     class Meta:

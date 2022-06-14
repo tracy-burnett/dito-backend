@@ -19,7 +19,8 @@ class Audio(models.Model):
     uploaded_by = models.ForeignKey(Extended_User, related_name="audio_uploaded_by", null=True, on_delete=models.SET_NULL) # FOR DEMONSTRATION
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(Extended_User, related_name="audio_last_updated_by", null=True, on_delete=models.SET_NULL)
-    shared_with = models.ManyToManyField(Extended_User, blank=True)
+    shared_editors = models.ManyToManyField(Extended_User, related_name="audio_shared_editors", blank=True)
+    shared_viewers = models.ManyToManyField(Extended_User, related_name="audio_shared_viewers", blank=True)
     public = models.BooleanField(default=False)
 
     class Meta:
