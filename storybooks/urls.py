@@ -22,7 +22,7 @@ presignedgeturl_detail = DownloadFileViewSet.as_view({
 
 audio_list = AudioViewSet.as_view({
     'post':'create',             # has auth.  working 6/13/22.
-    'get':'retrieve_public'      # NOT UPDATED YET.      (get list of public and not archived audio files.)
+    'get':'retrieve_public'      # no auth required.  working 6/14/22.
 })
 
 audio_update_owner = AudioViewSet.as_view({
@@ -55,7 +55,7 @@ interpretations_editor = InterpretationViewSet.as_view({
 interpretations_owner = InterpretationViewSet.as_view({
     'patch': 'update_owners',       # has auth.  working 6/13/22.
     'get': 'retrieve_owners',         # has auth.  working 6/13/22.
-    'delete': 'destroy',               # NOT UPDATED YET.          (delete an interpretation that you created.)
+    'delete': 'destroy',               # NOT UPDATED YET.          (delete an interpretation that you created.)  [ignore for now]
 })
 
 interpretations = InterpretationViewSet.as_view({

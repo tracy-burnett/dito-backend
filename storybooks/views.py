@@ -40,16 +40,26 @@ class UploadFileViewSet(viewsets.ViewSet):
 
 
 class DownloadFileViewSet(viewsets.ViewSet):
+    queryset = Audio.objects.all()
+    serializer_class = AudioSerializer
+    
     def presignedgeturl(self, request, pk=None):
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         audio_ID = request.data['audio_ID']
-        url = S3().get_file(audio_ID)
 
-        return Response({'url': url, 'audio_ID': audio_ID})
+        
+        try:
+            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            query = self.queryset.filter((Q(uploaded_by=decoded_token['uid']) | (
+            Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
+            Q(archived=False) & Q(shared_viewers=decoded_token['uid']))) & Q(id=audio_ID))
+        except:
+            query = self.queryset.filter(Q(public=True) & Q(archived=False) & Q(id=audio_ID))
+
+        if not query:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        elif query:
+            url = S3().get_file(audio_ID)
+            return Response({'url': url, 'audio_ID': audio_ID})
 
 
 class InterpretationViewSet(viewsets.ModelViewSet):
@@ -305,28 +315,28 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
             return Response('interpretation updated')
 
-    def destroy(self, request, iid, aid):
-        data = request.data
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    # def destroy(self, request, iid, aid):
+    #     data = request.data
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #     except:
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(
-            Q(audio_id__id=aid) & Q(id=iid) & Q(created_by__id=uid))
-        if not query:
-            return HttpResponse(status=404)
-        obj = query.get()
-        cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
-                                     shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
-                                     latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
-                                     spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
-                                     last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
-        cpy.save()
-        obj.delete()
-        return HttpResponse(status=200)
+    #     query = self.queryset.filter(
+    #         Q(audio_id__id=aid) & Q(id=iid) & Q(created_by__id=uid))
+    #     if not query:
+    #         return HttpResponse(status=404)
+    #     obj = query.get()
+    #     cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
+    #                                  shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
+    #                                  latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
+    #                                  spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
+    #                                  last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+    #     cpy.save()
+    #     obj.delete()
+    #     return HttpResponse(status=200)
 
     def retrieve_all(self, request):
         data = request.data
@@ -440,14 +450,15 @@ class AudioViewSet(viewsets.ModelViewSet):
     def retrieve_public(self, pk):
         query = self.queryset.filter(Q(archived=False) & Q(public=True))
         serializer = self.serializer_class(query, many=True)
-        fieldsToKeep = {'title', 'description', 'id', 'url'}
-        sanitizedList = []
-        for audioModel in serializer.data:
-            sanitizedDict = {}
-            for key in fieldsToKeep:
-                sanitizedDict[key] = audioModel[key]
-            sanitizedList.append(sanitizedDict)
-        return JsonResponse({"audio": sanitizedList})
+        # fieldsToKeep = {'title', 'description', 'id', 'url'}
+        # sanitizedList = []
+        # for audioModel in serializer.data:
+        #     sanitizedDict = {}
+        #     for key in fieldsToKeep:
+        #         sanitizedDict[key] = audioModel[key]
+        #     sanitizedList.append(sanitizedDict)
+        # return JsonResponse({"audio": sanitizedList})
+        return JsonResponse({"audio": serializer.data})
 
     def retrieve_private_user(self, request):
         data = request.headers  # FOR DEMONSTRATION
