@@ -30,7 +30,7 @@ audio_update_owner = AudioViewSet.as_view({
 })
 
 audio_update_editor = AudioViewSet.as_view({
-    'patch':'partial_update_editor'        # NOT UPDATED YET.
+    'patch':'partial_update_editor'        # has auth.  working 6/13/22.
 })
 
 audio_retrieve_private_user = AudioViewSet.as_view({

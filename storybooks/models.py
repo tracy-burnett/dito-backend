@@ -3,6 +3,7 @@ from django.db import models
 
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
+    email = models.CharField(max_length=255)
     user_ID = models.CharField(max_length=255, primary_key=True)
     display_name = models.CharField(max_length=255)
     description = models.TextField()

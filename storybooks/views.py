@@ -124,13 +124,15 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
-                                                           | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
-                                                           | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                                           | (Q(public=True) & Q(archived=False))))
+            query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
+                                                    | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                    | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                    | (Q(public=True) & Q(archived=False))))
+        except:
+            query = self.queryset.filter(Q(public=True) & Q(archived=False))
+
+
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
@@ -259,59 +261,60 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         else:
             obj.save()
 
-            query = Content.objects.all().filter(
-                interpretation_id_id=iid).order_by('value_index')
-            serializer = ContentSerializer(query, many=True)
-            a = [entry['value'] for entry in serializer.data]
-            b = []
-            if obj.spaced_by:
-                b = request.data['latest_text'].split(obj.spaced_by)
-            else:
-                b = list(request.data['latest_text'])
+            if 'path' in locals():
+                query = Content.objects.all().filter(
+                    interpretation_id_id=iid).order_by('value_index')
+                serializer = ContentSerializer(query, many=True)
+                a = [entry['value'] for entry in serializer.data]
+                b = []
+                if obj.spaced_by:
+                    b = request.data['latest_text'].split(obj.spaced_by)
+                else:
+                    b = list(request.data['latest_text'])
 
-            # print(path)
+                # print(path)
 
-            add = []
-            subtract = []
-            changed = []
+                add = []
+                subtract = []
+                changed = []
 
-            def traverse_path(path):
-                i = 0
-                while i < len(path):
-                    if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                        useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                == -1 and not x['aIndex'] == -1]
-                        # print("useful, ", useful)
-                        query[path[i]['aIndex']].value_index = useful[0]['bIndex']
-                        changed.append(query[path[i]['aIndex']])
-                    elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
-                        add.append(Content(interpretation_id_id=iid,
-                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
-                    elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
-                        subtract.append(query[path[i]['aIndex']])
-                    elif not 'moved' in path[i]:
-                        query[path[i]['aIndex']].value_index = path[i]['bIndex']
-                        changed.append(query[path[i]['aIndex']])
+                def traverse_path(path):
+                    i = 0
+                    while i < len(path):
+                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                            useful = [x for x in path if 'moved' in x and not x['bIndex']
+                                    == -1 and not x['aIndex'] == -1]
+                            # print("useful, ", useful)
+                            query[path[i]['aIndex']].value_index = useful[0]['bIndex']
+                            changed.append(query[path[i]['aIndex']])
+                        elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            add.append(Content(interpretation_id_id=iid,
+                                    value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                        elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            subtract.append(query[path[i]['aIndex']])
+                        elif not 'moved' in path[i]:
+                            query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            changed.append(query[path[i]['aIndex']])
 
-                    i += 1
-            traverse_path(path['lines'])
+                        i += 1
+                traverse_path(path['lines'])
 
-            # print("changed, ", changed[0].__dict__)
-            # print("add, ", add[0].__dict__)
-            # print("subtract, ", subtract[0].__dict__)
+                # print("changed, ", changed[0].__dict__)
+                # print("add, ", add[0].__dict__)
+                # print("subtract, ", subtract[0].__dict__)
 
-            Content.objects.bulk_update(changed, ['value_index'])
-            for obj in subtract:
-                obj.delete()
-            Content.objects.bulk_create(add)
+                Content.objects.bulk_update(changed, ['value_index'])
+                for obj in subtract:
+                    obj.delete()
+                Content.objects.bulk_create(add)
 
-            # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
-            # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
-            # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
-            # print("".join(a))
-            # print(" ")
-            # print("".join(b))
-            # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
+                # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+                # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+                # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+                # print("".join(a))
+                # print(" ")
+                # print("".join(b))
+                # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
 
             return Response('interpretation updated')
 
@@ -410,12 +413,34 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
                            'last_updated_by', 'last_updated_at', 'archived'}
+        k=0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+                k=1
+        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+            # print("editor", request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+            obj.shared_editors.add(neweditor)
+            k=1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k=1
+        if 'remove_editor' in request.data:
+            print("editor", request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k=1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['shared_viewer'])
+            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k=1
+        if k==0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
@@ -437,12 +462,34 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
                            'last_updated_by', 'last_updated_at'}
+        k=0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+                k=1
+        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+            # print("editor", request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+            obj.shared_editors.add(neweditor)
+            k=1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k=1
+        if 'remove_editor' in request.data:
+            # print("editor", request.data['shared_editor'])
+            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k=1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['shared_viewer'])
+            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k=1
+        if k==0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
@@ -669,8 +716,9 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
     def create(self, request):
         # permission_classes = [permissions.IsAuthenticated]
         data = request.data
-
+        # print("data", data)
         try:
+            # print(request.headers)
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
@@ -679,14 +727,15 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
         if Extended_User.objects.filter(user_ID=uid).exists():
-            user = Extended_User.objects.get(user_ID=uid)
+            user = Extended_User.objects.get(Q(user_ID=uid) | Q(email=data['email']))
             if user:
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             obj = Extended_User(user_ID=uid,
                                 description=data['description'],
                                 display_name=data['display_name'],
-                                anonymous=data['anonymous'])
+                                anonymous=data['anonymous'],
+                                email=data['email'])
 
             obj.save()
             serializer = self.serializer_class(obj)
@@ -720,7 +769,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
             user = Extended_User.objects.get(user_ID=uid)
-            assert(user)
+            # assert(user)
         except:
             return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
 
