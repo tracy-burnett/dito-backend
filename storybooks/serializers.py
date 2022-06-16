@@ -27,6 +27,8 @@ class AudioSerializer(serializers.ModelSerializer):
 
 class InterpretationSerializer(serializers.ModelSerializer):
     created_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+    shared_editors = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
+    shared_viewers = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
 
     class Meta:
         model = Interpretation

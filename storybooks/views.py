@@ -155,8 +155,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query, many=True)
         return JsonResponse(serializer.data)  # TODO
 
+
+    # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_editors(self, request, iid, aid):
-        data = request.data
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -164,31 +165,186 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid) & Q(
-            shared_editors__id=uid) & Q(id=iid) & Q(archived=False))
+        query = self.queryset.filter(
+            Q(audio_ID_id=aid) & Q(shared_editors_id=uid) & Q(id=iid) & Q(archived=False))
+
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
-        cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
-                                     shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
+        # make a copy of the former version of the interpretation into the archive
+
+        cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title,
                                      latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
                                      spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
                                      last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
+        Interpretation_History.objects.get(
+            interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+        Interpretation_History.objects.get(
+            interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
 
-        modifiable_attr = {'title', 'public', 'language_name', 'latest_text'}
+        # edit the interpretation to reflect the new user entered version
+
+        modifiable_attr = {'public', 'shared_viewers', 'title', 'latest_text', 'language_name'}
+
+
+
+        k=0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+                k=1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k=1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k=1
+        if key == 'instructions':
+            # this is the instructions for updating the content table
+            path = request.data[key]
+            k=1
+        if k==0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        # print(obj)
         obj.version += 1
-        obj.last_updated_by = User.objects.get(id=uid)
-        obj.last_updated_at = datetime.now()
-        obj.save()
-        return HttpResponse(status=200)
+        obj.last_updated_by = uid
+        # print(obj)
+        if obj.title == "" and obj.latest_text == "" and obj.language_name == "":
+            obj.delete()
+            return Response('interpretation deleted')
+        else:
+            obj.save()
+
+            if 'path' in locals():
+                query = Content.objects.all().filter(
+                    interpretation_id_id=iid).order_by('value_index')
+                serializer = ContentSerializer(query, many=True)
+                a = [entry['value'] for entry in serializer.data]
+                b = []
+                if obj.spaced_by:
+                    b = request.data['latest_text'].split(obj.spaced_by)
+                else:
+                    b = list(request.data['latest_text'])
+
+                # print(path)
+
+                add = []
+                subtract = []
+                changed = []
+
+                def traverse_path(path):
+                    i = 0
+                    while i < len(path):
+                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                            useful = [x for x in path if 'moved' in x and not x['bIndex']
+                                    == -1 and not x['aIndex'] == -1]
+                            # print("useful, ", useful)
+                            query[path[i]['aIndex']].value_index = useful[0]['bIndex']
+                            changed.append(query[path[i]['aIndex']])
+                        elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            add.append(Content(interpretation_id_id=iid,
+                                    value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                        elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            subtract.append(query[path[i]['aIndex']])
+                        elif not 'moved' in path[i]:
+                            query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            changed.append(query[path[i]['aIndex']])
+
+                        i += 1
+                traverse_path(path['lines'])
+
+                # print("changed, ", changed[0].__dict__)
+                # print("add, ", add[0].__dict__)
+                # print("subtract, ", subtract[0].__dict__)
+
+                Content.objects.bulk_update(changed, ['value_index'])
+                for obj in subtract:
+                    obj.delete()
+                Content.objects.bulk_create(add)
+
+                # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+                # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+                # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+                # print("".join(a))
+                # print(" ")
+                # print("".join(b))
+                # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
+
+            return Response('interpretation updated')
+
+    # def update_editors(self, request, iid, aid):
+    #     # data = request.data
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #     except:
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     query = self.queryset.filter(Q(audio_id__id=aid) & Q(
+    #         shared_editors__id=uid) & Q(id=iid) & Q(archived=False))
+    #     if not query:
+    #         return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+    #     obj = query.get()
+
+    #     cpy = Interpretation_History(interpretation_id=obj.id, public=obj.public, shared_editors=obj.shared_editors,
+    #                                  shared_viewers=obj.shared_viewers, audio_id=obj.audio_id, title=obj.title,
+    #                                  latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
+    #                                  spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
+    #                                  last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+    #     cpy.save()
+
+    #     modifiable_attr = {'title', 'public', 'language_name', 'latest_text', 'shared_viewers'}
+
+    #     k=0
+    #     for key in request.data:
+    #         if hasattr(obj, key) and key in modifiable_attr:
+    #             # set last updated by/at automatically
+    #             setattr(obj, key, request.data[key])
+    #             k=1
+    #     if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+    #         # print("editor", request.data['shared_editor'])
+    #         neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+    #         obj.shared_editors.add(neweditor)
+    #         k=1
+    #     if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+    #         # print("viewer", request.data['shared_viewer'])
+    #         newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+    #         obj.shared_viewers.add(newviewer)
+    #         k=1
+    #     if 'remove_editor' in request.data:
+    #         # print("editor", request.data['remove_editor'])
+    #         oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+    #         obj.shared_editors.remove(oldeditor)
+    #         k=1
+    #     if 'remove_viewer' in request.data:
+    #         # print("viewer", request.data['remove_viewer'])
+    #         oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+    #         obj.shared_viewers.remove(oldviewer)
+    #         k=1
+    #     if k==0:
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # for key in request.data:
+    #     #     if hasattr(obj, key) and key in modifiable_attr:
+    #     #         # set last updated by/at automatically
+    #     #         setattr(obj, key, request.data[key])
+    #     #     else:
+    #     #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    #     obj.version += 1
+    #     obj.last_updated_by = User.objects.get(id=uid)
+    #     # obj.last_updated_at = datetime.now()
+    #     obj.save()
+    #     return HttpResponse(status=200)
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
     def retrieve_owners(self, request, iid, aid):
@@ -212,7 +368,6 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_owners(self, request, iid, aid):
-        data = request.data
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -235,21 +390,49 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         cpy.save()
         Interpretation_History.objects.get(
             interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+        Interpretation_History.objects.get(
+            interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
 
         # edit the interpretation to reflect the new user entered version
 
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
-                           'title', 'latest_text', 'archived', 'language_name', 'spaced_by'}
+                           'title', 'latest_text', 'archived', 'language_name',}
 
+
+
+        k=0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-            elif key == 'instructions':
-                # this is the instructions for updating the content table
-                path = request.data[key]
-            else:
-                return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+                k=1
+        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+            # print("editor", request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+            obj.shared_editors.add(neweditor)
+            k=1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k=1
+        if 'remove_editor' in request.data:
+            # print("editor", request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k=1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k=1
+        if key == 'instructions':
+            # this is the instructions for updating the content table
+            path = request.data[key]
+            k=1
+        if k==0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
 
         # print(obj)
         obj.version += 1
@@ -430,7 +613,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             obj.shared_viewers.add(newviewer)
             k=1
         if 'remove_editor' in request.data:
-            print("editor", request.data['remove_editor'])
+            # print("editor", request.data['remove_editor'])
             oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
             k=1
@@ -484,7 +667,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         #     obj.shared_editors.remove(oldeditor)
         #     k=1
         if 'remove_viewer' in request.data:
-            print("viewer", request.data['remove_viewer'])
+            # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k=1
@@ -524,7 +707,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
         serializer = self.serializer_class(query, many=True)
-        print(serializer.data)
+        # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
     def retrieve_public_user(self, pk, uid):
@@ -684,7 +867,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         changed = []
         association_dict = request.data['associations']
-        print(association_dict)
+        # print(association_dict)
 
         serializer = ContentSerializer(query, many=True)
 
@@ -694,12 +877,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
         association_dict = {int(k): v for k, v in association_dict.items()}
         for key in association_dict:
             if key >= 0:
-                print(association_dict[key])
-                print(query[key].audio_time)
+                # print(association_dict[key])
+                # print(query[key].audio_time)
                 query[key].audio_time = association_dict[key]
-                print("why is this not updating", query[key].audio_time)
+                # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
-        print(changed[0].__dict__)
+        # print(changed[0].__dict__)
         Content.objects.bulk_update(changed, ['audio_time'])
 
         return HttpResponse(status=200)

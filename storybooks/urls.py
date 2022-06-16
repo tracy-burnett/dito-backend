@@ -48,12 +48,12 @@ interpretations_detail = InterpretationViewSet.as_view({
 })
 
 interpretations_editor = InterpretationViewSet.as_view({
-    'patch': 'update_editors',          # NOT UPDATED YET.
+    'patch': 'update_editors',          # has auth.  working 6/16/22.
     'get': 'retrieve_editors',          # NOT UPDATED YET.
 })
 
 interpretations_owner = InterpretationViewSet.as_view({
-    'patch': 'update_owners',       # has auth.  working 6/13/22.
+    'patch': 'update_owners',       # has auth.  working 6/16/22.
     'get': 'retrieve_owners',         # has auth.  working 6/13/22.
     'delete': 'destroy',               # NOT UPDATED YET.          (delete an interpretation that you created.)  [ignore for now]
 })
@@ -106,7 +106,7 @@ urlpatterns.extend(format_suffix_patterns([
     path('s3/presignedposturl', presignedposturl_detail, name='presignedposturl-detail'),
     path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail'),
     path('interpretations/audio/<aid>/', interpretations_detail, name='interpretations_detail'),
-    path('interpretations/<int:iid>/audio/<int:aid>/editor', interpretations_editor, name='interpretations_editor'),    
+    path('interpretations/<iid>/audio/<aid>/editor/', interpretations_editor, name='interpretations_editor'),    
     path('interpretations/<iid>/audio/<aid>/owner/', interpretations_owner, name='interpretations_owner'),
     path('interpretations/', interpretations, name='interpretations'),
     path('interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user'),
