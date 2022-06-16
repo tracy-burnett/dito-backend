@@ -51,7 +51,7 @@ class DownloadFileViewSet(viewsets.ViewSet):
             decoded_token = auth.verify_id_token(request.headers['Authorization'])
             query = self.queryset.filter((Q(uploaded_by=decoded_token['uid']) | (
             Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
-            Q(archived=False) & Q(shared_viewers=decoded_token['uid']))) & Q(id=audio_ID))
+            Q(archived=False) & Q(shared_viewers=decoded_token['uid']))) & Q(id=audio_ID)).distinct()
         except:
             query = self.queryset.filter(Q(public=True) & Q(archived=False) & Q(id=audio_ID))
 
@@ -81,7 +81,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         if not Audio.objects.filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
                                                       | (Q(shared_editors=uid) & Q(archived=False)) | (
-            Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)):
+            Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
             return HttpResponse(status=404)
 
         newinterpretationid = secrets.token_urlsafe(8)
@@ -128,7 +128,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
                                                     | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                     | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                                    | (Q(public=True) & Q(archived=False))))
+                                                    | (Q(public=True) & Q(archived=False)))).distinct()
         except:
             query = self.queryset.filter(Q(public=True) & Q(archived=False))
 
@@ -352,7 +352,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         query = self.queryset.filter(Q(created_by__id=uid)
                                      | (Q(shared_viewers__id=uid) & Q(archived=False))
-                                     | (Q(shared_editors__id=uid) & Q(archived=False)))
+                                     | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
         if not query:
             return HttpResponse(status=404)
         serializer = self.serializer_class(query, many=True)
@@ -435,7 +435,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             obj.shared_editors.remove(oldeditor)
             k=1
         if 'remove_viewer' in request.data:
-            # print("viewer", request.data['shared_viewer'])
+            # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k=1
@@ -468,23 +468,23 @@ class AudioViewSet(viewsets.ModelViewSet):
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
                 k=1
-        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
-            # print("editor", request.data['shared_editor'])
-            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
-            obj.shared_editors.add(neweditor)
-            k=1
+        # if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+        #     # print("editor", request.data['shared_editor'])
+        #     neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+        #     obj.shared_editors.add(neweditor)
+        #     k=1
         if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
             # print("viewer", request.data['shared_viewer'])
             newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
             obj.shared_viewers.add(newviewer)
             k=1
-        if 'remove_editor' in request.data:
-            # print("editor", request.data['shared_editor'])
-            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
-            obj.shared_editors.remove(oldeditor)
-            k=1
+        # if 'remove_editor' in request.data:
+        #     # print("editor", request.data['shared_editor'])
+        #     oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+        #     obj.shared_editors.remove(oldeditor)
+        #     k=1
         if 'remove_viewer' in request.data:
-            # print("viewer", request.data['shared_viewer'])
+            print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k=1
@@ -519,11 +519,12 @@ class AudioViewSet(viewsets.ModelViewSet):
         query = self.queryset.filter(Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
             Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True)))  # FOR DEMONSTRATION
+            Q(archived=False) & Q(public=True))).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
         serializer = self.serializer_class(query, many=True)
+        print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
     def retrieve_public_user(self, pk, uid):
