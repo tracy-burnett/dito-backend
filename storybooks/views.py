@@ -130,7 +130,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                                     | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                     | (Q(public=True) & Q(archived=False)))).distinct()
         except:
-            query = self.queryset.filter(Q(public=True) & Q(archived=False))
+            query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(public=True) & Q(archived=False)))
 
 
         if not query:
