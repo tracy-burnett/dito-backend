@@ -140,7 +140,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         return JsonResponse({"interpretations": serializer.data})
 
     def retrieve_editors(self, request, iid, aid):
-        data = request.data
+        # print(iid)
+        # print(aid)
+        # print("hi")
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -148,13 +150,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(audio_id__id=aid) & Q(created_by__id=uid)
-                                     & Q(id=iid) & Q(shared_editors__id=uid) & Q(archived=False))
+        query = self.queryset.get(
+            Q(audio_ID_id=aid) & Q(shared_editors=uid) & Q(archived=False) & Q(id=iid))
+        # print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data)  # TODO
-
+        serializer = self.serializer_class(query)
+        return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_editors(self, request, iid, aid):
@@ -166,7 +168,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.filter(
-            Q(audio_ID_id=aid) & Q(shared_editors_id=uid) & Q(id=iid) & Q(archived=False))
+            Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False))
 
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)

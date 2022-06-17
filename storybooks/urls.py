@@ -49,7 +49,7 @@ interpretations_detail = InterpretationViewSet.as_view({
 
 interpretations_editor = InterpretationViewSet.as_view({
     'patch': 'update_editors',          # has auth.  working 6/16/22.
-    'get': 'retrieve_editors',          # NOT UPDATED YET.
+    'get': 'retrieve_editors',          # has auth.  working 6/17/22.
 })
 
 interpretations_owner = InterpretationViewSet.as_view({
