@@ -3,6 +3,7 @@ from django.db import models
 
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
+    email = models.CharField(max_length=255)
     user_ID = models.CharField(max_length=255, primary_key=True)
     display_name = models.CharField(max_length=255)
     description = models.TextField()
@@ -15,11 +16,12 @@ class Audio(models.Model):
     description = models.CharField(default="Empty", max_length=2048)
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
-    uploaded_at = models.DateTimeField(auto_now=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey(Extended_User, related_name="audio_uploaded_by", null=True, on_delete=models.SET_NULL) # FOR DEMONSTRATION
     last_updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(Extended_User, related_name="audio_last_updated_by", null=True, on_delete=models.SET_NULL)
-    shared_with = models.ManyToManyField(Extended_User, blank=True)
+    shared_editors = models.ManyToManyField(Extended_User, related_name="audio_shared_editors", blank=True)
+    shared_viewers = models.ManyToManyField(Extended_User, related_name="audio_shared_viewers", blank=True)
     public = models.BooleanField(default=False)
 
     class Meta:
