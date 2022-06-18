@@ -42,18 +42,18 @@ class UploadFileViewSet(viewsets.ViewSet):
 class DownloadFileViewSet(viewsets.ViewSet):
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
-    
+
     def presignedgeturl(self, request, pk=None):
         audio_ID = request.data['audio_ID']
 
-        
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
-            query = self.queryset.filter((Q(uploaded_by=decoded_token['uid']) | (
-            Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
-            Q(archived=False) & Q(shared_viewers=decoded_token['uid']))) & Q(id=audio_ID)).distinct()
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            query = self.queryset.filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
+                Q(archived=False) & Q(shared_viewers=decoded_token['uid'])) | Q(public=True) & Q(archived=False)) & Q(id=audio_ID)).distinct()
         except:
-            query = self.queryset.filter(Q(public=True) & Q(archived=False) & Q(id=audio_ID))
+            query = self.queryset.filter(
+                Q(public=True) & Q(archived=False) & Q(id=audio_ID))
 
         if not query:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
@@ -81,7 +81,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         if not Audio.objects.filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
                                                       | (Q(shared_editors=uid) & Q(archived=False)) | (
-            Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
+                Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
             return HttpResponse(status=404)
 
         newinterpretationid = secrets.token_urlsafe(8)
@@ -126,12 +126,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             uid = decoded_token['uid']
 
             query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
-                                                    | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
-                                                    | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                                    | (Q(public=True) & Q(archived=False)))).distinct()
+                                                               | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                               | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                               | (Q(public=True) & Q(archived=False)))).distinct()
         except:
-            query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(public=True) & Q(archived=False)))
-
+            query = self.queryset.filter(Q(audio_ID_id=aid) & (
+                Q(public=True) & Q(archived=False)))
 
         if not query:
             return HttpResponse(status=404)
@@ -188,33 +188,33 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         # edit the interpretation to reflect the new user entered version
 
-        modifiable_attr = {'public', 'shared_viewers', 'title', 'latest_text', 'language_name'}
+        modifiable_attr = {'public', 'shared_viewers',
+                           'title', 'latest_text', 'language_name'}
 
-
-
-        k=0
+        k = 0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-                k=1
+                k = 1
         if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
             # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
             obj.shared_viewers.add(newviewer)
-            k=1
+            k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
-            k=1
+            k = 1
         if key == 'instructions':
             # this is the instructions for updating the content table
             path = request.data[key]
-            k=1
-        if k==0:
+            k = 1
+        if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
 
         # print(obj)
         obj.version += 1
@@ -248,17 +248,19 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
                             useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                    == -1 and not x['aIndex'] == -1]
+                                      == -1 and not x['aIndex'] == -1]
                             # print("useful, ", useful)
-                            query[path[i]['aIndex']].value_index = useful[0]['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = useful[0]['bIndex']
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
-                                    value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                                               value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
-                            query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
                         i += 1
@@ -398,43 +400,44 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # edit the interpretation to reflect the new user entered version
 
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
-                           'title', 'latest_text', 'archived', 'language_name',}
+                           'title', 'latest_text', 'archived', 'language_name', }
 
-
-
-        k=0
+        k = 0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-                k=1
+                k = 1
         if 'shared_editor' in request.data and request.data['shared_editor'] != None:
             # print("editor", request.data['shared_editor'])
-            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(
+                email=request.data['shared_editor'])
             obj.shared_editors.add(neweditor)
-            k=1
+            k = 1
         if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
             # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
             obj.shared_viewers.add(newviewer)
-            k=1
+            k = 1
         if 'remove_editor' in request.data:
             # print("editor", request.data['remove_editor'])
-            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(
+                email=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
-            k=1
+            k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
-            k=1
+            k = 1
         if key == 'instructions':
             # this is the instructions for updating the content table
             path = request.data[key]
-            k=1
-        if k==0:
+            k = 1
+        if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
 
         # print(obj)
         obj.version += 1
@@ -468,17 +471,19 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
                             useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                    == -1 and not x['aIndex'] == -1]
+                                      == -1 and not x['aIndex'] == -1]
                             # print("useful, ", useful)
-                            query[path[i]['aIndex']].value_index = useful[0]['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = useful[0]['bIndex']
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
-                                    value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
+                                               value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
-                            query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
                         i += 1
@@ -598,33 +603,37 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
                            'last_updated_by', 'last_updated_at', 'archived'}
-        k=0
+        k = 0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-                k=1
+                k = 1
         if 'shared_editor' in request.data and request.data['shared_editor'] != None:
             # print("editor", request.data['shared_editor'])
-            neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(
+                email=request.data['shared_editor'])
             obj.shared_editors.add(neweditor)
-            k=1
+            k = 1
         if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
             # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
             obj.shared_viewers.add(newviewer)
-            k=1
+            k = 1
         if 'remove_editor' in request.data:
             # print("editor", request.data['remove_editor'])
-            oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(
+                email=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
-            k=1
+            k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
-            k=1
-        if k==0:
+            k = 1
+        if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
@@ -647,12 +656,12 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
                            'last_updated_by', 'last_updated_at'}
-        k=0
+        k = 0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
                 # set last updated by/at automatically
                 setattr(obj, key, request.data[key])
-                k=1
+                k = 1
         # if 'shared_editor' in request.data and request.data['shared_editor'] != None:
         #     # print("editor", request.data['shared_editor'])
         #     neweditor = Extended_User.objects.get(email=request.data['shared_editor'])
@@ -660,9 +669,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         #     k=1
         if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
             # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(email=request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
             obj.shared_viewers.add(newviewer)
-            k=1
+            k = 1
         # if 'remove_editor' in request.data:
         #     # print("editor", request.data['shared_editor'])
         #     oldeditor = Extended_User.objects.get(email=request.data['remove_editor'])
@@ -670,10 +680,11 @@ class AudioViewSet(viewsets.ModelViewSet):
         #     k=1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(email=request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                email=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
-            k=1
-        if k==0:
+            k = 1
+        if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
@@ -734,7 +745,6 @@ class AudioViewSet(viewsets.ModelViewSet):
     #     obj = query.get()
     #     obj.delete()
     #     return HttpResponse(status=200)
-
 
 
 class AssociationViewSet(viewsets.ModelViewSet):
@@ -853,15 +863,16 @@ class AssociationViewSet(viewsets.ModelViewSet):
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
-        
+
         try:
-            decoded_token = auth.verify_id_token(request.headers['Authorization'])
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         if not Interpretation.objects.filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
-                                                      | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
+                                                                                | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
         query = Content.objects.all().filter(
@@ -873,7 +884,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         serializer = ContentSerializer(query, many=True)
 
-        indices_array = [entry['value_index'] for entry in serializer.data] # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
+        # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
+        indices_array = [entry['value_index'] for entry in serializer.data]
 
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
@@ -913,7 +925,8 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
         if Extended_User.objects.filter(user_ID=uid).exists():
-            user = Extended_User.objects.get(Q(user_ID=uid) | Q(email=data['email']))
+            user = Extended_User.objects.get(
+                Q(user_ID=uid) | Q(email=data['email']))
             if user:
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -963,18 +976,6 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
         #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(user)
         return JsonResponse(serializer.data)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # class TranslationViewSet(viewsets.ModelViewSet):
@@ -1198,7 +1199,6 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 #         return HttpResponse(status=200)
 
 
-
 # class LanguageViewSet(viewsets.ModelViewSet):
 #     """
 #     Language API
@@ -1215,8 +1215,6 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 #         return JsonResponse(dict)
 
 
-
-
 # class UserViewSet(viewsets.ModelViewSet):
 #     """
 #     User API
@@ -1224,4 +1222,3 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 #     queryset = User.objects.all()
 #     serializer_class = UserSerializer
 #     # permission_classes = [permissions.IsAuthenticated]
-
