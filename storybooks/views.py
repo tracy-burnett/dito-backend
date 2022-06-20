@@ -110,14 +110,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                          value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
         obj.save()
         Content.objects.bulk_create(words)
-        return JsonResponse({"interpretation": {"id": newinterpretationid, "public": data['public'],
-                                                "shared_editors": None,
-                                                "shared_viewers": None,
-                                                "audio_ID": aid,
-                                                "title": data['title'], "latest_text": data['latest_text'],
-                                                "language_name": data['language_name'],
-                                                "spaced_by": None,
-                                                "created_by": uid, "last_edited_by": uid}})  # ACTUALLY SHOULD RETURN THE ACTUAL OBJECT, THIS IS KIND OF FAKE
+        
+        serializer = self.serializer_class(obj)
+        return JsonResponse({"interpretation": serializer.data})
 
     def retrieve_audios(self, request, aid):
         try:
@@ -753,114 +748,270 @@ class AssociationViewSet(viewsets.ModelViewSet):
     """
     # permission_classes = [permissions.IsAuthenticated]
 
-    def retrieve(self, request, aid, iid):     # UPDATED BY SKYSNOLIMIT08 TO WORK
-        # print("trying to retrieve associations")
-        # print(aid)
-        # print(iid)
+
+    def retrieve(self, request, aid, iid):
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
-        # print(interpretation)
+        
         if not interpretation:
             return HttpResponse(status=404)
-        start = int(request.query_params.get('ts1', 0))
-        end = float('inf')
-        if 'ts2' in request.query_params:
-            end = int(request.query_params['ts2'])
-        query = Content.objects.all().filter(
-            interpretation_id_id=iid).order_by('value_index')
-        timestamp_to_word_groups = {}
-        word_index = 0
-        char_index = 0
-        while word_index < len(query):
-            obj = query[word_index]
-            if obj.audio_time is not None:
-                if not obj.audio_time in timestamp_to_word_groups:
-                    timestamp_to_word_groups[obj.audio_time] = []
-                group = [char_index]
-                char_index += len(obj.value)
-                if interpretation.spaced_by:
-                    char_index += 1
-                word_index += 1
-
-                # associate timestamps to those without
-                while word_index < len(query) and (query[word_index].audio_time is None or query[word_index].audio_time == obj.audio_time):
-                    char_index += len(query[word_index].value)
-                    if interpretation.spaced_by:
-                        char_index += 1
-                    word_index += 1
-
-                group.append(char_index - 1)  # inclusive (not exclusive)
-                if interpretation.spaced_by:  # remove space at the end
-                    group[1] -= 1
-                timestamp_to_word_groups[obj.audio_time].append(group)
-            else:
-                char_index += len(obj.value)
-                if interpretation.spaced_by:
-                    char_index += 1
-                word_index += 1
-
-        # print(timestamp_to_word_groups)
-
-        next_timestamp = {}  # dictionary of timestamp to next timestamp
-        ts_query = Content.objects.all().filter(interpretation_id_id=iid).order_by(
-            'audio_time').exclude(audio_time__isnull=True)
-        for i in range(len(ts_query) - 1):
-            next_timestamp[ts_query[i].audio_time] = ts_query[i + 1].audio_time
-        if ts_query:
-            next_timestamp[ts_query[len(ts_query) - 1].audio_time] = "end"
-        else:
+        
+        query = Content.objects.all().filter(audio_id_id=aid, interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
+        if not query:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
-        #print("next_ts", next_timestamp)
+    #     timestamp_to_word_groups = {}
+    #     word_index = 0
+    #     char_index = 0
+    #     while word_index < len(query):
+    #         obj = query[word_index]
+    #         if obj.audio_time is not None:
+    #             if not obj.audio_time in timestamp_to_word_groups:
+    #                 timestamp_to_word_groups[obj.audio_time] = []
+    #             group = [char_index]
+    #             char_index += len(obj.value)
+    #             if interpretation.spaced_by:
+    #                 char_index += 1
+    #             word_index += 1
 
-        start_index = len(query) - 1
-        start_offset = 0
-        for i in range(len(query)):
-            if query[i].audio_time is not None:
-                # interval crossing logic
-                if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
-                    start_index = i
-                    break
-            start_offset += len(query[i].value)
-            if interpretation.spaced_by:
-                start_offset += 1
 
-        end_index = len(query) - 1
-        for i in range(len(query) - 1, -1, -1):
-            if query[i].audio_time is not None:
-                if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
-                    break
-                else:
-                    end_index = i - 1
+        associations_times = []
+        associations_chars = []
+        # print("test")
+        # print(len(interpretation.spaced_by))
+        # if the interpretation is spaced, I need to duplicate each word and create a "value_index" representing the first character of the word and a "value_index" representing the last character in the word instead.
+        if len(interpretation.spaced_by) > 0:
+            # print("interpretation is spaced")
+            all_words = Content.objects.all().filter(interpretation_id_id=iid, audio_id_id=aid).order_by('value_index')
+            word_index=0
+            word_lengths_dict = {}
+            summing_length = 0
+            while word_index < len(all_words):
+                if all_words[word_index].audio_time is not None:
+                    word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
 
-        #print("start_index", start_index, "start_offset", start_offset, "end_index", end_index)
+                summing_length+=len(all_words[word_index].value) + 1
+                word_index+=1
 
-        # Construct output dictionary from information
-        output = {}
-        associations = {}
-        for timestamp_start in timestamp_to_word_groups:
-            timestamp_end = next_timestamp[timestamp_start]
-            if (timestamp_end == 'end' or timestamp_end > start) and timestamp_start < end:
-                entry = []
-                for interval in timestamp_to_word_groups[timestamp_start]:
-                    # entry.append({'bar':"foo"})
-                    # entry.append({'timeStart':str(interval[0] - start_offset),'timeEnd':str(interval[1] - start_offset),'characterStart':str(timestamp_start),'characterEnd':str(timestamp_end)})
-                    # timeStart.append(str(interval[0] - start_offset))
-                    # timeEnd.append(str(interval[1] - start_offset))
-                    # characterStart.append(str(timestamp_start))
-                    # characterEnd.append(str(timestamp_end))
-                    entry.append(
-                        str(interval[0] - start_offset) + "-" + str(interval[1] - start_offset))
-                associations[str(timestamp_start) + "-" +
-                             str(timestamp_end)] = entry
+            # print(word_lengths_dict)
+        # this already works if the language is not spaced
 
-        # text = ""
-        # words = [query[i].word for i in range(start_index, end_index + 1)]
-        # if translation.language.spaced:
-        #     text = ' '.join(words)
-        # else:
-        #     text = "".join(words)
+        # print("else")
+        m = 0
+        while m < len(query):
+            obj = query[m]
+            # print(obj)
+            associations_times.append(obj.audio_time)
+            associations_chars.append(obj.value_index)
+            m += 1
+
+        # print(associations_times)
+        # print(associations_chars)
+
+        if len(interpretation.spaced_by) > 0:
+            new_array_times=[]
+            new_array_chars=[]
+            # use word_lengths_dict to populate associations_times and associations_chars
+            w = 0
+            while w < len(associations_times) and w < len(associations_chars):
+
+                # print(word_lengths_dict[associations_chars[w]])
+                # print(associations_times[w])
+                new_array_chars.append(word_lengths_dict[associations_chars[w]][0])
+                new_array_chars.append(word_lengths_dict[associations_chars[w]][1])
+                new_array_times.append(associations_times[w])
+                new_array_times.append(associations_times[w])
+                w+=1
+            associations_times=new_array_times
+            associations_chars=new_array_chars
+
+        # print(associations_times)
+        # print(associations_chars)
+        a = 500 # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
+        associations = {}   
+        associations_chars_new=[]
+        associations_times_new=[]
+        parentarray_times=[]
+        parentarray_chars=[]
+        parentarray_times.append(associations_times)
+        parentarray_chars.append(associations_chars)
+        # print(parentarray_times)
+        # print(parentarray_chars)
+
+        while parentarray_times:
+            if max(parentarray_times[0])-min(parentarray_times[0]) > a:
+                times_differences=[]
+                j=0
+                while j < len(parentarray_times[0]) - 1 and j < len(parentarray_chars[0]) - 1:
+                    times_differences.append(parentarray_times[0][j+1]-parentarray_times[0][j])
+                    j+=1
+                    # print(j)
+                # print(times_differences)
+                difference_index=times_differences.index(max(times_differences))
+                associations_times_new=parentarray_times[0][:difference_index+1]
+                associations_chars_new=parentarray_chars[0][:difference_index+1]
+                parentarray_times[0]=parentarray_times[0][difference_index+1:]
+                parentarray_chars[0]=parentarray_chars[0][difference_index+1:]
+                parentarray_times.insert(0,associations_times_new)
+                parentarray_chars.insert(0,associations_chars_new)
+                # print(parentarray_times)
+                # print(parentarray_chars)
+            elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
+                entry = str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
+                associations[str(min(parentarray_times[0]))+"-"+str(max(parentarray_times[0]))]=[entry]
+                # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
+                parentarray_times.pop(0)
+                parentarray_chars.pop(0)
+                # print(parentarray_times)
+                # print(parentarray_chars)
+                # print(associations)
+
+        # def split_array(array_to_split):
+        # print(associations)
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
+
+
+
+
+    # def retrieve(self, request, aid, iid):     # UPDATED BY SKYSNOLIMIT08 TO WORK
+    #     # print("trying to retrieve associations")
+    #     # print(aid)
+    #     # print(iid)
+    #     interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
+    #     # print(interpretation)
+    #     if not interpretation:
+    #         return HttpResponse(status=404)
+    #     start = int(request.query_params.get('ts1', 0))
+    #     end = float('inf')
+    #     if 'ts2' in request.query_params:
+    #         end = int(request.query_params['ts2'])
+    #     query = Content.objects.all().filter(
+    #         interpretation_id_id=iid).order_by('value_index')
+    #     timestamp_to_word_groups = {}
+    #     word_index = 0
+    #     char_index = 0
+    #     while word_index < len(query):
+    #         obj = query[word_index]
+    #         if obj.audio_time is not None:
+    #             if not obj.audio_time in timestamp_to_word_groups:
+    #                 timestamp_to_word_groups[obj.audio_time] = []
+    #             group = [char_index]
+    #             char_index += len(obj.value)
+    #             if interpretation.spaced_by:
+    #                 char_index += 1
+    #             word_index += 1
+
+    #             # associate timestamps to those without
+    #             while word_index < len(query) and (query[word_index].audio_time is None or query[word_index].audio_time == obj.audio_time):
+    #                 char_index += len(query[word_index].value)
+    #                 if interpretation.spaced_by:
+    #                     char_index += 1
+    #                 word_index += 1
+
+    #             group.append(char_index - 1)  # inclusive (not exclusive)
+    #             if interpretation.spaced_by:  # remove space at the end
+    #                 group[1] -= 1
+    #             timestamp_to_word_groups[obj.audio_time].append(group)
+    #         else:
+    #             char_index += len(obj.value)
+    #             if interpretation.spaced_by:
+    #                 char_index += 1
+    #             word_index += 1
+
+    #     print(timestamp_to_word_groups)
+
+    #     next_timestamp = {}  # dictionary of timestamp to next timestamp
+    #     ts_query = Content.objects.all().filter(interpretation_id_id=iid).order_by(
+    #         'audio_time').exclude(audio_time__isnull=True)
+    #     # print(ts_query)
+    #     for i in range(len(ts_query) - 1):
+    #         next_timestamp[ts_query[i].audio_time] = ts_query[i + 1].audio_time
+    #     if ts_query:
+    #         next_timestamp[ts_query[len(ts_query) - 1].audio_time] = "end"
+    #     else:
+    #         return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
+
+    #     # print("next_ts", next_timestamp)
+
+    #     start_index = len(query) - 1
+    #     start_offset = 0
+    #     for i in range(len(query)):
+    #         if query[i].audio_time is not None:
+    #             # interval crossing logic
+    #             if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
+    #                 start_index = i
+    #                 break
+    #         start_offset += len(query[i].value)
+    #         if interpretation.spaced_by:
+    #             start_offset += 1
+
+    #     end_index = len(query) - 1
+    #     for i in range(len(query) - 1, -1, -1):
+    #         if query[i].audio_time is not None:
+    #             if (next_timestamp[query[i].audio_time] == 'end' or start < next_timestamp[query[i].audio_time]) and end > query[i].audio_time:
+    #                 break
+    #             else:
+    #                 end_index = i - 1
+
+    #     # print("start_index", start_index, "start_offset", start_offset, "end_index", end_index)
+
+    #     # Construct output dictionary from information
+    #     # output = {}
+    #     # print(timestamp_to_word_groups)
+    #     timestamp_order = list(timestamp_to_word_groups)
+    #     print(timestamp_order)
+    #     print(next_timestamp)
+
+    #     associations = {}
+    #     for timestamp_start in timestamp_to_word_groups:
+    #         f = 0
+    #         g=1
+    #         while f in range(len(timestamp_order) - 1):
+    #             print(timestamp_order[g])
+    #             print(timestamp_order[f])
+    #             if timestamp_order[g] > timestamp_order[f]:
+    #                 timestamp_end = next_timestamp[timestamp_order[g-1]]
+    #                 print("assigned:", timestamp_order[])
+    #                 f=f+1
+    #                 g=f+1
+    #             else:
+    #                 g = g+1
+    #                 print(g)
+    #                 print("stop here")
+
+    #         if (timestamp_end == 'end' or timestamp_end > start) and timestamp_start < end:
+    #             entry = []
+    #             for char_interval in timestamp_to_word_groups[timestamp_start]:
+    #                 # entry.append({'bar':"foo"})
+    #                 # entry.append({'timeStart':str(interval[0] - start_offset),'timeEnd':str(interval[1] - start_offset),'characterStart':str(timestamp_start),'characterEnd':str(timestamp_end)})
+    #                 # timeStart.append(str(interval[0] - start_offset))
+    #                 # timeEnd.append(str(interval[1] - start_offset))
+    #                 # characterStart.append(str(timestamp_start))
+    #                 # characterEnd.append(str(timestamp_end))
+    #                 entry.append(
+    #                     str(char_interval[0] - start_offset) + "-" + str(char_interval[1] - start_offset))
+    #             associations[str(timestamp_start) + "-" +
+    #                          str(timestamp_end)] = entry
+    #     # print(entry)
+    #     print(associations)
+
+    #     # text = ""
+    #     # words = [query[i].word for i in range(start_index, end_index + 1)]
+    #     # if translation.language.spaced:
+    #     #     text = ' '.join(words)
+    #     # else:
+    #     #     text = "".join(words)
+
+    #     return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
+
+
+
+
+
+
+
+
+
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
 
