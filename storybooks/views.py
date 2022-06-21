@@ -749,7 +749,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
 
-    def retrieve(self, request, aid, iid):
+    def retrieve(self, request, aid, iid, timestep):
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
         
         if not interpretation:
@@ -826,7 +826,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         # print(associations_times)
         # print(associations_chars)
-        a = 500 # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
+        a = timestep # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
         associations = {}   
         associations_chars_new=[]
         associations_times_new=[]

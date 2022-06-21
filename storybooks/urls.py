@@ -67,8 +67,11 @@ interpretations_user = InterpretationViewSet.as_view({
 })
 
 associations_detail = AssociationViewSet.as_view({
-    'get': 'retrieve',       # NO AUTH REQUIRED.  working 6/13/22.
     'post': 'update'         # has auth.  working 6/13/22.
+})
+
+associations_retrieve = AssociationViewSet.as_view({
+    'get': 'retrieve',       # NO AUTH REQUIRED.  working 6/13/22.
 })
 
 extended_user_details = ExtendedUserViewSet.as_view({
@@ -103,6 +106,7 @@ urlpatterns.extend(format_suffix_patterns([
     # path('audio/<aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
     # path('audio/<aid>/translations/', translations_list, name='translations-list'),
     path('content/<aid>/<iid>', associations_detail, name='associations-detail'),
+    path('content/<aid>/<iid>/<int:timestep>/', associations_retrieve, name='associations-retrieve'),
     path('s3/presignedposturl', presignedposturl_detail, name='presignedposturl-detail'),
     path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail'),
     path('interpretations/audio/<aid>/', interpretations_detail, name='interpretations_detail'),
