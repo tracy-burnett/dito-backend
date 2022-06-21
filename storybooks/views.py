@@ -823,6 +823,23 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 w+=1
             associations_times=new_array_times
             associations_chars=new_array_chars
+        else:
+            #double associations_times and associations_chars
+            f=len(associations_times)-1
+            for u in range(f+1):
+                # print(f,u)
+                associations_times.insert(f-u, associations_times[f-u])
+                associations_chars.insert(f-u, associations_chars[f-u])
+                u+=1
+
+        #expand the intervals to bridge them
+        for e in range(1,len(associations_times)-1):
+            if associations_times[e]+associations_times[e+1]>3:
+                buffer=round((associations_times[e+1]-associations_times[e])/3)
+                associations_times[e]=associations_times[e]+buffer
+                associations_times[e+1]=associations_times[e+1]-buffer
+            e+=2
+            
 
         # print(associations_times)
         # print(associations_chars)
