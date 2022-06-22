@@ -153,6 +153,27 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
+
+    def retrieve_viewers(self, request, iid, aid):
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+            
+            query = self.queryset.get(
+            Q(audio_ID_id=aid) & Q(shared_viewers=uid) & Q(archived=False) & Q(id=iid))
+        except:
+            query = self.queryset.get(
+            Q(audio_ID_id=aid) & Q(public=True) & Q(archived=False) & Q(id=iid))
+
+
+        # print(query)
+        if not query:
+            return HttpResponse(status=404)
+        serializer = self.serializer_class(query)
+        return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
+
+
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_editors(self, request, iid, aid):
         try:

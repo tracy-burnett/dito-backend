@@ -52,6 +52,10 @@ interpretations_editor = InterpretationViewSet.as_view({
     'get': 'retrieve_editors',          # has auth.  working 6/17/22.
 })
 
+interpretations_viewer = InterpretationViewSet.as_view({
+    'get': 'retrieve_viewers',          # has auth.  working 6/17/22.
+})
+
 interpretations_owner = InterpretationViewSet.as_view({
     'patch': 'update_owners',       # has auth.  working 6/16/22.
     'get': 'retrieve_owners',         # has auth.  working 6/13/22.
@@ -111,7 +115,8 @@ urlpatterns.extend(format_suffix_patterns([
     path('s3/presignedgeturl', presignedgeturl_detail, name='presignedgeturl-detail'),
     path('interpretations/audio/<aid>/', interpretations_detail, name='interpretations_detail'),
     path('interpretations/<iid>/audio/<aid>/editor/', interpretations_editor, name='interpretations_editor'),    
-    path('interpretations/<iid>/audio/<aid>/owner/', interpretations_owner, name='interpretations_owner'),
+    path('interpretations/<iid>/audio/<aid>/owner/', interpretations_owner, name='interpretations_owner'),  
+    path('interpretations/<iid>/audio/<aid>/viewer/', interpretations_viewer, name='interpretations_viewer'),
     path('interpretations/', interpretations, name='interpretations'),
     path('interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user'),
     # path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
