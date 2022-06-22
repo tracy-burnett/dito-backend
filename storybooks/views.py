@@ -787,9 +787,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
             summing_length = 0
             while word_index < len(all_words):
                 if all_words[word_index].audio_time is not None:
+                    # print(all_words[word_index].value, len(all_words[word_index].value))
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
-
+                    # print(word_lengths_dict)
                 summing_length+=len(all_words[word_index].value) + 1
+                # print(summing_length)
                 word_index+=1
 
             # print(word_lengths_dict)
@@ -851,6 +853,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         parentarray_chars=[]
         parentarray_times.append(associations_times)
         parentarray_chars.append(associations_chars)
+        # print(timestep)
         # print(parentarray_times)
         # print(parentarray_chars)
 
