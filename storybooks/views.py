@@ -879,6 +879,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
         for e in range(1,len(associations_times)-1):
             if associations_times[e]+associations_times[e+1]>3:
                 buffer=round((associations_times[e+1]-associations_times[e])/3)
+                if buffer*2 > ((associations_times[e+1]-buffer)-(associations_times[e]+buffer)):
+                    buffer=round(((associations_times[e+1]-buffer)-(associations_times[e]+buffer))/3)
                 associations_times[e]=associations_times[e]+buffer
                 associations_times[e+1]=associations_times[e+1]-buffer
             e+=2
