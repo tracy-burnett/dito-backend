@@ -294,6 +294,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
                 # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
                 # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+                # b = [entry['value_index'] for entry in serializer.data]
+                # print(b)
+                # print(a)
                 # print("".join(a))
                 # print(" ")
                 # print("".join(b))
@@ -388,6 +391,14 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_owners(self, request, iid, aid):
+
+        # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+        # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+        # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+        # b = [entry['value_index'] for entry in serializer.data]
+        # print(b)
+        # print(a)
+
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -513,6 +524,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 for obj in subtract:
                     obj.delete()
                 Content.objects.bulk_create(add)
+
+                # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
+                # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
+                # a = [entry['value'] for entry in serializer.data] # just for debugging;  can safely comment this out
+                # b = [entry['value_index'] for entry in serializer.data]
+                # print(b)
+                # print(a)
 
                 # query = Content.objects.all().filter(interpretation_id_id=iid).order_by('value_index') # just for debugging; can safely comment this out
                 # serializer = ContentSerializer(query, many=True) # just for debugging;  can safely comment this out
@@ -806,9 +824,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
             word_index=0
             word_lengths_dict = {}
             summing_length = 0
+            # print(all_words[0].audio_time)
             while word_index < len(all_words):
                 if all_words[word_index].audio_time is not None:
                     # print(all_words[word_index].value, len(all_words[word_index].value))
+                    # print(all_words[word_index].value_index, all_words[word_index].audio_time)
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
                     # print(word_lengths_dict)
                 summing_length+=len(all_words[word_index].value) + 1
@@ -1063,12 +1083,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
+
+        # print(request.data['associations'])
         if not Interpretation.objects.filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
                                                                                 | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
         query = Content.objects.all().filter(
-            interpretation_id_id=iid)
+            interpretation_id_id=iid).order_by('value_index')
 
         changed = []
         association_dict = request.data['associations']
@@ -1081,14 +1103,23 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
+        # print(association_dict)
         for key in association_dict:
             if key >= 0:
+                
                 # print(association_dict[key])
-                # print(query[key].audio_time)
+                # print(key)
+                # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
+                # print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
+                # print(query[key])
+                # print("new: char " + key + " time " + query[key])
+                # print(changed)
         # print(changed[0].__dict__)
+        # SOMETHING IS BROKEN IN HERE
         Content.objects.bulk_update(changed, ['audio_time'])
 
         return HttpResponse(status=200)
