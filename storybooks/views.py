@@ -880,7 +880,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             if associations_times[e]+associations_times[e+1]>3:
                 buffer=round((associations_times[e+1]-associations_times[e])/3)
                 if buffer*2 > ((associations_times[e+1]-buffer)-(associations_times[e]+buffer)):
-                    buffer=round(((associations_times[e+1]-buffer)-(associations_times[e]+buffer))/3)
+                    buffer=round(((associations_times[e+1]-buffer)-(associations_times[e]+buffer))/3) # NEED TO MAKE THIS BETTER, IT STILL SOMETIMES SPLITS THE SINGLE WORD
                 associations_times[e]=associations_times[e]+buffer
                 associations_times[e+1]=associations_times[e+1]-buffer
             e+=2
