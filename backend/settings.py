@@ -171,9 +171,7 @@ django_heroku.settings(locals())
 
 
 CORS_ALLOWED_ORIGINS = [
-    "https://xygil.net",
-    "https://www.xygil.net",
-    "http://localhost:8080",
+os.environ.get('FIREBASE_TYPE')
 ]
 
 
