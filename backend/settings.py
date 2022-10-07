@@ -170,8 +170,12 @@ django_heroku.settings(locals())
 # CORS setup
 
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+os.environ.get('CORS_ALLOWED_ORIGIN_REGEXES'),
+]
+
 CORS_ALLOWED_ORIGINS = [
-os.environ.get('FIREBASE_TYPE')
+os.environ.get('CORS_ALLOWED_ORIGINS'),
 ]
 
 
