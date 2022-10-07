@@ -175,9 +175,9 @@ r"^https:\/\/\w+\.dito\.live$",
 ]
 
 CORS_ALLOWED_ORIGINS = [
-os.environ.get('CORS_ALLOWED_ORIGINS_1'), 
-os.environ.get('CORS_ALLOWED_ORIGINS_2'), 
-os.environ.get('CORS_ALLOWED_ORIGINS_3'), 
+os.environ.get('CORS_ALLOWED_ORIGINS_1'),      # production environment variable will be empty; useful for dev environment
+os.environ.get('CORS_ALLOWED_ORIGINS_2'),      # production environment variable will be empty; useful for dev environment
+os.environ.get('CORS_ALLOWED_ORIGINS_3'),      # production environment variable will be empty; useful for dev environment 
 ]
 
 
