@@ -170,12 +170,14 @@ django_heroku.settings(locals())
 # CORS setup
 
 
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-# r"^https:\/\/\w+\.dito\.live$",
-# ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+r"^https:\/\/\w+\.dito\.live$",
+]
 
 CORS_ALLOWED_ORIGINS = [
-os.environ.get('CORS_ALLOWED_ORIGINS')
+os.environ.get('CORS_ALLOWED_ORIGINS_1'), 
+os.environ.get('CORS_ALLOWED_ORIGINS_2'), 
+os.environ.get('CORS_ALLOWED_ORIGINS_3'), 
 ]
 
 
