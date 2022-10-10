@@ -260,16 +260,14 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 changed = []
 
                 def traverse_path(path):
-                    i = 0
-                    while i < len(path):
-                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            # useful = [x for x in path if 'moved' in x and not x['bIndex']
-                            #           == -1 and not x['aIndex'] == -1]
-                            # print("useful, ", useful)
-                            print(query[path[i]['aIndex']].value_index)
-                            # print(useful[0]['bIndex'])
+                    i = len(path) - 1
+                    while i >= 0:
+                        if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
+                            print(path[i])
+                            print(query[path[i]['aIndex']].value)
                             query[path[i]['aIndex']
-                                  ].value_index = query[path[i]['bIndex']]
+                                  ].value_index = path[i]['bIndex']
+                            # print(query[path[i]['aIndex']])
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
@@ -281,7 +279,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
-                        i += 1
+                        i -= 1
                 traverse_path(path['lines'])
 
                 # print("changed, ", changed[0].__dict__)
@@ -495,18 +493,15 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 subtract = []
                 changed = []
 
-
                 def traverse_path(path):
-                    i = 0
-                    while i < len(path):
-                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            # useful = [x for x in path if 'moved' in x and not x['bIndex']
-                            #           == -1 and not x['aIndex'] == -1]
-                            # print("useful, ", useful)
-                            print(query[path[i]['aIndex']].value_index)
-                            # print(useful[0]['bIndex'])
+                    i = len(path) - 1
+                    while i >= 0:
+                        if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
+                            print(path[i])
+                            print(query[path[i]['aIndex']].value)
                             query[path[i]['aIndex']
-                                  ].value_index = query[path[i]['bIndex']]
+                                  ].value_index = path[i]['bIndex']
+                            # print(query[path[i]['aIndex']])
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
@@ -518,7 +513,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
-                        i += 1
+                        i -= 1
                 traverse_path(path['lines'])
 
                 # print("changed, ", changed[0].__dict__)
