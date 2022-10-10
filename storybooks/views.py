@@ -263,11 +263,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     i = 0
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                      == -1 and not x['aIndex'] == -1]
+                            # useful = [x for x in path if 'moved' in x and not x['bIndex']
+                            #           == -1 and not x['aIndex'] == -1]
                             # print("useful, ", useful)
+                            print(query[path[i]['aIndex']].value_index)
+                            # print(useful[0]['bIndex'])
                             query[path[i]['aIndex']
-                                  ].value_index = useful[0]['bIndex']
+                                  ].value_index = query[path[i]['bIndex']]
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
@@ -493,15 +495,18 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 subtract = []
                 changed = []
 
+
                 def traverse_path(path):
                     i = 0
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                      == -1 and not x['aIndex'] == -1]
+                            # useful = [x for x in path if 'moved' in x and not x['bIndex']
+                            #           == -1 and not x['aIndex'] == -1]
                             # print("useful, ", useful)
+                            print(query[path[i]['aIndex']].value_index)
+                            # print(useful[0]['bIndex'])
                             query[path[i]['aIndex']
-                                  ].value_index = useful[0]['bIndex']
+                                  ].value_index = query[path[i]['bIndex']]
                             changed.append(query[path[i]['aIndex']])
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             add.append(Content(interpretation_id_id=iid,
@@ -1105,12 +1110,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
-        # print(association_dict)
+        print(association_dict)
         for key in association_dict:
             if key >= 0:
                 
-                # print(association_dict[key])
+                
                 # print(key)
+                # print(association_dict[key])
+                # print(query[key].audio_time)
                 # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
