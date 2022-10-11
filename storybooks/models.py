@@ -72,6 +72,9 @@ class Content(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by", null=True, on_delete=models.SET_NULL)
 
+    def __getitem__(self, i):
+        return f"{i}"
+
     class Meta:
         verbose_name = "content"
         verbose_name_plural = "contents"

@@ -258,27 +258,50 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 add = []
                 subtract = []
                 changed = []
-
                 def traverse_path(path):
                     i = len(path) - 1
+                    j = 1
+                    h = len(path) - 1
+                    print(h)
+                    print(len(query))
+                    while h >= 0:
+                        if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            j += 1
+                        h -= 1
+                    print(j)
                     while i >= 0:
                         if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
                             print(path[i])
-                            print(query[path[i]['aIndex']].value)
-                            query[path[i]['aIndex']
-                                  ].value_index = path[i]['bIndex']
+                            try:
+                                print("in try")
+                                print(query[path[i]['aIndex']].value)
+                                query[path[i]['aIndex']].value_index
+                            except:
+                                print(path[i]['aIndex']-j)
+                                query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
                             # print(query[path[i]['aIndex']])
-                            changed.append(query[path[i]['aIndex']])
+                                changed.append(query[path[i]['aIndex']-j])
+                                print ("in except")
+                                print(query[path[i]['aIndex']-j].value)
+                            else:
+                                query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # print(query[path[i]['aIndex']])
+                                changed.append(query[path[i]['aIndex']])
+                                print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            print("in added")
                             add.append(Content(interpretation_id_id=iid,
                                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            print("in subtracted")
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
+                            print("in changed")
                             query[path[i]['aIndex']
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
+                        print("finished path")
                         i -= 1
                 traverse_path(path['lines'])
 
@@ -487,35 +510,58 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 else:
                     b = list(request.data['latest_text'])
 
-                # print(path)
+                print(path)
 
                 add = []
                 subtract = []
                 changed = []
-
                 def traverse_path(path):
                     i = len(path) - 1
+                    j = 1
+                    h = len(path) - 1
+                    print(h)
+                    print(len(query))
+                    while h >= 0:
+                        if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            j += 1
+                        h -= 1
+                    print(j)
                     while i >= 0:
                         if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
                             print(path[i])
-                            print(query[path[i]['aIndex']].value)
-                            query[path[i]['aIndex']
-                                  ].value_index = path[i]['bIndex']
+                            try:
+                                print("in try")
+                                print(query[path[i]['aIndex']].value)
+                                query[path[i]['aIndex']].value_index
+                            except:
+                                print(path[i]['aIndex']-j)
+                                query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
                             # print(query[path[i]['aIndex']])
-                            changed.append(query[path[i]['aIndex']])
+                                changed.append(query[path[i]['aIndex']-j])
+                                print ("in except")
+                                print(query[path[i]['aIndex']-j].value)
+                            else:
+                                query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # print(query[path[i]['aIndex']])
+                                changed.append(query[path[i]['aIndex']])
+                                print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            print("in added")
                             add.append(Content(interpretation_id_id=iid,
                                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            print("in subtracted")
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
+                            print("in changed")
                             query[path[i]['aIndex']
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
+                        print("finished path")
                         i -= 1
                 traverse_path(path['lines'])
-
+                
                 # print("changed, ", changed[0].__dict__)
                 # print("add, ", add[0].__dict__)
                 # print("subtract, ", subtract[0].__dict__)
@@ -539,7 +585,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 # print(" ")
                 # print("".join(b))
                 # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
-
+            print("interpretation updated")
             return Response('interpretation updated')
 
     # def destroy(self, request, iid, aid):
