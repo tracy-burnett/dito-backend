@@ -12,7 +12,7 @@ class Extended_User(models.Model):
 
 class Audio(models.Model):
     title = models.CharField(default="Untitled Audio", max_length=255)
-    url = models.CharField(max_length=255) # for the cover image
+    url = models.CharField(max_length=255) # originally for the cover image, now purposed to the home base web URL
     description = models.CharField(default="Empty", max_length=2048)
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)
@@ -71,6 +71,9 @@ class Content(models.Model):
     created_by = models.ForeignKey(Extended_User, related_name="content_created_by", null=True, on_delete=models.SET_NULL)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by", null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return f"{self.interpretation_id} {self.value} {self.value_index} {self.audio_time}"
 
     class Meta:
         verbose_name = "content"

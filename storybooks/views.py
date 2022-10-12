@@ -258,27 +258,61 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 add = []
                 subtract = []
                 changed = []
-
                 def traverse_path(path):
                     i = 0
+                    # j = 1
+                    # h = len(path) - 1
+                    # print(h)
+                    # print(len(query))
+                    # while h >= 0:
+                        # if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            # j += 1
+                        # h -= 1
+                    # print(j)
+
+                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                      == -1 and not x['aIndex'] == -1]
-                            # print("useful, ", useful)
-                            query[path[i]['aIndex']
-                                  ].value_index = useful[0]['bIndex']
+                            # print(path[i]) # print instructions
+                            for use in useful:
+                                if use['line'] == path[i]['line']:
+                                    usefulnow=use
+                                    useful.remove(use)
+                                    break
+                            # print(usefulnow)
+                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
                             changed.append(query[path[i]['aIndex']])
+
+                            # try:
+                            #     print("in try")
+                            #     print(query[path[i]['aIndex']].value)
+                            #     query[path[i]['aIndex']].value_index
+                            # except:
+                            #     print(path[i]['aIndex']-j)
+                            #     query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                            #     changed.append(query[path[i]['aIndex']-j])
+                            #     print ("in except")
+                            #     print(query[path[i]['aIndex']-j].value)
+                            # else:
+                            #     query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                                # changed.append(query[path[i]['aIndex']])
+                                # print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            # print("in added")
                             add.append(Content(interpretation_id_id=iid,
                                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            # print("in subtracted")
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
+                            # print("in changed")
                             query[path[i]['aIndex']
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
+                        # print("finished path")
                         i += 1
                 traverse_path(path['lines'])
 
@@ -492,30 +526,64 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 add = []
                 subtract = []
                 changed = []
-
                 def traverse_path(path):
                     i = 0
+                    # j = 1
+                    # h = len(path) - 1
+                    # print(h)
+                    # print(len(query))
+                    # while h >= 0:
+                        # if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            # j += 1
+                        # h -= 1
+                    # print(j)
+
+                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            useful = [x for x in path if 'moved' in x and not x['bIndex']
-                                      == -1 and not x['aIndex'] == -1]
-                            # print("useful, ", useful)
-                            query[path[i]['aIndex']
-                                  ].value_index = useful[0]['bIndex']
+                            # print(path[i]) # print instructions
+                            for use in useful:
+                                if use['line'] == path[i]['line']:
+                                    usefulnow=use
+                                    useful.remove(use)
+                                    break
+                            # print(usefulnow)
+                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
                             changed.append(query[path[i]['aIndex']])
+
+                            # try:
+                            #     print("in try")
+                            #     print(query[path[i]['aIndex']].value)
+                            #     query[path[i]['aIndex']].value_index
+                            # except:
+                            #     print(path[i]['aIndex']-j)
+                            #     query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                            #     changed.append(query[path[i]['aIndex']-j])
+                            #     print ("in except")
+                            #     print(query[path[i]['aIndex']-j].value)
+                            # else:
+                            #     query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                                # changed.append(query[path[i]['aIndex']])
+                                # print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
+                            # print("in added")
                             add.append(Content(interpretation_id_id=iid,
                                                value=path[i]['line'], value_index=path[i]['bIndex'], audio_id_id=aid, created_by_id=uid, updated_by_id=uid))
                         elif path[i]['bIndex'] == -1 and not 'moved' in path[i]:
+                            # print("in subtracted")
                             subtract.append(query[path[i]['aIndex']])
                         elif not 'moved' in path[i]:
+                            # print("in changed")
                             query[path[i]['aIndex']
                                   ].value_index = path[i]['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
+                        # print("finished path")
                         i += 1
                 traverse_path(path['lines'])
-
+                
                 # print("changed, ", changed[0].__dict__)
                 # print("add, ", add[0].__dict__)
                 # print("subtract, ", subtract[0].__dict__)
@@ -539,7 +607,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 # print(" ")
                 # print("".join(b))
                 # print("DID IT WORK?", a==b) # just for debugging;  can safely comment this out
-
+            # print("interpretation updated")
             return Response('interpretation updated')
 
     # def destroy(self, request, iid, aid):
@@ -612,7 +680,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
-        obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
+        obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
                     uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
         # serializer = self.serializer_class(obj)
@@ -724,8 +792,9 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    def retrieve_public(self, pk):
-        query = self.queryset.filter(Q(archived=False) & Q(public=True))
+    def retrieve_public(self, pk, request):
+        data = request.headers
+        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=data['Origin']))
         serializer = self.serializer_class(query, many=True)
         # fieldsToKeep = {'title', 'description', 'id', 'url'}
         # sanitizedList = []
@@ -746,10 +815,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({"login expired; try refreshing the app or loggin in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.filter(Q(uploaded_by_id=uid) | (
+        query = self.queryset.filter((Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
             Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True))).distinct()  # FOR DEMONSTRATION
+            Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
@@ -757,9 +826,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
-    def retrieve_public_user(self, pk, uid):
+    def retrieve_public_user(self, pk, uid, request):
+        data = request.headers
         query = self.queryset.filter(
-            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True))
+            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=data['Origin']))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
@@ -1106,11 +1176,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
         # print(association_dict)
+        # print(serializer.data)
         for key in association_dict:
             if key >= 0:
                 
-                # print(association_dict[key])
+                
                 # print(key)
+                # print(association_dict[key])
+                # print(query[key].audio_time)
                 # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
