@@ -680,7 +680,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
-        obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
+        obj = Audio(id=data['id'], url=data['url'], title=data['title'], description=data['description'],
                     uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
         # serializer = self.serializer_class(obj)
