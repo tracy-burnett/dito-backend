@@ -260,34 +260,45 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 changed = []
                 def traverse_path(path):
                     i = len(path) - 1
-                    j = 1
-                    h = len(path) - 1
-                    print(h)
-                    print(len(query))
-                    while h >= 0:
-                        if 'moved' in path[h] and path[h]['bIndex'] == -1:
-                            j += 1
-                        h -= 1
-                    print(j)
+                    # j = 1
+                    # h = len(path) - 1
+                    # print(h)
+                    # print(len(query))
+                    # while h >= 0:
+                        # if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            # j += 1
+                        # h -= 1
+                    # print(j)
+
+                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
                     while i >= 0:
-                        if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
-                            print(path[i])
-                            try:
-                                print("in try")
-                                print(query[path[i]['aIndex']].value)
-                                query[path[i]['aIndex']].value_index
-                            except:
-                                print(path[i]['aIndex']-j)
-                                query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
-                            # print(query[path[i]['aIndex']])
-                                changed.append(query[path[i]['aIndex']-j])
-                                print ("in except")
-                                print(query[path[i]['aIndex']-j].value)
-                            else:
-                                query[path[i]['aIndex']].value_index = path[i]['bIndex']
-                            # print(query[path[i]['aIndex']])
-                                changed.append(query[path[i]['aIndex']])
-                                print ("in else")
+                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                            print(path[i]) # print instructions
+                            for use in useful:
+                                if use['line'] == path[i]['line']:
+                                    usefulnow=use
+                                    useful.remove(use)
+                                    break
+                            print(usefulnow)
+                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
+                            changed.append(query[path[i]['aIndex']])
+
+                            # try:
+                            #     print("in try")
+                            #     print(query[path[i]['aIndex']].value)
+                            #     query[path[i]['aIndex']].value_index
+                            # except:
+                            #     print(path[i]['aIndex']-j)
+                            #     query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                            #     changed.append(query[path[i]['aIndex']-j])
+                            #     print ("in except")
+                            #     print(query[path[i]['aIndex']-j].value)
+                            # else:
+                            #     query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                                # changed.append(query[path[i]['aIndex']])
+                                # print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             print("in added")
                             add.append(Content(interpretation_id_id=iid,
@@ -517,34 +528,45 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 changed = []
                 def traverse_path(path):
                     i = len(path) - 1
-                    j = 1
-                    h = len(path) - 1
-                    print(h)
-                    print(len(query))
-                    while h >= 0:
-                        if 'moved' in path[h] and path[h]['bIndex'] == -1:
-                            j += 1
-                        h -= 1
-                    print(j)
+                    # j = 1
+                    # h = len(path) - 1
+                    # print(h)
+                    # print(len(query))
+                    # while h >= 0:
+                        # if 'moved' in path[h] and path[h]['bIndex'] == -1:
+                            # j += 1
+                        # h -= 1
+                    # print(j)
+
+                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
                     while i >= 0:
-                        if 'moved' in path[i] and not path[i]['bIndex'] == -1 and not path[i]['aIndex'] == -1:
-                            print(path[i])
-                            try:
-                                print("in try")
-                                print(query[path[i]['aIndex']].value)
-                                query[path[i]['aIndex']].value_index
-                            except:
-                                print(path[i]['aIndex']-j)
-                                query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
-                            # print(query[path[i]['aIndex']])
-                                changed.append(query[path[i]['aIndex']-j])
-                                print ("in except")
-                                print(query[path[i]['aIndex']-j].value)
-                            else:
-                                query[path[i]['aIndex']].value_index = path[i]['bIndex']
-                            # print(query[path[i]['aIndex']])
-                                changed.append(query[path[i]['aIndex']])
-                                print ("in else")
+                        if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                            print(path[i]) # print instructions
+                            for use in useful:
+                                if use['line'] == path[i]['line']:
+                                    usefulnow=use
+                                    useful.remove(use)
+                                    break
+                            print(usefulnow)
+                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
+                            changed.append(query[path[i]['aIndex']])
+
+                            # try:
+                            #     print("in try")
+                            #     print(query[path[i]['aIndex']].value)
+                            #     query[path[i]['aIndex']].value_index
+                            # except:
+                            #     print(path[i]['aIndex']-j)
+                            #     query[path[i]['aIndex']-j].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                            #     changed.append(query[path[i]['aIndex']-j])
+                            #     print ("in except")
+                            #     print(query[path[i]['aIndex']-j].value)
+                            # else:
+                            #     query[path[i]['aIndex']].value_index = path[i]['bIndex']
+                            # # print(query[path[i]['aIndex']])
+                                # changed.append(query[path[i]['aIndex']])
+                                # print ("in else")
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             print("in added")
                             add.append(Content(interpretation_id_id=iid,
@@ -1152,6 +1174,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
         print(association_dict)
+        print(serializer.data)
         for key in association_dict:
             if key >= 0:
                 
