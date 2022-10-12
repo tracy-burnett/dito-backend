@@ -72,8 +72,8 @@ class Content(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by", null=True, on_delete=models.SET_NULL)
 
-    def __getitem__(self, i):
-        return f"{i}"
+    def __str__(self):
+        return f"{self.interpretation_id} {self.value} {self.value_index} {self.audio_time}"
 
     class Meta:
         verbose_name = "content"
