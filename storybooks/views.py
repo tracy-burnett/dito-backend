@@ -13,7 +13,6 @@ from rest_framework import views, viewsets, permissions, generics, filters, stat
 from rest_framework.response import Response
 from bisect import bisect_left
 import ast
-import os
 import secrets
 import datetime
 import copy
@@ -793,8 +792,9 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    def retrieve_public(self, pk):
-        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=os.environ.get('BASE_URL')))
+    def retrieve_public(self, pk, request):
+        data = request.headers
+        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=data['Origin']))
         serializer = self.serializer_class(query, many=True)
         # fieldsToKeep = {'title', 'description', 'id', 'url'}
         # sanitizedList = []
@@ -818,7 +818,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         query = self.queryset.filter((Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
             Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True))) & Q(url=os.environ.get('BASE_URL'))).distinct()  # FOR DEMONSTRATION
+            Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
@@ -826,9 +826,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
-    def retrieve_public_user(self, pk, uid):
+    def retrieve_public_user(self, pk, uid, request):
+        data = request.headers
         query = self.queryset.filter(
-            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=os.environ.get('BASE_URL')))
+            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=data['Origin']))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
