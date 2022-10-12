@@ -527,7 +527,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 subtract = []
                 changed = []
                 def traverse_path(path):
-                    i = len(path) - 1
+                    i = 0
                     # j = 1
                     # h = len(path) - 1
                     # print(h)
@@ -539,15 +539,15 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     # print(j)
 
                     useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
-                    while i >= 0:
+                    while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            # print(path[i]) # print instructions
+                            print(path[i]) # print instructions
                             for use in useful:
                                 if use['line'] == path[i]['line']:
                                     usefulnow=use
                                     useful.remove(use)
                                     break
-                            # print(usefulnow)
+                            print(usefulnow)
                             query[path[i]['aIndex']].value_index = usefulnow['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
@@ -581,7 +581,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                             changed.append(query[path[i]['aIndex']])
 
                         # print("finished path")
-                        i -= 1
+                        i += 1
                 traverse_path(path['lines'])
                 
                 # print("changed, ", changed[0].__dict__)
