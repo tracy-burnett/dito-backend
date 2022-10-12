@@ -12,7 +12,7 @@ class Extended_User(models.Model):
 
 class Audio(models.Model):
     title = models.CharField(default="Untitled Audio", max_length=255)
-    url = models.CharField(max_length=255) # for the cover image
+    url = models.CharField(max_length=255) # originally for the cover image, now purposed to the home base web URL
     description = models.CharField(default="Empty", max_length=2048)
     id = models.CharField(primary_key=True, max_length=255)
     archived = models.BooleanField(default=False)

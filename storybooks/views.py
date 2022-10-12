@@ -13,6 +13,7 @@ from rest_framework import views, viewsets, permissions, generics, filters, stat
 from rest_framework.response import Response
 from bisect import bisect_left
 import ast
+import os
 import secrets
 import datetime
 import copy
@@ -793,7 +794,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         return JsonResponse(serializer.data)
 
     def retrieve_public(self, pk):
-        query = self.queryset.filter(Q(archived=False) & Q(public=True))
+        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=os.environ.get('BASE_URL')))
         serializer = self.serializer_class(query, many=True)
         # fieldsToKeep = {'title', 'description', 'id', 'url'}
         # sanitizedList = []
@@ -814,10 +815,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({"login expired; try refreshing the app or loggin in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.filter(Q(uploaded_by_id=uid) | (
+        query = self.queryset.filter((Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
             Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True))).distinct()  # FOR DEMONSTRATION
+            Q(archived=False) & Q(public=True))) & Q(url=os.environ.get('BASE_URL'))).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
@@ -827,7 +828,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
     def retrieve_public_user(self, pk, uid):
         query = self.queryset.filter(
-            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True))
+            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=os.environ.get('BASE_URL')))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(query, many=True)
