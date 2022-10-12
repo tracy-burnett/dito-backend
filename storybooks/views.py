@@ -792,8 +792,9 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
-    def retrieve_public(self, pk, request):
+    def retrieve_public(self, request):
         data = request.headers
+        print(data)
         query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=data['Origin']))
         serializer = self.serializer_class(query, many=True)
         # fieldsToKeep = {'title', 'description', 'id', 'url'}
@@ -826,7 +827,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
-    def retrieve_public_user(self, pk, uid, request):
+    def retrieve_public_user(self, request, uid):
         data = request.headers
         query = self.queryset.filter(
             Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=data['Origin']))
