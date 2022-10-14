@@ -13,6 +13,7 @@ from rest_framework import views, viewsets, permissions, generics, filters, stat
 from rest_framework.response import Response
 from bisect import bisect_left
 import ast
+import re
 import secrets
 import datetime
 import copy
@@ -98,11 +99,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         text_array = []
+        
+        regexwithspacedby = re.escape(data['spaced_by']) + r"|(\n)"
+
         if data['spaced_by']:
-            text_array = data['latest_text'].split(data['spaced_by'])
+            text_array = re.split(regexwithspacedby, data['latest_text'])
+            # print(text_array)
+            # print(len(text_array)-1)
+            for p in range(len(text_array)):
+                # print(p)
+                if text_array[len(text_array)-1-p]=="" or text_array[len(text_array)-1-p] == None:
+                    del text_array[len(text_array)-1-p]
+
+            
         else:
             text_array = list(data['latest_text'])
 
+        # print(text_array)
         words = []
         for i in range(len(text_array)):
             word = text_array[i]
@@ -1184,11 +1197,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 
                 # print(key)
                 # print(association_dict[key])
-                # print(query[key].audio_time)
-                # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
-                # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                print(query[key].audio_time)
+                print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
-                # print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
                 # print(query[key])
