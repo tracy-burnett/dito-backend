@@ -910,13 +910,16 @@ class AssociationViewSet(viewsets.ModelViewSet):
             summing_length = 0
             # print(all_words[0].audio_time)
             while word_index < len(all_words):
-                if all_words[word_index].audio_time is not None:
-                    # print(all_words[word_index].value, len(all_words[word_index].value))
-                    # print(all_words[word_index].value_index, all_words[word_index].audio_time)
+                if all_words[word_index].audio_time is not None:  # if it has a timestamp, then
+                    # print(all_words[word_index].value, len(all_words[word_index].value))   # print the word and the length of the word
+                    # print(all_words[word_index].value_index, all_words[word_index].audio_time)   # print the word's index # and the timestamp
+                    ## add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
                     # print(word_lengths_dict)
-                summing_length+=len(all_words[word_index].value) + 1
-                # print(summing_length)
+                # print(all_words[word_index].value)    
+                if not all_words[word_index].value == "\n":
+                    summing_length+=len(all_words[word_index].value) + 1
+                # print(summing_length)  # should be starting character of the next word
                 word_index+=1
 
             # print(word_lengths_dict)
@@ -1197,7 +1200,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 
                 # print(key)
                 # print(association_dict[key])
-                print(query[key].audio_time)
+                # print(query[key].audio_time)
                 print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
