@@ -917,7 +917,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
                     # print(word_lengths_dict)
                 # print(all_words[word_index].value)    
-                if not all_words[word_index].value == "\n":
+                if all_words[word_index].value == "\n" and all_words[word_index-1].value == "\n":
+                    summing_length += 1
+                elif all_words[word_index].value == "\n" and not all_words[word_index-1].value == "\n":
+                    summing_length += 0
+                else:
                     summing_length+=len(all_words[word_index].value) + 1
                 # print(summing_length)  # should be starting character of the next word
                 word_index+=1
