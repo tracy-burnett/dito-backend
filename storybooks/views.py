@@ -13,6 +13,7 @@ from rest_framework import views, viewsets, permissions, generics, filters, stat
 from rest_framework.response import Response
 from bisect import bisect_left
 import ast
+import re
 import secrets
 import datetime
 import copy
@@ -98,11 +99,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         text_array = []
+        
+        regexwithspacedby = re.escape(data['spaced_by']) + r"|(\n)"
+
         if data['spaced_by']:
-            text_array = data['latest_text'].split(data['spaced_by'])
+            text_array = re.split(regexwithspacedby, data['latest_text'])
+            # print(text_array)
+            # print(len(text_array)-1)
+            for p in range(len(text_array)):
+                # print(p)
+                if text_array[len(text_array)-1-p]=="" or text_array[len(text_array)-1-p] == None:
+                    del text_array[len(text_array)-1-p]
+
+            
         else:
             text_array = list(data['latest_text'])
 
+        # print(text_array)
         words = []
         for i in range(len(text_array)):
             word = text_array[i]
@@ -897,15 +910,27 @@ class AssociationViewSet(viewsets.ModelViewSet):
             summing_length = 0
             # print(all_words[0].audio_time)
             while word_index < len(all_words):
-                if all_words[word_index].audio_time is not None:
-                    # print(all_words[word_index].value, len(all_words[word_index].value))
-                    # print(all_words[word_index].value_index, all_words[word_index].audio_time)
+                if all_words[word_index].audio_time is not None:  # if it has a timestamp, then
+                    # print(all_words[word_index].value, len(all_words[word_index].value))   # print the word and the length of the word
+                    # print(all_words[word_index].value_index, all_words[word_index].audio_time)   # print the word's index # and the timestamp
+                    ## add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
                     # print(word_lengths_dict)
-                summing_length+=len(all_words[word_index].value) + 1
-                # print(summing_length)
+                # print(all_words[word_index].value)  
+                if word_index > 0:   
+                    if all_words[word_index].value == "\n" and all_words[word_index-1].value == "\n":
+                        summing_length += 1
+                    elif all_words[word_index].value == "\n" and not all_words[word_index-1].value == "\n":
+                        summing_length += 0
+                    else:
+                        summing_length+=len(all_words[word_index].value) + 1
+                # print(summing_length)  # should be starting character of the next word
+                elif word_index == 0:
+                    if all_words[word_index].value == "\n":
+                        summing_length += 0
+                    else:
+                        summing_length+=len(all_words[word_index].value) + 1
                 word_index+=1
-
             # print(word_lengths_dict)
         # this already works if the language is not spaced
 
@@ -946,6 +971,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 associations_chars.insert(f-u, associations_chars[f-u])
                 u+=1
 
+        # print(associations_times)
+        # print(associations_chars)
         #expand the intervals to bridge them
         for e in range(1,len(associations_times)-1):
             if associations_times[e]+associations_times[e+1]>3:
@@ -1185,10 +1212,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(key)
                 # print(association_dict[key])
                 # print(query[key].audio_time)
-                # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
-                # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 query[key].audio_time = association_dict[key]
-                # print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
                 # print(query[key])
