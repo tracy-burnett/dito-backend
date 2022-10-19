@@ -916,7 +916,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     ## add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
                     # print(word_lengths_dict)
-                # print(all_words[word_index].value)  
                 if word_index > 0:   
                     if all_words[word_index].value == "\n" and all_words[word_index-1].value == "\n":
                         summing_length += 1
@@ -924,12 +923,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         summing_length += 0
                     else:
                         summing_length+=len(all_words[word_index].value) + 1
-                # print(summing_length)  # should be starting character of the next word
                 elif word_index == 0:
                     if all_words[word_index].value == "\n":
-                        summing_length += 0
+                        summing_length += 1
                     else:
                         summing_length+=len(all_words[word_index].value) + 1
+                        
+                # print(all_words[word_index].value)  
+                # print(summing_length)  # should be starting character of the next word
                 word_index+=1
             # print(word_lengths_dict)
         # this already works if the language is not spaced
