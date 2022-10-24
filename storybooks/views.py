@@ -915,7 +915,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     # print(all_words[word_index].value_index, all_words[word_index].audio_time)   # print the word's index # and the timestamp
                     ## add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
                     word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
-                    # print(word_lengths_dict)
                 if word_index > 0:   
                     if all_words[word_index].value == "\n" and all_words[word_index-1].value == "\n":
                         summing_length += 1
@@ -929,8 +928,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     else:
                         summing_length+=len(all_words[word_index].value) + 1
                         
-                # print(all_words[word_index].value)  
-                # print(summing_length)  # should be starting character of the next word
+                print(all_words[word_index].value)  
+                print(summing_length)  # should be starting character of the next word
                 word_index+=1
             # print(word_lengths_dict)
         # this already works if the language is not spaced
@@ -974,15 +973,16 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         # print(associations_times)
         # print(associations_chars)
-        #expand the intervals to bridge them
-        for e in range(1,len(associations_times)-1):
-            if associations_times[e]+associations_times[e+1]>3:
-                buffer=round((associations_times[e+1]-associations_times[e])/3)
-                if buffer*2 > ((associations_times[e+1]-buffer)-(associations_times[e]+buffer)):
-                    buffer=round(((associations_times[e+1]-buffer)-(associations_times[e]+buffer))/3) # NEED TO MAKE THIS BETTER, IT STILL SOMETIMES SPLITS THE SINGLE WORD
-                associations_times[e]=associations_times[e]+buffer
-                associations_times[e+1]=associations_times[e+1]-buffer
-            e+=2
+        # print("about to do the funky stuff")
+        # #expand the intervals to bridge them
+        # for e in range(1,len(associations_times)-1):
+        #     if associations_times[e]+associations_times[e+1]>3:
+        #         buffer=round((associations_times[e+1]-associations_times[e])/3)
+        #         if buffer*2 > ((associations_times[e+1]-buffer)-(associations_times[e]+buffer)):
+        #             buffer=round(((associations_times[e+1]-buffer)-(associations_times[e]+buffer))/3) # NEED TO MAKE THIS BETTER, IT STILL SOMETIMES SPLITS THE SINGLE WORD
+        #         associations_times[e]=associations_times[e]+buffer
+        #         associations_times[e+1]=associations_times[e+1]-buffer
+        #     e+=2
             
 
         # print(associations_times)
@@ -995,7 +995,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         parentarray_chars=[]
         parentarray_times.append(associations_times)
         parentarray_chars.append(associations_chars)
-        # print(timestep)
+        # print("timestep: ", timestep)
         # print(parentarray_times)
         # print(parentarray_chars)
 
@@ -1015,20 +1015,21 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_chars[0]=parentarray_chars[0][difference_index+1:]
                 parentarray_times.insert(0,associations_times_new)
                 parentarray_chars.insert(0,associations_chars_new)
-                # print(parentarray_times)
-                # print(parentarray_chars)
             elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
                 entry = str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
+                print(entry)
+                print(parentarray_times[0])
+                # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
+                parentarray_times[0][0] -= len(parentarray_times[0])*25
+                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*25
                 associations[str(min(parentarray_times[0]))+"-"+str(max(parentarray_times[0]))]=[entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
                 # print(parentarray_times)
                 # print(parentarray_chars)
-                # print(associations)
-
-        # def split_array(array_to_split):
-        # print(associations)
+        print(associations)
+        
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
@@ -1204,17 +1205,17 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         # make sure the keys in the dict are integers
         association_dict = {int(k): v for k, v in association_dict.items()}
-        # print(association_dict)
-        # print(serializer.data)
+        print(association_dict)
+        print(serializer.data)
+        old_values=[]
         for key in association_dict:
             if key >= 0:
-                
-                
                 # print(key)
                 # print(association_dict[key])
                 # print(query[key].audio_time)
                 print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                old_values.append(query[key].audio_time)
                 query[key].audio_time = association_dict[key]
                 print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 # print("why is this not updating", query[key].audio_time)
@@ -1222,7 +1223,22 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(query[key])
                 # print("new: char " + key + " time " + query[key])
                 # print(changed)
+                # print(old_values)
         # print(changed[0].__dict__)
+        old_values_unique=[*set(old_values)]
+        # print(old_values_unique)
+        old_audio_times=[]
+        for key in query:
+            old_audio_times.append(key.audio_time)
+        for l in old_values_unique:
+            indices = [i for i, x in enumerate(old_audio_times) if x == l]
+            for index in indices:
+                query[index].audio_time = None
+                changed.append(query[index])
+        # print(changed)
+        # for oldvalue in old_values:
+        #     indices = [i for i, x in enumerate(query) if x == "whatever"]
+        #     print("key by value: ", key)
         # SOMETHING IS BROKEN IN HERE
         Content.objects.bulk_update(changed, ['audio_time'])
 
