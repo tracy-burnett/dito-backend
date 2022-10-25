@@ -1020,8 +1020,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 print(entry)
                 print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
-                parentarray_times[0][0] -= len(parentarray_times[0])*25
-                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*25
+                parentarray_times[0][0] -= len(parentarray_times[0])*10
+                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*10
                 associations[str(min(parentarray_times[0]))+"-"+str(max(parentarray_times[0]))]=[entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
