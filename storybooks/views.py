@@ -1017,18 +1017,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_chars.insert(0,associations_chars_new)
             elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
                 entry = str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
-                print(entry)
-                print(parentarray_times[0])
+                # print(entry)
+                # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
-                parentarray_times[0][0] -= len(parentarray_times[0])*10
-                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*10
+                parentarray_times[0][0] -= len(parentarray_times[0])*15
+                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*15
                 associations[str(min(parentarray_times[0]))+"-"+str(max(parentarray_times[0]))]=[entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
                 # print(parentarray_times)
                 # print(parentarray_chars)
-        print(associations)
+        # print(associations)
         
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
