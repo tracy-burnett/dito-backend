@@ -844,6 +844,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         indices_array = [entry['value_index'] for entry in serializer.data]
 
         # make sure the keys in the dict are integers
+        print(association_dict)
         association_dict = {int(k): v for k, v in association_dict.items()}
         print(association_dict)
         print(serializer.data)
@@ -856,8 +857,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 old_values.append(query[key].audio_time)
-                query[key].audio_time = association_dict[key]
-                print("new values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                try:
+                    for subkey in association_dict[key]:
+                        query[key].audio_time = subkey
+                        query[key].audio_offset = association_dict[key][subkey]
+                except:
+                    query[key].audio_time = association_dict[key]
+                print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
                 # print(query[key])
@@ -874,13 +880,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
             indices = [i for i, x in enumerate(old_audio_times) if x == l]
             for index in indices:
                 query[index].audio_time = None
+                query[index].audio_offset = None
                 changed.append(query[index])
         # print(changed)
         # for oldvalue in old_values:
         #     indices = [i for i, x in enumerate(query) if x == "whatever"]
         #     print("key by value: ", key)
         # SOMETHING IS BROKEN IN HERE
-        Content.objects.bulk_update(changed, ['audio_time'])
+        Content.objects.bulk_update(changed, ['audio_time','audio_offset'])
 
         return HttpResponse(status=200)
 
