@@ -901,7 +901,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         query[key].audio_offset = association_dict[key][subkey]
                 except:
                     query[key].audio_time = association_dict[key]
-                    query[key].audio_offset = None
+                    query[key].audio_offset = 100
                 print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
