@@ -1,11 +1,10 @@
 # Xygil Backend
 
-As of 2/21/2022, main branch code auto-deploys to api.xygil.net.  But only skysnolimit08 has the ability to run migrations on the database it communicates with.
+ - 11/08/2022: Main branch code auto-deploys to api.dito.live.  Migrations must be made locally and pushed to the repository and the build/deploy needs to finish on Heroku, after which skysnolimit08 needs to run heroku run python manage.py migrate --app ditotranslationtool to bring things up to speed on Heroku after database format changes.
+ - For future reference on database upgrades with Heroku Postgres: https://gist.github.com/simonw/50e14b9a3e829355d6d43f0f12f91e74
 
 ## Update Notes
-- 6/16/2022: if you ever need to reset your local database, try deleting your migration files (but no folders and no init files), then running pipenv shell, python manage.py migrate storybooks zero, python manage.py makemigrations, and finally python manage.py migrate.
-- 4/7/2022: Added AWS blurb
-- 3/7/2022: Removed the mysqlclient package from Pipfile because it did not seem necessary and was causing problems for setup on Macs.  Please let me know if this causes any problems down the line.
+- 6/16/2022: if you ever need to reset your local database, try running pipenv shell, then running python manage.py migrate storybooks zero, then running python manage.py makemigrations, and finally running python manage.py migrate.
 
 ### Prerequisites
 
