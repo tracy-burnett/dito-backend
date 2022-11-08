@@ -74,7 +74,7 @@ class Content(models.Model):
     updated_by = models.ForeignKey(Extended_User, related_name="content_updated_by", null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f"{self.interpretation_id} {self.value} {self.value_index} {self.audio_time}"
+        return f"{self.interpretation_id} {self.value} {self.value_index} {self.audio_time} {self.audio_offset}"
 
     class Meta:
         verbose_name = "content"
