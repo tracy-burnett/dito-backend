@@ -689,6 +689,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         associations_times = []
         associations_chars = []
+        associations_offsets=[]
         # print("test")
         # print(len(interpretation.spaced_by))
         # if the interpretation is spaced, I need to duplicate each word and create a "value_index" representing the first character of the word and a "value_index" representing the last character in the word instead.
@@ -731,48 +732,67 @@ class AssociationViewSet(viewsets.ModelViewSet):
             # print(obj)
             associations_times.append(obj.audio_time)
             associations_chars.append(obj.value_index)
+            associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
             m += 1
 
-        # print(associations_times)
-        # print(associations_chars)
+        print("next three")
+        print(associations_times)
+        print(associations_chars)
+        print(associations_offsets)
 
         if len(interpretation.spaced_by) > 0:
             new_array_times=[]
             new_array_chars=[]
+            new_array_offsets=[]
             # use word_lengths_dict to populate associations_times and associations_chars
             w = 0
             while w < len(associations_times) and w < len(associations_chars):
 
                 # print(word_lengths_dict[associations_chars[w]])
                 # print(associations_times[w])
+                # new_array_chars.append(word_lengths_dict[associations_chars[w]][0])
+                # new_array_chars.append(word_lengths_dict[associations_chars[w]][1])
+                # new_array_times.append(associations_times[w]-associations_offsets[w]) # HERE
+                # new_array_times.append(associations_times[w]+associations_offsets[w]) # HERE
                 new_array_chars.append(word_lengths_dict[associations_chars[w]][0])
                 new_array_chars.append(word_lengths_dict[associations_chars[w]][1])
-                new_array_times.append(associations_times[w])
-                new_array_times.append(associations_times[w])
+                new_array_times.append(associations_times[w]) # HERE
+                new_array_times.append(associations_times[w]) # HERE
+                new_array_offsets.append(associations_offsets[w]) 
+                new_array_offsets.append(associations_offsets[w]) 
                 w+=1
             associations_times=new_array_times
             associations_chars=new_array_chars
+            associations_offsets=new_array_offsets
         else:
             #double associations_times and associations_chars
             f=len(associations_times)-1
-            for u in range(f+1):
-                # print(f,u)
-                associations_times.insert(f-u, associations_times[f-u])
-                associations_chars.insert(f-u, associations_chars[f-u])
-                u+=1
+            for b in range(f+1):
+                # print(f,b)
+                # associations_times[f-b]-=associations_offsets[f-b]
+                # associations_times.insert(f-b, associations_times[f-b]+associations_offsets[f-b]+associations_offsets[f-b]) # HERE
+                # associations_chars.insert(f-b, associations_chars[f-b])
+                associations_times.insert(f-b, associations_times[f-b]) # HERE
+                associations_chars.insert(f-b, associations_chars[f-b])
+                associations_offsets.insert(f-b, associations_offsets[f-b])
+                b+=1
 
             
 
-        # print(associations_times)
-        # print(associations_chars)
+        print(associations_times)
+        print(associations_chars)
+        print(associations_offsets)
         a = timestep # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
         associations = {}   
         associations_chars_new=[]
         associations_times_new=[]
+        associations_offsets_new=[]
         parentarray_times=[]
         parentarray_chars=[]
+        parentarray_offsets=[]
         parentarray_times.append(associations_times)
         parentarray_chars.append(associations_chars)
+        parentarray_offsets.append(associations_offsets)
         # print("timestep: ", timestep)
         # print(parentarray_times)
         # print(parentarray_chars)
@@ -785,28 +805,46 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     times_differences.append(parentarray_times[0][j+1]-parentarray_times[0][j])
                     j+=1
                     # print(j)
-                # print(times_differences)
+                print(times_differences)
                 difference_index=times_differences.index(max(times_differences))
                 associations_times_new=parentarray_times[0][:difference_index+1]
                 associations_chars_new=parentarray_chars[0][:difference_index+1]
+                associations_offsets_new=parentarray_offsets[0][:difference_index+1]
                 parentarray_times[0]=parentarray_times[0][difference_index+1:]
                 parentarray_chars[0]=parentarray_chars[0][difference_index+1:]
+                parentarray_offsets[0]=parentarray_offsets[0][difference_index+1:]
                 parentarray_times.insert(0,associations_times_new)
                 parentarray_chars.insert(0,associations_chars_new)
+                parentarray_offsets.insert(0,associations_offsets_new)
             elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
                 entry = str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
                 # print(entry)
                 # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
-                parentarray_times[0][0] -= len(parentarray_times[0])*15
-                parentarray_times[0][len(parentarray_times[0])-1] += len(parentarray_times[0])*15
-                associations[str(min(parentarray_times[0]))+"-"+str(max(parentarray_times[0]))]=[entry]
+                print("pause")
+                print(parentarray_times)
+                print(parentarray_chars)
+                print(parentarray_offsets)
+                mintimes=[]
+                maxtimes=[]
+                for x in range(len(parentarray_times[0])):
+                    mintimes.append(parentarray_times[0][x]-parentarray_offsets[0][x])
+                    maxtimes.append(parentarray_times[0][x]+parentarray_offsets[0][x])
+                # unique_audio_times=[]
+                # unique_audio_offsets=[]
+                # for x in range(len(parentarray_times[0])-1):
+                #     if not parentarray_times[0][x]==parentarray_times[0][x+1]:
+                #         unique_audio_times.append(parentarray_times[0][x+1])
+                #         unique_audio_offsets.append(parentarray_offsets[0][x+1])
+                # if len(unique_audio_times)==1:
+                #     parentarray_times[0][0] -= parentarray_offsets[0][0]
+                #     parentarray_times[0][len(parentarray_times[0])-1] += parentarray_offsets[0][0]
+                associations[str(min(mintimes))+"-"+str(max(maxtimes))]=[entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
-                # print(parentarray_times)
-                # print(parentarray_chars)
-        # print(associations)
+                parentarray_offsets.pop(0)
+        print(associations)
         
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
@@ -863,6 +901,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         query[key].audio_offset = association_dict[key][subkey]
                 except:
                     query[key].audio_time = association_dict[key]
+                    query[key].audio_offset = None
                 print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
