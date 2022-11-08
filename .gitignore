@@ -84,7 +84,6 @@ ENV/
 env.bak/ 
 venv.bak/ 
 .env
-storybooks/migrations/0*
 
 # mkdocs documentation 
 /site 
