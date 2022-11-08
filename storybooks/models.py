@@ -67,6 +67,7 @@ class Content(models.Model):
     interpretation_id = models.ForeignKey(Interpretation, on_delete=models.CASCADE)
     value = models.CharField(max_length=255)
     audio_time = models.IntegerField(null=True)
+    audio_offset = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(Extended_User, related_name="content_created_by", null=True, on_delete=models.SET_NULL)
     updated_at = models.DateTimeField(auto_now=True)
