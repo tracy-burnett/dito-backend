@@ -56,6 +56,10 @@ class Interpretation(models.Model):
     last_edited_at  = models.DateTimeField(auto_now=True)
     version         = models.IntegerField(default=1)
 
+
+    def __str__(self):
+        return f"{self.id} {self.title} {self.language_name}"
+
     class Meta:
         verbose_name = "interpretation"
         verbose_name_plural = "interpretations"
