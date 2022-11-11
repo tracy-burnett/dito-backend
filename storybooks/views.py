@@ -493,14 +493,6 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query, many=True)
         return JsonResponse(serializer.data)  # TODO
 
-    def retrieve_user(self, request, uid):
-        query = self.queryset.filter(Q(archived=False) & Q(
-            public=True) & Q(created_by__id=uid))
-        if not query:
-            return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data)  # TODO
-
 
 class AudioViewSet(viewsets.ModelViewSet):
     """
@@ -652,22 +644,6 @@ class AudioViewSet(viewsets.ModelViewSet):
         # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
-    def retrieve_public_user(self, request, uid):
-        data = request.headers
-        query = self.queryset.filter(
-            Q(archived=False) & Q(uploaded_by=uid) & Q(public=True) & Q(url=data['Origin']))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(query, many=True)
-        fieldsToKeep = {'title', 'description', 'id', 'url'}
-        sanitizedList = []
-        for audioModel in serializer.data:
-            sanitizedDict = {}
-            for key in fieldsToKeep:
-                sanitizedDict[key] = audioModel[key]
-            sanitizedList.append(sanitizedDict)
-        return JsonResponse({"audio": sanitizedList})
-
 
 class AssociationViewSet(viewsets.ModelViewSet):
     """
@@ -735,10 +711,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
             associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
             m += 1
 
-        print("next three")
-        print(associations_times)
-        print(associations_chars)
-        print(associations_offsets)
+        # print("next three")
+        # print(associations_times)
+        # print(associations_chars)
+        # print(associations_offsets)
 
         if len(interpretation.spaced_by) > 0:
             new_array_times=[]
@@ -779,9 +755,9 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
             
 
-        print(associations_times)
-        print(associations_chars)
-        print(associations_offsets)
+        # print(associations_times)
+        # print(associations_chars)
+        # print(associations_offsets)
         a = timestep # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
         associations = {}   
         associations_chars_new=[]
@@ -805,7 +781,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     times_differences.append(parentarray_times[0][j+1]-parentarray_times[0][j])
                     j+=1
                     # print(j)
-                print(times_differences)
+                # print(times_differences)
                 difference_index=times_differences.index(max(times_differences))
                 associations_times_new=parentarray_times[0][:difference_index+1]
                 associations_chars_new=parentarray_chars[0][:difference_index+1]
@@ -821,10 +797,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(entry)
                 # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
-                print("pause")
-                print(parentarray_times)
-                print(parentarray_chars)
-                print(parentarray_offsets)
+                # print("pause")
+                # print(parentarray_times)
+                # print(parentarray_chars)
+                # print(parentarray_offsets)
                 mintimes=[]
                 maxtimes=[]
                 for x in range(len(parentarray_times[0])):

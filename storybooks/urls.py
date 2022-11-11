@@ -37,10 +37,6 @@ audio_retrieve_private_user = AudioViewSet.as_view({
     'get':'retrieve_private_user'  # has auth.  working 6/13/22.
 })
 
-audio_retrieve_public_user = AudioViewSet.as_view({
-    'get':'retrieve_public_user'      # NOT UPDATED YET.    [ignore for now?]
-})
-
 
 interpretations_detail = InterpretationViewSet.as_view({
     'post': 'create',                    # has auth.  working 6/13/22.
@@ -64,10 +60,6 @@ interpretations_owner = InterpretationViewSet.as_view({
 
 interpretations = InterpretationViewSet.as_view({
     'get': 'retrieve_all'            # NOT UPDATED YET.   (see all interpretations that you have access to.)
-})
-
-interpretations_user = InterpretationViewSet.as_view({
-    'get': 'retrieve_user'            # NOT UPDATED YET.  (see all public interpretations created by a particular user, not you.)
 })
 
 associations_detail = AssociationViewSet.as_view({
@@ -106,7 +98,6 @@ urlpatterns.extend(format_suffix_patterns([
     path('audio/<aid>/owner/', audio_update_owner, name='audio_update_owner'),
     path('audio/<aid>/editor/', audio_update_editor, name='audio_update_editor'),
     path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
-    path('audio/user/<int:uid>', audio_retrieve_public_user, name='audio_retrieve_public_user'),
     # path('audio/<aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
     # path('audio/<aid>/translations/', translations_list, name='translations-list'),
     path('content/<aid>/<iid>', associations_detail, name='associations-detail'),
@@ -118,7 +109,6 @@ urlpatterns.extend(format_suffix_patterns([
     path('interpretations/<iid>/audio/<aid>/owner/', interpretations_owner, name='interpretations_owner'),  
     path('interpretations/<iid>/audio/<aid>/viewer/', interpretations_viewer, name='interpretations_viewer'),
     path('interpretations/', interpretations, name='interpretations'),
-    path('interpretations/user/<int:uid>/', interpretations_user, name='interpretations_user'),
     # path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
     path('user/', extended_user_details, name='extended_user_details'),
 ]))
