@@ -23,6 +23,7 @@ class Audio(models.Model):
     shared_editors = models.ManyToManyField(Extended_User, related_name="audio_shared_editors", blank=True)
     shared_viewers = models.ManyToManyField(Extended_User, related_name="audio_shared_viewers", blank=True)
     public = models.BooleanField(default=False)
+    peaks=models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name = "audio file"

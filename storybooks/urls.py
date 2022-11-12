@@ -33,6 +33,10 @@ audio_update_editor = AudioViewSet.as_view({
     'patch':'partial_update_editor'        # has auth.  working 6/13/22.
 })
 
+audio_update_public = AudioViewSet.as_view({
+    'patch':'partial_update_public'
+})
+
 audio_retrieve_private_user = AudioViewSet.as_view({
     'get':'retrieve_private_user'  # has auth.  working 6/13/22.
 })
@@ -97,6 +101,7 @@ urlpatterns.extend(format_suffix_patterns([
     path('audio/', audio_list, name='audio_list'),
     path('audio/<aid>/owner/', audio_update_owner, name='audio_update_owner'),
     path('audio/<aid>/editor/', audio_update_editor, name='audio_update_editor'),
+    path('audio/<aid>/public/', audio_update_public, name='audio_update_public'),
     path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
     # path('audio/<aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
     # path('audio/<aid>/translations/', translations_list, name='translations-list'),
