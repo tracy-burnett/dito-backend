@@ -60,7 +60,10 @@ class DownloadFileViewSet(viewsets.ViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         elif query:
             url = S3().get_file(audio_ID)
-            return Response({'url': url, 'audio_ID': audio_ID})
+            serializer=self.serializer_class(query[0])
+            peaks=serializer.data['peaks']
+
+            return Response({'url': url, 'audio_ID': audio_ID, 'peaks': peaks})
 
 
 class InterpretationViewSet(viewsets.ModelViewSet):
@@ -617,6 +620,26 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
 
+    def partial_update_public(self, request, aid):
+        data = request.data
+
+        query = self.queryset.filter(id=aid)
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {'peaks'}
+        k = 0
+        for key in request.data:
+            if hasattr(obj,key) and key in modifiable_attr:
+                setattr(obj,key,request.data[key])
+                k = 1
+        
+        if k == 0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj.save()
+        return Response({'peaks created'})
+
     def retrieve_public(self, request):
         data = request.headers
         print(data)
@@ -631,7 +654,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 data['Authorization'])  # FOR DEMONSTRATION
             uid = decoded_token['uid']
         except:
-            return JsonResponse({"login expired; try refreshing the app or loggin in again": status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
         query = self.queryset.filter((Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
