@@ -686,6 +686,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
 
+        a = timestep # maximum number of time to group timestamps together for, and also influences padding around words
         associations_times = []
         associations_chars = []
         associations_offsets=[]
@@ -718,8 +719,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     else:
                         summing_length+=len(all_words[word_index].value) + 1
                         
-                print(all_words[word_index].value)  
-                print(summing_length)  # should be starting character of the next word
+                # print(all_words[word_index].value)  
+                # print(summing_length)  # should be starting character of the next word
                 word_index+=1
             # print(word_lengths_dict)
         # this already works if the language is not spaced
@@ -731,7 +732,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
             # print(obj)
             associations_times.append(obj.audio_time)
             associations_chars.append(obj.value_index)
-            associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
+            if obj.audio_offset > 0:
+                associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
+            else:
+                associations_offsets.append(a)
             m += 1
 
         # print("next three")
@@ -781,7 +785,6 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print(associations_times)
         # print(associations_chars)
         # print(associations_offsets)
-        a = timestep # maximum number of time to group timestamps together for... eventually user should be able to edit this themselves
         associations = {}   
         associations_chars_new=[]
         associations_times_new=[]
@@ -881,18 +884,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
         indices_array = [entry['value_index'] for entry in serializer.data]
 
         # make sure the keys in the dict are integers
-        print(association_dict)
+        # print(association_dict)
         association_dict = {int(k): v for k, v in association_dict.items()}
-        print(association_dict)
-        print(serializer.data)
+        # print(association_dict)
+        # print(serializer.data)
         old_values=[]
         for key in association_dict:
             if key >= 0:
                 # print(key)
                 # print(association_dict[key])
                 # print(query[key].audio_time)
-                print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
-                print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                 old_values.append(query[key].audio_time)
                 try:
                     for subkey in association_dict[key]:
@@ -900,8 +903,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         query[key].audio_offset = association_dict[key][subkey]
                 except:
                     query[key].audio_time = association_dict[key]
-                    query[key].audio_offset = 100
-                print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
+                    query[key].audio_offset = 0
+                # print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
                 # print("why is this not updating", query[key].audio_time)
                 changed.append(query[key])
                 # print(query[key])
