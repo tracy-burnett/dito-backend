@@ -686,7 +686,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
 
-        a = timestep # maximum number of time to group timestamps together for, and also influences padding around words
+        a = timestep # maximum number of time to group timestamps together for
         associations_times = []
         associations_chars = []
         associations_offsets=[]
@@ -735,7 +735,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             if obj.audio_offset > 0:
                 associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
             else:
-                associations_offsets.append(a)
+                associations_offsets.append(45)
             m += 1
 
         # print("next three")
@@ -824,9 +824,9 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
                 # print("pause")
-                # print(parentarray_times)
-                # print(parentarray_chars)
-                # print(parentarray_offsets)
+                # print("times: ", parentarray_times[0])
+                # print("chars: ", parentarray_chars[0])
+                # print("offsets: ", parentarray_offsets[0])
                 mintimes=[]
                 maxtimes=[]
                 for x in range(len(parentarray_times[0])):
@@ -888,7 +888,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         association_dict = {int(k): v for k, v in association_dict.items()}
         # print(association_dict)
         # print(serializer.data)
-        old_values=[]
+        # old_values=[]
         for key in association_dict:
             if key >= 0:
                 # print(key)
@@ -896,7 +896,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(query[key].audio_time)
                 # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                 # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
-                old_values.append(query[key].audio_time)
+                # old_values.append(query[key].audio_time)
                 try:
                     for subkey in association_dict[key]:
                         query[key].audio_time = subkey
@@ -912,17 +912,17 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(changed)
                 # print(old_values)
         # print(changed[0].__dict__)
-        old_values_unique=[*set(old_values)]
-        # print(old_values_unique)
-        old_audio_times=[]
-        for key in query:
-            old_audio_times.append(key.audio_time)
-        for l in old_values_unique:
-            indices = [i for i, x in enumerate(old_audio_times) if x == l]
-            for index in indices:
-                query[index].audio_time = None
-                query[index].audio_offset = None
-                changed.append(query[index])
+        # old_values_unique=[*set(old_values)]
+        # # print(old_values_unique)
+        # old_audio_times=[]
+        # for key in query:
+        #     old_audio_times.append(key.audio_time)
+        # for l in old_values_unique:
+        #     indices = [i for i, x in enumerate(old_audio_times) if x == l]
+        #     for index in indices:
+        #         query[index].audio_time = None
+        #         query[index].audio_offset = None
+        #         changed.append(query[index])
         # print(changed)
         # for oldvalue in old_values:
         #     indices = [i for i, x in enumerate(query) if x == "whatever"]
