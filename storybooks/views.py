@@ -871,66 +871,87 @@ class AssociationViewSet(viewsets.ModelViewSet):
                                                                                 | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
+
+
         query = Content.objects.all().filter(
             interpretation_id_id=iid).order_by('value_index')
 
         changed = []
-        association_dict = request.data['associations']
         # print(association_dict)
 
         serializer = ContentSerializer(query, many=True)
+            
+        try:
+            new_offset = request.data['offset']
+            print(request.data['duration'])
+            for entry in query:
+                print(entry.audio_time)
+                print(new_offset)
+                if isinstance(entry.audio_time, int):
+                    if (entry.audio_time+new_offset) < (request.data['duration']/10):
+                        query[entry.value_index].audio_time += new_offset
 
-        # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
-        indices_array = [entry['value_index'] for entry in serializer.data]
+                        changed.append(query[entry.value_index])
+                    else:
+                        return HttpResponse(status=400)
+            
+            Content.objects.bulk_update(changed, ['audio_time'])
+            return HttpResponse(status=200)
+        except:
+            association_dict = request.data['associations']
 
-        # make sure the keys in the dict are integers
-        # print(association_dict)
-        association_dict = {int(k): v for k, v in association_dict.items()}
-        # print(association_dict)
-        # print(serializer.data)
-        # old_values=[]
-        for key in association_dict:
-            if key >= 0:
-                # print(key)
-                # print(association_dict[key])
-                # print(query[key].audio_time)
-                # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
-                # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
-                # old_values.append(query[key].audio_time)
-                try:
-                    for subkey in association_dict[key]:
-                        query[key].audio_time = subkey
-                        query[key].audio_offset = association_dict[key][subkey]
-                except:
-                    query[key].audio_time = association_dict[key]
-                    query[key].audio_offset = 0
-                # print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
-                # print("why is this not updating", query[key].audio_time)
-                changed.append(query[key])
-                # print(query[key])
-                # print("new: char " + key + " time " + query[key])
-                # print(changed)
-                # print(old_values)
-        # print(changed[0].__dict__)
-        # old_values_unique=[*set(old_values)]
-        # # print(old_values_unique)
-        # old_audio_times=[]
-        # for key in query:
-        #     old_audio_times.append(key.audio_time)
-        # for l in old_values_unique:
-        #     indices = [i for i, x in enumerate(old_audio_times) if x == l]
-        #     for index in indices:
-        #         query[index].audio_time = None
-        #         query[index].audio_offset = None
-        #         changed.append(query[index])
-        # print(changed)
-        # for oldvalue in old_values:
-        #     indices = [i for i, x in enumerate(query) if x == "whatever"]
-        #     print("key by value: ", key)
-        # SOMETHING IS BROKEN IN HERE
-        Content.objects.bulk_update(changed, ['audio_time','audio_offset'])
 
-        return HttpResponse(status=200)
+            # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
+            indices_array = [entry['value_index'] for entry in serializer.data]
+
+            # make sure the keys in the dict are integers
+            # print(association_dict)
+            association_dict = {int(k): v for k, v in association_dict.items()}
+            # print(association_dict)
+            # print(serializer.data)
+            # old_values=[]
+            for key in association_dict:
+                if key >= 0:
+                    # print(key)
+                    # print(association_dict[key])
+                    # print(query[key].audio_time)
+                    # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                    # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                    # old_values.append(query[key].audio_time)
+                    try:
+                        for subkey in association_dict[key]:
+                            query[key].audio_time = subkey
+                            query[key].audio_offset = association_dict[key][subkey]
+                    except:
+                        query[key].audio_time = association_dict[key]
+                        query[key].audio_offset = 0
+                    # print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
+                    # print("why is this not updating", query[key].audio_time)
+                    changed.append(query[key])
+                    # print(query[key])
+                    # print("new: char " + key + " time " + query[key])
+                    # print(changed)
+                    # print(old_values)
+            # print(changed[0].__dict__)
+            # old_values_unique=[*set(old_values)]
+            # # print(old_values_unique)
+            # old_audio_times=[]
+            # for key in query:
+            #     old_audio_times.append(key.audio_time)
+            # for l in old_values_unique:
+            #     indices = [i for i, x in enumerate(old_audio_times) if x == l]
+            #     for index in indices:
+            #         query[index].audio_time = None
+            #         query[index].audio_offset = None
+            #         changed.append(query[index])
+            # print(changed)
+            # for oldvalue in old_values:
+            #     indices = [i for i, x in enumerate(query) if x == "whatever"]
+            #     print("key by value: ", key)
+            # SOMETHING IS BROKEN IN HERE
+            Content.objects.bulk_update(changed, ['audio_time','audio_offset'])
+
+            return HttpResponse(status=200)
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
