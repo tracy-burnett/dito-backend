@@ -888,7 +888,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 print(entry.audio_time)
                 print(new_offset)
                 if isinstance(entry.audio_time, int):
-                    if (entry.audio_time+new_offset) < (request.data['duration']/10):
+                    if (entry.audio_time+new_offset) < (request.data['duration']/10) and (entry.audio_time+new_offset) > 0:
                         query[entry.value_index].audio_time += new_offset
 
                         changed.append(query[entry.value_index])
