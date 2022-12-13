@@ -918,13 +918,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
                     # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
                     # old_values.append(query[key].audio_time)
-                    try:
-                        for subkey in association_dict[key]:
-                            query[key].audio_time = subkey
-                            query[key].audio_offset = association_dict[key][subkey]
-                    except:
-                        query[key].audio_time = association_dict[key]
-                        query[key].audio_offset = 0
+                    # try:
+                    for subkey in association_dict[key]:
+                        query[key].audio_time = subkey
+                        query[key].audio_offset = association_dict[key][subkey]
+                    # except:
+                    #     query[key].audio_time = association_dict[key]
+                    #     query[key].audio_offset = 0
                     # print("new values Object(value_index, value, audio_time, audio_offset): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time) + ", " + str(query[key].audio_offset))
                     # print("why is this not updating", query[key].audio_time)
                     changed.append(query[key])
