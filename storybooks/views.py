@@ -685,8 +685,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
         if not query:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
-
-        a = timestep # maximum number of time to group timestamps together for
+        if timestep != 10:
+            a = timestep # maximum number of time to group timestamps together for
+        else:
+            a = 0
         associations_times = []
         associations_chars = []
         associations_offsets=[]
