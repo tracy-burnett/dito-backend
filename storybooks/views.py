@@ -732,10 +732,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
             # print(obj)
             associations_times.append(obj.audio_time)
             associations_chars.append(obj.value_index)
-            if obj.audio_offset > 0:
-                associations_offsets.append(obj.audio_offset) # What if there's none?  set a default value.
-            else:
-                associations_offsets.append(45)
+            # if obj.audio_offset > 0:
+            associations_offsets.append(obj.audio_offset)
+            # else:
+            #     associations_offsets.append(45)
             m += 1
 
         # print("next three")
