@@ -109,11 +109,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             text_array = re.split(regexwithspacedby, data['latest_text'])
             # print(text_array)
             # print(len(text_array)-1)
-            for p in range(len(text_array)):
-                # print(p)
-                if text_array[len(text_array)-1-p]=="" or text_array[len(text_array)-1-p] == None:
-                    del text_array[len(text_array)-1-p]
-
+            startinglength=len(text_array)
+            for p in range(startinglength):
+                if text_array[startinglength-1-p]=="" or text_array[startinglength-1-p] == None:
+                    # print(len(text_array)-1-p)
+                    # print(text_array[len(text_array)-1-p])
+                    del text_array[startinglength-1-p]
+            # print(text_array)
             
         else:
             text_array = list(data['latest_text'])
@@ -124,6 +126,11 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             word = text_array[i]
             words.append(Content(interpretation_id_id=newinterpretationid, audio_id_id=aid,
                          value=word, value_index=i, created_by_id=uid, updated_by_id=uid))
+            # if i < 21:
+            #     print(i)
+            #     print(word)
+            # if word == None:
+            #     print(i)
         obj.save()
         Content.objects.bulk_create(words)
         
@@ -846,7 +853,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
                 parentarray_offsets.pop(0)
-        print(associations)
+        # print(associations)
         
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
