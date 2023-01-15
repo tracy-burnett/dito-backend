@@ -5,10 +5,10 @@ from storybooks.s3 import *
 
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['url', 'username', 'email', 'groups']
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['url', 'username', 'email', 'groups']
 
 class ExtendedUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,20 +39,20 @@ class InterpretationHistorySerializer(serializers.ModelSerializer):
         model = Interpretation_History
         fields = ['id','interpretation_id','public','shared_editors','shared_viewers','audio_id','title','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
 
-class LanguageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Language
-        fields = ['id', 'name']
+# class LanguageSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Language
+#         fields = ['id', 'name']
 
-class TranslationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Translation
-        fields = ['title', 'audio', 'published', 'language', 'author']
+# class TranslationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Translation
+#         fields = ['title', 'audio', 'published', 'language', 'author']
 
-class StorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Story
-        fields = ['word', 'index', 'timestamp']
+# class StorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Story
+#         fields = ['word', 'index', 'timestamp']
 
 class ContentSerializer(serializers.ModelSerializer):
     class Meta:

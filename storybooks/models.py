@@ -30,13 +30,13 @@ class Audio(models.Model):
         verbose_name_plural = "audio files"
 
 
-class Language(models.Model):
-    name = models.CharField(max_length=255)
-    spaced = models.BooleanField()
+# class Language(models.Model):
+#     name = models.CharField(max_length=255)
+#     spaced = models.BooleanField()
 
-    class Meta:
-        verbose_name = "language"
-        verbose_name_plural = "languages"
+#     class Meta:
+#         verbose_name = "language"
+#         verbose_name_plural = "languages"
 
 
 class Interpretation(models.Model):
@@ -108,32 +108,32 @@ class Interpretation_History(models.Model):
         verbose_name_plural = "interpretation history"
 
 
-class Translation(models.Model):
-    title = models.CharField(default="Untitled Storybook", max_length=255)
-    audio_id = models.CharField(max_length=255, primary_key=True)
-    published = models.BooleanField(default=False)
-    text     = models.TextField(null=True)
-    language = models.ForeignKey(
-        Language, related_name="translation_language", null=True, on_delete=models.SET_NULL)
-    author_id = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    last_updated_by = models.CharField(max_length=255)
+# class Translation(models.Model):
+#     title = models.CharField(default="Untitled Storybook", max_length=255)
+#     audio_id = models.CharField(max_length=255, primary_key=True)
+#     published = models.BooleanField(default=False)
+#     text     = models.TextField(null=True)
+#     language = models.ForeignKey(
+#         Language, related_name="translation_language", null=True, on_delete=models.SET_NULL)
+#     author_id = models.CharField(max_length=255)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     last_updated_by = models.CharField(max_length=255)
 
-    class Meta:
-        verbose_name = "translation"
-        verbose_name_plural = "translations"
+#     class Meta:
+#         verbose_name = "translation"
+#         verbose_name_plural = "translations"
 
 
-class Story(models.Model):
-    translation = models.ForeignKey(Translation, on_delete=models.CASCADE, default=0)
-    word = models.CharField(max_length=255)
-    index = models.IntegerField()
-    timestamp = models.IntegerField(null=True)
+# class Story(models.Model):
+#     translation = models.ForeignKey(Translation, on_delete=models.CASCADE, default=0)
+#     word = models.CharField(max_length=255)
+#     index = models.IntegerField()
+#     timestamp = models.IntegerField(null=True)
 
-    class Meta:
-        verbose_name = "story"
-        verbose_name_plural = "stories"
+#     class Meta:
+#         verbose_name = "story"
+#         verbose_name_plural = "stories"
 
 
 
