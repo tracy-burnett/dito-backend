@@ -59,7 +59,6 @@ interpretations_viewer = InterpretationViewSet.as_view({
 interpretations_owner = InterpretationViewSet.as_view({
     'patch': 'update_owners',       # has auth.  working 6/16/22.
     'get': 'retrieve_owners',         # has auth.  working 6/13/22.
-    'delete': 'destroy',               # NOT UPDATED YET.          (delete an interpretation that you created.)  [ignore for now]
 })
 
 interpretations = InterpretationViewSet.as_view({
