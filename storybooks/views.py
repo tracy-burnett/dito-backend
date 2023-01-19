@@ -60,8 +60,8 @@ class DownloadFileViewSet(viewsets.ViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         elif query:
             url = S3().get_file(audio_ID)
-            serializer=self.serializer_class(query[0])
-            peaks=serializer.data['peaks']
+            serializer = self.serializer_class(query[0])
+            peaks = serializer.data['peaks']
 
             return Response({'url': url, 'audio_ID': audio_ID, 'peaks': peaks})
 
@@ -102,21 +102,21 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         text_array = []
-        
+
         regexwithspacedby = re.escape(data['spaced_by']) + r"|(\n)"
 
         if data['spaced_by']:
             text_array = re.split(regexwithspacedby, data['latest_text'])
             # print(text_array)
             # print(len(text_array)-1)
-            startinglength=len(text_array)
+            startinglength = len(text_array)
             for p in range(startinglength):
-                if text_array[startinglength-1-p]=="" or text_array[startinglength-1-p] == None:
+                if text_array[startinglength-1-p] == "" or text_array[startinglength-1-p] == None:
                     # print(len(text_array)-1-p)
                     # print(text_array[len(text_array)-1-p])
                     del text_array[startinglength-1-p]
             # print(text_array)
-            
+
         else:
             text_array = list(data['latest_text'])
 
@@ -133,7 +133,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             #     print(i)
         obj.save()
         Content.objects.bulk_create(words)
-        
+
         serializer = self.serializer_class(obj)
         return JsonResponse({"interpretation": serializer.data})
 
@@ -176,19 +176,17 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
-
     def retrieve_viewers(self, request, iid, aid):
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-            
+
             query = self.queryset.get(
-            Q(audio_ID_id=aid) & Q(shared_viewers=uid) & Q(archived=False) & Q(id=iid))
+                Q(audio_ID_id=aid) & Q(shared_viewers=uid) & Q(archived=False) & Q(id=iid))
         except:
             query = self.queryset.get(
-            Q(audio_ID_id=aid) & Q(public=True) & Q(archived=False) & Q(id=iid))
-
+                Q(audio_ID_id=aid) & Q(public=True) & Q(archived=False) & Q(id=iid))
 
         # print(query)
         if not query:
@@ -196,8 +194,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
-
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
+
     def update_editors(self, request, iid, aid):
         try:
             decoded_token = auth.verify_id_token(
@@ -281,22 +279,24 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 add = []
                 subtract = []
                 changed = []
+
                 def traverse_path(path):
                     i = 0
 
-                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
+                    useful = [x for x in path if 'moved' in x and not x['bIndex']
+                              == -1 and not x['aIndex'] == -1]
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
                             # print(path[i]) # print instructions
                             for use in useful:
                                 if use['line'] == path[i]['line']:
-                                    usefulnow=use
+                                    usefulnow = use
                                     useful.remove(use)
                                     break
                             # print(usefulnow)
-                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = usefulnow['bIndex']
                             changed.append(query[path[i]['aIndex']])
-
 
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
                             # print("in added")
@@ -325,8 +325,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 Content.objects.bulk_create(add)
             return Response('interpretation updated')
 
-
     # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
+
     def retrieve_owners(self, request, iid, aid):
         # print(iid)
         # print(aid)
@@ -442,20 +442,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 add = []
                 subtract = []
                 changed = []
+
                 def traverse_path(path):
                     i = 0
 
-                    useful = [x for x in path if 'moved' in x and not x['bIndex'] == -1 and not x['aIndex'] == -1]                    
+                    useful = [x for x in path if 'moved' in x and not x['bIndex']
+                              == -1 and not x['aIndex'] == -1]
                     while i < len(path):
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
                             # print(path[i]) # print instructions
                             for use in useful:
                                 if use['line'] == path[i]['line']:
-                                    usefulnow=use
+                                    usefulnow = use
                                     useful.remove(use)
                                     break
                             # print(usefulnow)
-                            query[path[i]['aIndex']].value_index = usefulnow['bIndex']
+                            query[path[i]['aIndex']
+                                  ].value_index = usefulnow['bIndex']
                             changed.append(query[path[i]['aIndex']])
 
                         elif path[i]['aIndex'] == -1 and not 'moved' in path[i]:
@@ -474,7 +477,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                         # print("finished path")
                         i += 1
                 traverse_path(path['lines'])
-                
+
                 # print("changed, ", changed[0].__dict__)
                 # print("add, ", add[0].__dict__)
                 # print("subtract, ", subtract[0].__dict__)
@@ -637,10 +640,10 @@ class AudioViewSet(viewsets.ModelViewSet):
         modifiable_attr = {'peaks'}
         k = 0
         for key in request.data:
-            if hasattr(obj,key) and key in modifiable_attr:
-                setattr(obj,key,request.data[key])
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key])
                 k = 1
-        
+
         if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -650,7 +653,8 @@ class AudioViewSet(viewsets.ModelViewSet):
     def retrieve_public(self, request):
         data = request.headers
         print(data)
-        query = self.queryset.filter(Q(archived=False) & Q(public=True) & Q(url=data['Origin']))
+        query = self.queryset.filter(Q(archived=False) & Q(
+            public=True) & Q(url=data['Origin']))
         serializer = self.serializer_class(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
@@ -663,10 +667,8 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.filter((Q(uploaded_by_id=uid) | (
-            Q(archived=False) & Q(shared_editors=uid)) | (
-            Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
+        query = self.queryset.filter(Q(url=data['Origin']) & (Q(uploaded_by_id=uid) | (Q(archived=False) & (
+            Q(shared_editors=uid) | Q(shared_viewers=uid) | Q(public=True))))).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
@@ -681,29 +683,29 @@ class AssociationViewSet(viewsets.ModelViewSet):
     """
     # permission_classes = [permissions.IsAuthenticated]
 
-
     def retrieve(self, request, aid, iid, timestep):
         interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
-        
+
         if not interpretation:
             return HttpResponse(status=404)
-        
-        query = Content.objects.all().filter(audio_id_id=aid, interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
+
+        query = Content.objects.all().filter(audio_id_id=aid,
+                                             interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
         if not query:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
-
-        a = timestep # maximum number of time to group timestamps together for
+        a = timestep  # maximum number of time to group timestamps together for
         associations_times = []
         associations_chars = []
-        associations_offsets=[]
+        associations_offsets = []
         # print("test")
         # print(len(interpretation.spaced_by))
         # if the interpretation is spaced, I need to duplicate each word and create a "value_index" representing the first character of the word and a "value_index" representing the last character in the word instead.
         if len(interpretation.spaced_by) > 0:
             # print("interpretation is spaced")
-            all_words = Content.objects.all().filter(interpretation_id_id=iid, audio_id_id=aid).order_by('value_index')
-            word_index=0
+            all_words = Content.objects.all().filter(interpretation_id_id=iid,
+                                                     audio_id_id=aid).order_by('value_index')
+            word_index = 0
             word_lengths_dict = {}
             summing_length = 0
             # print(all_words[0].audio_time)
@@ -711,24 +713,25 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 if all_words[word_index].audio_time is not None:  # if it has a timestamp, then
                     # print(all_words[word_index].value, len(all_words[word_index].value))   # print the word and the length of the word
                     # print(all_words[word_index].value_index, all_words[word_index].audio_time)   # print the word's index # and the timestamp
-                    ## add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
-                    word_lengths_dict[all_words[word_index].value_index] = [summing_length, summing_length-1+len(all_words[word_index].value)]
-                if word_index > 0:   
+                    # add an entry to the dictionary key: word's index and then value: [starting character of word, ending char of word]
+                    word_lengths_dict[all_words[word_index].value_index] = [
+                        summing_length, summing_length-1+len(all_words[word_index].value)]
+                if word_index > 0:
                     if all_words[word_index].value == "\n" and all_words[word_index-1].value == "\n":
                         summing_length += 1
                     elif all_words[word_index].value == "\n" and not all_words[word_index-1].value == "\n":
                         summing_length += 0
                     else:
-                        summing_length+=len(all_words[word_index].value) + 1
+                        summing_length += len(all_words[word_index].value) + 1
                 elif word_index == 0:
                     if all_words[word_index].value == "\n":
                         summing_length += 1
                     else:
-                        summing_length+=len(all_words[word_index].value) + 1
-                        
-                # print(all_words[word_index].value)  
+                        summing_length += len(all_words[word_index].value) + 1
+
+                # print(all_words[word_index].value)
                 # print(summing_length)  # should be starting character of the next word
-                word_index+=1
+                word_index += 1
             # print(word_lengths_dict)
         # this already works if the language is not spaced
 
@@ -751,9 +754,9 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print(associations_offsets)
 
         if len(interpretation.spaced_by) > 0:
-            new_array_times=[]
-            new_array_chars=[]
-            new_array_offsets=[]
+            new_array_times = []
+            new_array_chars = []
+            new_array_offsets = []
             # use word_lengths_dict to populate associations_times and associations_chars
             w = 0
             while w < len(associations_times) and w < len(associations_chars):
@@ -764,41 +767,41 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # new_array_chars.append(word_lengths_dict[associations_chars[w]][1])
                 # new_array_times.append(associations_times[w]-associations_offsets[w]) # HERE
                 # new_array_times.append(associations_times[w]+associations_offsets[w]) # HERE
-                new_array_chars.append(word_lengths_dict[associations_chars[w]][0])
-                new_array_chars.append(word_lengths_dict[associations_chars[w]][1])
-                new_array_times.append(associations_times[w]) # HERE
-                new_array_times.append(associations_times[w]) # HERE
-                new_array_offsets.append(associations_offsets[w]) 
-                new_array_offsets.append(associations_offsets[w]) 
-                w+=1
-            associations_times=new_array_times
-            associations_chars=new_array_chars
-            associations_offsets=new_array_offsets
+                new_array_chars.append(
+                    word_lengths_dict[associations_chars[w]][0])
+                new_array_chars.append(
+                    word_lengths_dict[associations_chars[w]][1])
+                new_array_times.append(associations_times[w])  # HERE
+                new_array_times.append(associations_times[w])  # HERE
+                new_array_offsets.append(associations_offsets[w])
+                new_array_offsets.append(associations_offsets[w])
+                w += 1
+            associations_times = new_array_times
+            associations_chars = new_array_chars
+            associations_offsets = new_array_offsets
         else:
-            #double associations_times and associations_chars
-            f=len(associations_times)-1
+            # double associations_times and associations_chars
+            f = len(associations_times)-1
             for b in range(f+1):
                 # print(f,b)
                 # associations_times[f-b]-=associations_offsets[f-b]
                 # associations_times.insert(f-b, associations_times[f-b]+associations_offsets[f-b]+associations_offsets[f-b]) # HERE
                 # associations_chars.insert(f-b, associations_chars[f-b])
-                associations_times.insert(f-b, associations_times[f-b]) # HERE
+                associations_times.insert(f-b, associations_times[f-b])  # HERE
                 associations_chars.insert(f-b, associations_chars[f-b])
                 associations_offsets.insert(f-b, associations_offsets[f-b])
-                b+=1
-
-            
+                b += 1
 
         # print(associations_times)
         # print(associations_chars)
         # print(associations_offsets)
-        associations = {}   
-        associations_chars_new=[]
-        associations_times_new=[]
-        associations_offsets_new=[]
-        parentarray_times=[]
-        parentarray_chars=[]
-        parentarray_offsets=[]
+        associations = {}
+        associations_chars_new = []
+        associations_times_new = []
+        associations_offsets_new = []
+        parentarray_times = []
+        parentarray_chars = []
+        parentarray_offsets = []
         parentarray_times.append(associations_times)
         parentarray_chars.append(associations_chars)
         parentarray_offsets.append(associations_offsets)
@@ -808,25 +811,28 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         while parentarray_times:
             if max(parentarray_times[0])-min(parentarray_times[0]) > a:
-                times_differences=[]
-                j=0
+                times_differences = []
+                j = 0
                 while j < len(parentarray_times[0]) - 1 and j < len(parentarray_chars[0]) - 1:
-                    times_differences.append(parentarray_times[0][j+1]-parentarray_times[0][j])
-                    j+=1
+                    times_differences.append(
+                        parentarray_times[0][j+1]-parentarray_times[0][j])
+                    j += 1
                     # print(j)
                 # print(times_differences)
-                difference_index=times_differences.index(max(times_differences))
-                associations_times_new=parentarray_times[0][:difference_index+1]
-                associations_chars_new=parentarray_chars[0][:difference_index+1]
-                associations_offsets_new=parentarray_offsets[0][:difference_index+1]
-                parentarray_times[0]=parentarray_times[0][difference_index+1:]
-                parentarray_chars[0]=parentarray_chars[0][difference_index+1:]
-                parentarray_offsets[0]=parentarray_offsets[0][difference_index+1:]
-                parentarray_times.insert(0,associations_times_new)
-                parentarray_chars.insert(0,associations_chars_new)
-                parentarray_offsets.insert(0,associations_offsets_new)
+                difference_index = times_differences.index(
+                    max(times_differences))
+                associations_times_new = parentarray_times[0][:difference_index+1]
+                associations_chars_new = parentarray_chars[0][:difference_index+1]
+                associations_offsets_new = parentarray_offsets[0][:difference_index+1]
+                parentarray_times[0] = parentarray_times[0][difference_index+1:]
+                parentarray_chars[0] = parentarray_chars[0][difference_index+1:]
+                parentarray_offsets[0] = parentarray_offsets[0][difference_index+1:]
+                parentarray_times.insert(0, associations_times_new)
+                parentarray_chars.insert(0, associations_chars_new)
+                parentarray_offsets.insert(0, associations_offsets_new)
             elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
-                entry = str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
+                entry = str(
+                    min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
                 # print(entry)
                 # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
@@ -834,11 +840,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print("times: ", parentarray_times[0])
                 # print("chars: ", parentarray_chars[0])
                 # print("offsets: ", parentarray_offsets[0])
-                mintimes=[]
-                maxtimes=[]
+                mintimes = []
+                maxtimes = []
                 for x in range(len(parentarray_times[0])):
-                    mintimes.append(parentarray_times[0][x]-parentarray_offsets[0][x])
-                    maxtimes.append(parentarray_times[0][x]+parentarray_offsets[0][x])
+                    mintimes.append(
+                        parentarray_times[0][x]-parentarray_offsets[0][x])
+                    maxtimes.append(
+                        parentarray_times[0][x]+parentarray_offsets[0][x])
                 # unique_audio_times=[]
                 # unique_audio_offsets=[]
                 # for x in range(len(parentarray_times[0])-1):
@@ -848,20 +856,15 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # if len(unique_audio_times)==1:
                 #     parentarray_times[0][0] -= parentarray_offsets[0][0]
                 #     parentarray_times[0][len(parentarray_times[0])-1] += parentarray_offsets[0][0]
-                associations[str(min(mintimes))+"-"+str(max(maxtimes))]=[entry]
+                associations[str(min(mintimes))+"-" +
+                             str(max(maxtimes))] = [entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
                 parentarray_offsets.pop(0)
         # print(associations)
-        
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
-
-
-
-
-
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
 
@@ -872,13 +875,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-
         # print(request.data['associations'])
         if not Interpretation.objects.filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
                                                                                 | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
-
-
 
         query = Content.objects.all().filter(
             interpretation_id_id=iid).order_by('value_index')
@@ -887,7 +887,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print(association_dict)
 
         serializer = ContentSerializer(query, many=True)
-            
+
         try:
             new_offset = request.data['offset']
             print(request.data['duration'])
@@ -901,12 +901,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         changed.append(query[entry.value_index])
                     else:
                         return HttpResponse(status=400)
-            
+
             Content.objects.bulk_update(changed, ['audio_time'])
             return HttpResponse(status=200)
         except:
             association_dict = request.data['associations']
-
 
             # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
             indices_array = [entry['value_index'] for entry in serializer.data]
@@ -956,7 +955,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
             #     indices = [i for i, x in enumerate(query) if x == "whatever"]
             #     print("key by value: ", key)
             # SOMETHING IS BROKEN IN HERE
-            Content.objects.bulk_update(changed, ['audio_time','audio_offset'])
+            Content.objects.bulk_update(
+                changed, ['audio_time', 'audio_offset'])
 
             return HttpResponse(status=200)
 
