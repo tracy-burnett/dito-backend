@@ -668,8 +668,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
         query = self.queryset.filter(Q(url=data['Origin']) & (Q(uploaded_by_id=uid) | (Q(archived=False) & (
-            Q(shared_editors=uid) | Q(shared_viewers=uid) | Q(public=True)))))
-            # .distinct()  # FOR DEMONSTRATION
+            Q(shared_editors=uid) | Q(shared_viewers=uid) | Q(public=True))))).distinct()  # FOR DEMONSTRATION
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
