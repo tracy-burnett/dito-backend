@@ -50,7 +50,7 @@ class DownloadFileViewSet(viewsets.ViewSet):
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
-            query = self.queryset.filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
+            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','uploaded_by').filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
                 Q(archived=False) & Q(shared_viewers=decoded_token['uid'])) | Q(public=True) & Q(archived=False)) & Q(id=audio_ID)).distinct()
         except:
             query = self.queryset.filter(
@@ -83,7 +83,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not Audio.objects.filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
+        if not Audio.objects.prefetch_related('shared_editors', 'shared_viewers','uploaded_by').filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
                                                       | (Q(shared_editors=uid) & Q(archived=False)) | (
                 Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
             return HttpResponse(status=404)
@@ -143,12 +143,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
 
-            query = self.queryset.filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
+            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by','audio_ID').filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
                                                                | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                                | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                                | (Q(public=True) & Q(archived=False)))).distinct()
         except:
-            query = self.queryset.filter(Q(audio_ID_id=aid) & (
+            query = self.queryset.prefetch_related('audio_ID').filter(Q(audio_ID_id=aid) & (
                 Q(public=True) & Q(archived=False)))
 
         if not query:
@@ -204,7 +204,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(
+        query = self.queryset.prefetch_related('audio_ID','shared_editors').filter(
             Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False))
 
         if not query:
@@ -264,7 +264,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             obj.save()
 
             if 'path' in locals():
-                query = Content.objects.all().filter(
+                query = Content.objects.all().prefetch_related('interpretation_id').filter(
                     interpretation_id_id=iid).order_by('value_index')
                 serializer = ContentSerializer(query, many=True)
                 a = [entry['value'] for entry in serializer.data]
@@ -356,7 +356,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(
+        query = self.queryset.prefetch_related('audio_ID','created_by').filter(
             Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -427,7 +427,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             obj.save()
 
             if 'path' in locals():
-                query = Content.objects.all().filter(
+                query = Content.objects.all().prefetch_related('interpretation_id').filter(
                     interpretation_id_id=iid).order_by('value_index')
                 serializer = ContentSerializer(query, many=True)
                 a = [entry['value'] for entry in serializer.data]
@@ -498,7 +498,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(created_by__id=uid)
+        query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by__id=uid)
                                      | (Q(shared_viewers__id=uid) & Q(archived=False))
                                      | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
         if not query:
@@ -547,7 +547,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(uploaded_by=uid) & Q(id=aid))
+        query = self.queryset.prefetch_related('uploaded_by').filter(Q(uploaded_by=uid) & Q(id=aid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
@@ -599,7 +599,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.filter(Q(archived=False) & Q(id=aid) & Q(
+        query = self.queryset.prefetch_related('shared_editors').filter(Q(archived=False) & Q(id=aid) & Q(
             shared_editors=uid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -667,7 +667,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.filter((Q(uploaded_by_id=uid) | (
+        query = self.queryset.prefetch_related('uploaded_by','shared_editors','shared_viewers').filter((Q(uploaded_by_id=uid) | (
             Q(archived=False) & Q(shared_editors=uid)) | (
             Q(archived=False) & Q(shared_viewers=uid)) | (
             Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
@@ -691,7 +691,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         if not interpretation:
             return HttpResponse(status=404)
 
-        query = Content.objects.all().filter(audio_id_id=aid,
+        query = Content.objects.all().prefetch_related('audio_id','interpretation_id').filter(audio_id_id=aid,
                                              interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
         if not query:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
@@ -878,11 +878,11 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         # print(request.data['associations'])
-        if not Interpretation.objects.filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
+        if not Interpretation.objects.prefetch_related('shared_editors','created_by','audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
                                                                                 | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
-        query = Content.objects.all().filter(
+        query = Content.objects.all().prefetch_related('interpretation_id').filter(
             interpretation_id_id=iid).order_by('value_index')
 
         changed = []
