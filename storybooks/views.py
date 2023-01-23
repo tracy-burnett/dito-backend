@@ -652,10 +652,10 @@ class AudioViewSet(viewsets.ModelViewSet):
 
     def retrieve_public(self, request):
         data = request.headers
-        print(data)
+        # print(data)
         query = self.queryset.filter(Q(archived=False) & Q(
             public=True) & Q(url=data['Origin']))
-        serializer = self.serializer_class(query, many=True)
+        serializer = AudioSerializer2(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
     def retrieve_private_user(self, request):
