@@ -674,7 +674,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
-        serializer = self.serializer_class(query, many=True)
+        serializer = AudioSerializer2(query, many=True)
         # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
