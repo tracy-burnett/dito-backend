@@ -531,9 +531,9 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
                     uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
         obj.save()
-        # serializer = self.serializer_class(obj)
+        serializer = self.serializer_class(obj)
         # return JsonResponse('{"audio": serializer.data}')
-        return Response('audio created')
+        return JsonResponse(serializer.data)
 
     # Unsafe
 
