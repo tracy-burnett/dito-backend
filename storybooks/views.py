@@ -938,7 +938,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                             new_calculated_offset=0
                             new_calculated_midpoint=0
                             # if new range is offset to take place a bit earlier than old range
-                            if (new_range_start < old_range_start) and (new_range_end > old_range_start) and (new_range_end < old_range_end):
+                            if (new_range_start <= old_range_start) and (new_range_end > old_range_start) and (new_range_end < old_range_end):
                                 # print("1")
                                 new_calculated_offset = (old_range_end-new_range_end)/2
                                 # print(new_calculated_offset)
@@ -958,7 +958,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                                         query[entry.value_index].audio_offset = round(new_calculated_offset)
                                         changed.append(query[entry.value_index])
                             # if new range is offset to take place a bit later than old range
-                            if (new_range_start > old_range_start) and (new_range_start < old_range_end) and (new_range_end > old_range_end):
+                            if (new_range_start > old_range_start) and (new_range_start < old_range_end) and (new_range_end >= old_range_end):
                                 # print("2")
                                 new_calculated_offset = (new_range_start-old_range_start)/2
                                 new_calculated_midpoint=old_range_start+new_calculated_offset
