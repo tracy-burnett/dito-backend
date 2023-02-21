@@ -67,4 +67,4 @@ class InterpretationHistorySerializer(serializers.ModelSerializer):
 class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
-        fields = ['value_index', 'audio_id', 'interpretation_id', 'value', 'audio_time', 'audio_offset', 'created_at', 'created_by', 'updated_at', 'updated_by']
+        fields = ['value_index', 'audio_id', 'interpretation_id', 'value', 'audio_time', 'created_at', 'created_by', 'updated_at', 'updated_by']
