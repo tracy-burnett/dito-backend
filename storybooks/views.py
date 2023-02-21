@@ -941,9 +941,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                             if (new_range_start < old_range_start) and (new_range_end > old_range_start) and (new_range_end < old_range_end):
                                 # print("1")
                                 new_calculated_offset = (old_range_end-new_range_end)/2
-                                # print(new_calculated_offset)
                                 new_calculated_midpoint = old_range_end-new_calculated_offset
-                                # print(new_calculated_midpoint)
                                 for entry in query:
                                     # print(entry.audio_time)
                                     # print(query[key].audio_time)
@@ -954,8 +952,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                                     # adjust the ranges of the leftover Contents accordingly
                                     if entry.audio_time == query[key].audio_time and entry.audio_offset == query[key].audio_offset and entry.value_index not in keys_in_dict:
                                         # print("match")
-                                        query[entry.value_index].audio_time = round(new_calculated_midpoint)
-                                        query[entry.value_index].audio_offset = round(new_calculated_offset)
+                                        query[entry.value_index].audio_time = new_calculated_midpoint
+                                        query[entry.value_index].audio_offset = new_calculated_offset
                                         changed.append(query[entry.value_index])
                             # if new range is offset to take place a bit later than old range
                             if (new_range_start > old_range_start) and (new_range_start < old_range_end) and (new_range_end > old_range_end):
@@ -967,8 +965,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                                     # adjust the ranges of the leftover Contents accordingly
                                     if entry.audio_time == query[key].audio_time and entry.audio_offset == query[key].audio_offset and entry.value_index not in keys_in_dict:
                                         # print("match")
-                                        query[entry.value_index].audio_time = round(new_calculated_midpoint)
-                                        query[entry.value_index].audio_offset = round(new_calculated_offset)
+                                        query[entry.value_index].audio_time = new_calculated_midpoint
+                                        query[entry.value_index].audio_offset = new_calculated_offset
                                         changed.append(query[entry.value_index])
                             # print(query)
                         except Exception as e: print(repr(e))
