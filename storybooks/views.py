@@ -890,7 +890,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         serializer = ContentSerializer(query, many=True)
 
-        try: # this is for shifting the whole interpretation forward or backward in time using frontend "Sync"
+        try:
             new_offset = request.data['offset']
             print(request.data['duration'])
             for entry in query:
@@ -912,70 +912,22 @@ class AssociationViewSet(viewsets.ModelViewSet):
             # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
             indices_array = [entry['value_index'] for entry in serializer.data]
 
-            # print(association_dict)
             # make sure the keys in the dict are integers
+            # print(association_dict)
             association_dict = {int(k): v for k, v in association_dict.items()}
             # print(association_dict)
             # print(serializer.data)
             # old_values=[]
-            keys_in_dict=[]
-            for key in association_dict:
-                keys_in_dict.append(key)
             for key in association_dict:
                 if key >= 0:
+                    # print(key)
+                    # print(association_dict[key])
+                    # print(query[key].audio_time)
+                    # print("association dict Object(key, value): " + str(key) + ", " + str(association_dict[key]))
+                    # print("old values Object(value_index, value, audio_time): " + str(key) + ", " + query[key].value + ", " + str(query[key].audio_time))
+                    # old_values.append(query[key].audio_time)
+                    # try:
                     for subkey in association_dict[key]:
-                        try: # adjust old Content info if old range and new range overlap but don't contain
-                            new_range_start=int(subkey)-association_dict[key][subkey]
-                            new_range_end=int(subkey)+association_dict[key][subkey]
-                            # print("new range start: ", new_range_start)
-                            # print("new range timestamp: ", subkey)
-                            # print("new range end: ", new_range_end)
-                            old_range_start=query[key].audio_time-query[key].audio_offset
-                            old_range_end=query[key].audio_time+query[key].audio_offset
-                            # print("old range start: ", old_range_start)
-                            # print("old range timestamp: ", query[key].audio_time)
-                            # print("old range end: ", old_range_end)
-                            new_calculated_offset=0
-                            new_calculated_midpoint=0
-                            # if new range is offset to take place a bit earlier than old range
-                            if (new_range_start <= old_range_start) and (new_range_end > old_range_start) and (new_range_end < old_range_end):
-                                # print("1")
-                                new_calculated_offset = (old_range_end-new_range_end)/2
-                                # print(new_calculated_offset)
-                                new_calculated_midpoint = old_range_end-new_calculated_offset
-                                # print(new_calculated_midpoint)
-                                for entry in query:
-                                    # print(entry.audio_time)
-                                    # print(query[key].audio_time)
-                                    # print(entry.audio_offset)
-                                    # print(query[key].audio_offset)
-                                    # print(query[entry.value_index].value)
-
-                                    # adjust the ranges of the leftover Contents accordingly
-                                    if entry.audio_time == query[key].audio_time and entry.audio_offset == query[key].audio_offset and entry.value_index not in keys_in_dict:
-                                        # print("match")
-                                        query[entry.value_index].audio_time = round(new_calculated_midpoint)
-                                        query[entry.value_index].audio_offset = round(new_calculated_offset)
-                                        changed.append(query[entry.value_index])
-                            # if new range is offset to take place a bit later than old range
-                            if (new_range_start > old_range_start) and (new_range_start < old_range_end) and (new_range_end >= old_range_end):
-                                # print("2")
-                                new_calculated_offset = (new_range_start-old_range_start)/2
-                                new_calculated_midpoint=old_range_start+new_calculated_offset
-                                for entry in query:
-                                    # print(query[entry.value_index].value)
-                                    # adjust the ranges of the leftover Contents accordingly
-                                    if entry.audio_time == query[key].audio_time and entry.audio_offset == query[key].audio_offset and entry.value_index not in keys_in_dict:
-                                        # print("match")
-                                        query[entry.value_index].audio_time = round(new_calculated_midpoint)
-                                        query[entry.value_index].audio_offset = round(new_calculated_offset)
-                                        changed.append(query[entry.value_index])
-                            # print(query)
-                        except Exception as e: print(repr(e))
-
-
-
-
                         query[key].audio_time = subkey
                         query[key].audio_offset = association_dict[key][subkey]
                     # except:
@@ -988,7 +940,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     # print("new: char " + key + " time " + query[key])
                     # print(changed)
                     # print(old_values)
-            # print(changed)
+            # print(changed[0].__dict__)
             # old_values_unique=[*set(old_values)]
             # # print(old_values_unique)
             # old_audio_times=[]
