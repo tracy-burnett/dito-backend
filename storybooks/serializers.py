@@ -15,10 +15,20 @@ class ExtendedUserSerializer(serializers.ModelSerializer):
         model = Extended_User
         fields = ['user_ID', 'display_name', 'description', 'anonymous', 'created_at', 'email']
 
+class ExtendedUserSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = Extended_User
+        fields = ['user_ID', 'display_name']
+
+# class ExtendedUserSerializer3(serializers.ModelSerializer):
+#     class Meta:
+#         model = Extended_User
+#         fields = ['user_ID']
+
 class AudioSerializer(serializers.ModelSerializer):
-    uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
-    shared_editors = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
-    shared_viewers = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
+    uploaded_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+    shared_editors = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
+    shared_viewers = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
     # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
 
     class Meta:
@@ -26,19 +36,38 @@ class AudioSerializer(serializers.ModelSerializer):
         fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','shared_editors','shared_viewers','public','peaks']
 
 class AudioSerializer2(serializers.ModelSerializer):
-    uploaded_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
-    shared_editors = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
-    shared_viewers = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
+    uploaded_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+    shared_editors = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
+    shared_viewers = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
     # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
 
     class Meta:
         model = Audio
         fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','shared_editors','shared_viewers','public']
 
+# class AudioSerializer3(serializers.ModelSerializer):
+#     uploaded_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+#     shared_editors = ExtendedUserSerializer3(read_only=True, many=True) # FOR DEMONSTRATION
+#     shared_viewers = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
+#     # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+
+#     class Meta:
+#         model = Audio
+#         fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','shared_editors','shared_viewers','public']
+
+
+class AudioSerializerPublic(serializers.ModelSerializer):
+    uploaded_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+    # last_updated_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
+
+    class Meta:
+        model = Audio
+        fields = ['id', 'url', 'title', 'description','archived','uploaded_at','uploaded_by','last_updated_at','last_updated_by','public']
+
 class InterpretationSerializer(serializers.ModelSerializer):
-    created_by = ExtendedUserSerializer(read_only=True) # FOR DEMONSTRATION
-    shared_editors = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
-    shared_viewers = ExtendedUserSerializer(read_only=True, many=True) # FOR DEMONSTRATION
+    created_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+    shared_editors = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
+    shared_viewers = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
 
     class Meta:
         model = Interpretation

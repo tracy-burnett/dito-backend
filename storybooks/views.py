@@ -243,7 +243,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if key == 'instructions':
@@ -400,13 +400,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if 'remove_editor' in request.data:
             # print("editor", request.data['remove_editor'])
             oldeditor = Extended_User.objects.get(
-                email=request.data['remove_editor'])
+                user_ID=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
             k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if key == 'instructions':
@@ -574,13 +574,13 @@ class AudioViewSet(viewsets.ModelViewSet):
         if 'remove_editor' in request.data:
             # print("editor", request.data['remove_editor'])
             oldeditor = Extended_User.objects.get(
-                email=request.data['remove_editor'])
+                user_ID=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
             k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if k == 0:
@@ -621,7 +621,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if k == 0:
@@ -655,7 +655,7 @@ class AudioViewSet(viewsets.ModelViewSet):
         # print(data)
         query = self.queryset.filter(Q(archived=False) & Q(
             public=True) & Q(url=data['Origin']))
-        serializer = AudioSerializer2(query, many=True)
+        serializer = AudioSerializerPublic(query, many=True)
         return JsonResponse({"audio": serializer.data})
 
     def retrieve_private_user(self, request):
@@ -674,8 +674,31 @@ class AudioViewSet(viewsets.ModelViewSet):
 
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
+        
         serializer = AudioSerializer2(query, many=True)
-        # print(serializer.data)
+        
+        # query1=[]
+        # query2=[]
+
+        # for entry in query:
+        #     print(entry.shared_viewers)
+        #     if entry.uploaded_by.user_ID is uid or Q(shared_editors=uid):
+        #         query1.append(entry)
+        #     else:
+        #         query2.append(entry)
+
+        # serializer1 = AudioSerializer2(query1, many=True)
+        # serializer2 = AudioSerializer3(query2, many=True)
+
+        # for entry in serializer1.data:
+        #     print(entry)
+        #     # print(uid)
+        #     # print(entry["uploaded_by"])
+        #     # print(entry["shared_editors"])
+        # print(serializer2.data)
+
+        # data = serializer1.data + serializer2.data
+        # # print(serializer.data)
         return JsonResponse({"audio files": serializer.data})
 
 
