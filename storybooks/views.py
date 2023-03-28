@@ -153,9 +153,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
+        # serializer = self.serializer_class(query, many=True)
+
+        query1=[]
+        query2=[]
+
+        query1 = query.filter(Q(created_by_id=uid) | Q(shared_editors__user_ID=uid)).distinct()
+        query2 = query.filter((~Q(created_by_id=uid) & ~Q(shared_editors__user_ID=uid))).distinct()
+
+        serializer1 = InterpretationSerializer(query1, many=True) # does show display names of editors
+        serializer2 = InterpretationSerializer2(query2, many=True) # doesn't show display names of editors
+
+        serializeddata = serializer1.data + serializer2.data
+
+
+
         # print(serializer.data)
-        return JsonResponse({"interpretations": serializer.data})
+        return JsonResponse({"interpretations": serializeddata})
 
     def retrieve_editors(self, request, iid, aid):
         # print(iid)

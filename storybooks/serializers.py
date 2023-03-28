@@ -73,6 +73,17 @@ class InterpretationSerializer(serializers.ModelSerializer):
         model = Interpretation
         fields = ['id','title', 'public','shared_editors','shared_viewers','audio_ID','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
 
+class InterpretationSerializer2(serializers.ModelSerializer):
+    created_by = ExtendedUserSerializer2(read_only=True) # FOR DEMONSTRATION
+    shared_editors = ExtendedUserSerializer3(read_only=True, many=True) # FOR DEMONSTRATION
+    shared_viewers = ExtendedUserSerializer2(read_only=True, many=True) # FOR DEMONSTRATION
+
+    class Meta:
+        model = Interpretation
+        fields = ['id','title', 'public','shared_editors','shared_viewers','audio_ID','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
+
+
+
 class InterpretationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Interpretation_History
