@@ -205,7 +205,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query)
+        serializer = InterpretationSerializer2(query, many=True) # doesn't show display names of editors
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
