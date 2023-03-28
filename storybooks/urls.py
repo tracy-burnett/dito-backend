@@ -74,7 +74,7 @@ associations_retrieve = AssociationViewSet.as_view({
 })
 
 extended_user_details = ExtendedUserViewSet.as_view({
-    'get': 'retrieve',            # has auth.  working 6/13/22.
+    # 'get': 'retrieve',            # has auth.  working 6/13/22.
     'post': 'create',             # has auth.  working 6/13/22.
     # 'patch': 'update'             # NOT UPDATED YET.      (update your user profile.)
 })
