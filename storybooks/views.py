@@ -503,22 +503,22 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
             return Response('interpretation updated')
 
-    def retrieve_all(self, request):
-        data = request.data
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    # def retrieve_all(self, request):
+    #     data = request.data
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #     except:
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by__id=uid)
-                                     | (Q(shared_viewers__id=uid) & Q(archived=False))
-                                     | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
-        if not query:
-            return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data)  # TODO
+    #     query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by__id=uid)
+    #                                  | (Q(shared_viewers__id=uid) & Q(archived=False))
+    #                                  | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
+    #     if not query:
+    #         return HttpResponse(status=404)
+    #     serializer = self.serializer_class(query, many=True)
+    #     return JsonResponse(serializer.data)  # TODO
 
 
 class AudioViewSet(viewsets.ModelViewSet):
@@ -1027,25 +1027,25 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             serializer = self.serializer_class(obj)
             return Response({'user created'})
 
-    def update(self, request):
-        data = request.data
+    # def update(self, request):
+    #     data = request.data
 
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-            user = Extended_User.objects.get(user_ID=uid)
-            assert(user)
-        except:
-            # print("bad")
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #         user = Extended_User.objects.get(user_ID=uid)
+    #         assert(user)
+    #     except:
+    #         # print("bad")
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.description = data['description']
-        user.display_name = data['display_name']
-        user.anonymous = data['anonymous']
-        user.save()
-        serializer = self.serializer_class(user)
-        return JsonResponse({"user": serializer.data})
+    #     user.description = data['description']
+    #     user.display_name = data['display_name']
+    #     user.anonymous = data['anonymous']
+    #     user.save()
+    #     serializer = self.serializer_class(user)
+    #     return JsonResponse({"user": serializer.data})
 
     def retrieve(self, request):
         data = request.data

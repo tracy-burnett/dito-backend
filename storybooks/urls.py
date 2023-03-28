@@ -61,9 +61,9 @@ interpretations_owner = InterpretationViewSet.as_view({
     'get': 'retrieve_owners',         # has auth.  working 6/13/22.
 })
 
-interpretations = InterpretationViewSet.as_view({
-    'get': 'retrieve_all'            # NOT UPDATED YET.   (see all interpretations that you have access to.)
-})
+# interpretations = InterpretationViewSet.as_view({
+#     'get': 'retrieve_all'            # NOT UPDATED YET.   (see all interpretations that you have access to.)
+# })
 
 associations_detail = AssociationViewSet.as_view({
     'post': 'update'         # has auth.  working 6/13/22.
@@ -76,7 +76,7 @@ associations_retrieve = AssociationViewSet.as_view({
 extended_user_details = ExtendedUserViewSet.as_view({
     'get': 'retrieve',            # has auth.  working 6/13/22.
     'post': 'create',             # has auth.  working 6/13/22.
-    'patch': 'update'             # NOT UPDATED YET.      (update your user profile.)
+    # 'patch': 'update'             # NOT UPDATED YET.      (update your user profile.)
 })
 
 
@@ -112,7 +112,7 @@ urlpatterns.extend(format_suffix_patterns([
     path('interpretations/<iid>/audio/<aid>/editor/', interpretations_editor, name='interpretations_editor'),    
     path('interpretations/<iid>/audio/<aid>/owner/', interpretations_owner, name='interpretations_owner'),  
     path('interpretations/<iid>/audio/<aid>/viewer/', interpretations_viewer, name='interpretations_viewer'),
-    path('interpretations/', interpretations, name='interpretations'),
+    # path('interpretations/', interpretations, name='interpretations'),
     # path('user/<int:aid>/', extended_user_details, name='extended_user_details'),
     path('user/', extended_user_details, name='extended_user_details'),
 ]))
