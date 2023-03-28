@@ -675,31 +675,20 @@ class AudioViewSet(viewsets.ModelViewSet):
         if not query:
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
         
-        serializer = AudioSerializer2(query, many=True)
+        # serializer = AudioSerializer2(query, many=True)
         
-        # query1=[]
-        # query2=[]
+        query1=[]
+        query2=[]
 
-        # for entry in query:
-        #     print(entry.shared_viewers)
-        #     if entry.uploaded_by.user_ID is uid or Q(shared_editors=uid):
-        #         query1.append(entry)
-        #     else:
-        #         query2.append(entry)
+        query1 = query.filter(Q(uploaded_by_id=uid) | Q(shared_editors=uid)).distinct()
+        query2 = query.filter((~Q(uploaded_by_id=uid) & ~Q(shared_editors=uid))).distinct()
 
-        # serializer1 = AudioSerializer2(query1, many=True)
-        # serializer2 = AudioSerializer3(query2, many=True)
+        serializer1 = AudioSerializer2(query1, many=True) # does show display names of editors
+        serializer2 = AudioSerializer3(query2, many=True) # doesn't show display names of editors
 
-        # for entry in serializer1.data:
-        #     print(entry)
-        #     # print(uid)
-        #     # print(entry["uploaded_by"])
-        #     # print(entry["shared_editors"])
-        # print(serializer2.data)
+        serializeddata = serializer1.data + serializer2.data
 
-        # data = serializer1.data + serializer2.data
-        # # print(serializer.data)
-        return JsonResponse({"audio files": serializer.data})
+        return JsonResponse({"audio files": serializeddata})
 
 
 class AssociationViewSet(viewsets.ModelViewSet):
