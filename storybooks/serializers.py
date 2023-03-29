@@ -17,7 +17,7 @@ class ExtendedUserSerializer2(serializers.ModelSerializer):
 class ExtendedUserSerializer3(serializers.ModelSerializer):
     class Meta:
         model = Extended_User
-        fields = ['user_ID']
+        fields = []
 
 class AudioSerializer(serializers.ModelSerializer):
     uploaded_by = ExtendedUserSerializer2(read_only=True)
@@ -62,6 +62,12 @@ class InterpretationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interpretation
         fields = ['id','title', 'public','shared_editors','shared_viewers','audio_ID','latest_text','archived','language_name','spaced_by','created_by','created_at','last_edited_at','last_edited_by','version']
+
+class InterpretationSerializerBrief(serializers.ModelSerializer):
+
+    class Meta:
+        model = Interpretation
+        fields = ['title','latest_text','language_name','spaced_by']
 
 class InterpretationSerializer2(serializers.ModelSerializer):
     created_by = ExtendedUserSerializer2(read_only=True) 
