@@ -50,7 +50,7 @@ class DownloadFileViewSet(viewsets.ViewSet):
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
-            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','uploaded_by').filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
+            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers', 'uploaded_by').filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
                 Q(archived=False) & Q(shared_viewers=decoded_token['uid'])) | Q(public=True) & Q(archived=False)) & Q(id=audio_ID)).distinct()
         except:
             query = self.queryset.filter(
@@ -63,7 +63,194 @@ class DownloadFileViewSet(viewsets.ViewSet):
             serializer = self.serializer_class(query[0])
             peaks = serializer.data['peaks']
 
-            return Response({'url': url, 'audio_ID': audio_ID, 'peaks': peaks})
+            return Response({'url': url, 'peaks': peaks})
+
+
+class AudioViewSet(viewsets.ModelViewSet):
+    """
+    Audio API
+    """
+    queryset = Audio.objects.all()
+    serializer_class = AudioSerializer
+    # this overrides project-level permission in settings.py
+    permission_classes = [permissions.AllowAny]
+
+# presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
+    def create(self, request):
+        data = request.data
+        # print(request.headers['Authorization'])
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return Response('no valid user logged in')
+
+        # get url from s3 and user from firebase
+        obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
+                    uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        # return JsonResponse('{"audio": serializer.data}')
+        return JsonResponse(serializer.data)
+
+    def retrieve_public(self, request):
+        data = request.headers
+        # print(data)
+        query = self.queryset.filter(Q(archived=False) & Q(
+            public=True) & Q(url=data['Origin']))
+        serializer = AudioSerializerPublic(query, many=True)
+        return JsonResponse({"audio": serializer.data})
+
+    def partial_update_owner(self, request, aid):
+        data = request.data
+
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = self.queryset.prefetch_related(
+            'uploaded_by').filter(Q(uploaded_by=uid) & Q(id=aid))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {'title', 'public', 'description',
+                           'last_updated_by', 'last_updated_at', 'archived'}
+        k = 0
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
+                k = 1
+        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
+            # print("editor", request.data['shared_editor'])
+            neweditor = Extended_User.objects.get(
+                email=request.data['shared_editor'])
+            obj.shared_editors.add(neweditor)
+            k = 1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k = 1
+        if 'remove_editor' in request.data:
+            # print("editor", request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(
+                user_ID=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k = 1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                user_ID=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k = 1
+        if k == 0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+
+    def partial_update_editor(self, request, aid):
+        data = request.data
+
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = self.queryset.prefetch_related('shared_editors').filter(Q(archived=False) & Q(id=aid) & Q(
+            shared_editors=uid))
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {'title', 'public', 'description',
+                           'last_updated_by', 'last_updated_at'}
+        k = 0
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                # set last updated by/at automatically
+                setattr(obj, key, request.data[key])
+                k = 1
+        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
+            # print("viewer", request.data['shared_viewer'])
+            newviewer = Extended_User.objects.get(
+                email=request.data['shared_viewer'])
+            obj.shared_viewers.add(newviewer)
+            k = 1
+        if 'remove_viewer' in request.data:
+            # print("viewer", request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                user_ID=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k = 1
+        if k == 0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        serializer = self.serializer_class(obj)
+        return JsonResponse(serializer.data)
+
+    def partial_update_public(self, request, aid):
+        data = request.data
+
+        query = self.queryset.filter(id=aid)
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+        modifiable_attr = {'peaks'}
+        k = 0
+        for key in request.data:
+            if hasattr(obj, key) and key in modifiable_attr:
+                setattr(obj, key, request.data[key])
+                k = 1
+
+        if k == 0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj.save()
+        return Response({'peaks created'})
+
+    def retrieve_private_user(self, request):
+        data = request.headers  # FOR DEMONSTRATION
+        try:
+            decoded_token = auth.verify_id_token(
+                data['Authorization'])  # FOR DEMONSTRATION
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
+        # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
+        query = self.queryset.prefetch_related('uploaded_by', 'shared_editors', 'shared_viewers').filter((Q(uploaded_by_id=uid) | (
+            Q(archived=False) & Q(shared_editors=uid)) | (
+            Q(archived=False) & Q(shared_viewers=uid)) | (
+            Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
+
+        if not query:
+            return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
+
+        # serializer = AudioSerializer2(query, many=True)
+
+        query1 = []
+        query2 = []
+
+        query1 = query.filter(Q(uploaded_by_id=uid) |
+                              Q(shared_editors=uid)).distinct()
+        query2 = query.filter(
+            (~Q(uploaded_by_id=uid) & ~Q(shared_editors=uid))).distinct()
+
+        # does show display names of editors
+        serializer1 = AudioSerializer2(query1, many=True)
+        # doesn't show display names of editors
+        serializer2 = AudioSerializer3(query2, many=True)
+
+        serializeddata = serializer1.data + serializer2.data
+
+        return JsonResponse({"audio files": serializeddata})
 
 
 class InterpretationViewSet(viewsets.ModelViewSet):
@@ -83,8 +270,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not Audio.objects.prefetch_related('shared_editors', 'shared_viewers','uploaded_by').filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
-                                                      | (Q(shared_editors=uid) & Q(archived=False)) | (
+        if not Audio.objects.prefetch_related('shared_editors', 'shared_viewers', 'uploaded_by').filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
+                                                                                                                          | (Q(shared_editors=uid) & Q(archived=False)) | (
                 Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
             return HttpResponse(status=404)
 
@@ -143,19 +330,36 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
 
-            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by','audio_ID').filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
-                                                               | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
-                                                               | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                                               | (Q(public=True) & Q(archived=False)))).distinct()
+            query = self.queryset.prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid) & (Q(created_by_id=uid)
+                                                                                                                                              | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                                                                                                              | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                                                                                                              | (Q(public=True) & Q(archived=False)))).distinct()
         except:
+            uid = ""
             query = self.queryset.prefetch_related('audio_ID').filter(Q(audio_ID_id=aid) & (
                 Q(public=True) & Q(archived=False)))
 
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
+        # serializer = self.serializer_class(query, many=True)
+
+        query1 = []
+        query2 = []
+
+        query1 = query.filter(Q(created_by_id=uid) | Q(
+            shared_editors__user_ID=uid)).distinct()
+        query2 = query.filter((~Q(created_by_id=uid) & ~Q(
+            shared_editors__user_ID=uid))).distinct()
+
+        # does show display names of editors
+        serializer1 = InterpretationSerializer(query1, many=True)
+        # doesn't show display names of editors
+        serializer2 = InterpretationSerializer2(query2, many=True)
+
+        serializeddata = serializer1.data + serializer2.data
+
         # print(serializer.data)
-        return JsonResponse({"interpretations": serializer.data})
+        return JsonResponse({"interpretations": serializeddata})
 
     def retrieve_editors(self, request, iid, aid):
         # print(iid)
@@ -173,7 +377,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query)
+
+        serializer = InterpretationSerializerBrief(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     def retrieve_viewers(self, request, iid, aid):
@@ -191,7 +396,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query)
+        serializer = InterpretationSerializerBrief(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
@@ -204,7 +409,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.prefetch_related('audio_ID','shared_editors').filter(
+        query = self.queryset.prefetch_related('audio_ID', 'shared_editors').filter(
             Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False))
 
         if not query:
@@ -243,7 +448,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if key == 'instructions':
@@ -343,7 +548,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(query)
         if not query:
             return HttpResponse(status=404)
-        serializer = self.serializer_class(query)
+        serializer = InterpretationSerializerBrief(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
@@ -356,7 +561,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.prefetch_related('audio_ID','created_by').filter(
+        query = self.queryset.prefetch_related('audio_ID', 'created_by').filter(
             Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -400,13 +605,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if 'remove_editor' in request.data:
             # print("editor", request.data['remove_editor'])
             oldeditor = Extended_User.objects.get(
-                email=request.data['remove_editor'])
+                user_ID=request.data['remove_editor'])
             obj.shared_editors.remove(oldeditor)
             k = 1
         if 'remove_viewer' in request.data:
             # print("viewer", request.data['remove_viewer'])
             oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
+                user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if key == 'instructions':
@@ -489,194 +694,22 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
             return Response('interpretation updated')
 
-    def retrieve_all(self, request):
-        data = request.data
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    # def retrieve_all(self, request):
+    #     data = request.data
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #     except:
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by__id=uid)
-                                     | (Q(shared_viewers__id=uid) & Q(archived=False))
-                                     | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
-        if not query:
-            return HttpResponse(status=404)
-        serializer = self.serializer_class(query, many=True)
-        return JsonResponse(serializer.data)  # TODO
-
-
-class AudioViewSet(viewsets.ModelViewSet):
-    """
-    Audio API
-    """
-    queryset = Audio.objects.all()
-    serializer_class = AudioSerializer
-    # this overrides project-level permission in settings.py
-    permission_classes = [permissions.AllowAny]
-
-# presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
-    def create(self, request):
-        data = request.data
-        # print(request.headers['Authorization'])
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return Response('no valid user logged in')
-
-        # get url from s3 and user from firebase
-        obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
-                    uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
-        obj.save()
-        serializer = self.serializer_class(obj)
-        # return JsonResponse('{"audio": serializer.data}')
-        return JsonResponse(serializer.data)
-
-    # Unsafe
-
-    def partial_update_owner(self, request, aid):
-        data = request.data
-
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
-        query = self.queryset.prefetch_related('uploaded_by').filter(Q(uploaded_by=uid) & Q(id=aid))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        modifiable_attr = {'title', 'public', 'description',
-                           'last_updated_by', 'last_updated_at', 'archived'}
-        k = 0
-        for key in request.data:
-            if hasattr(obj, key) and key in modifiable_attr:
-                # set last updated by/at automatically
-                setattr(obj, key, request.data[key])
-                k = 1
-        if 'shared_editor' in request.data and request.data['shared_editor'] != None:
-            # print("editor", request.data['shared_editor'])
-            neweditor = Extended_User.objects.get(
-                email=request.data['shared_editor'])
-            obj.shared_editors.add(neweditor)
-            k = 1
-        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
-            # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(
-                email=request.data['shared_viewer'])
-            obj.shared_viewers.add(newviewer)
-            k = 1
-        if 'remove_editor' in request.data:
-            # print("editor", request.data['remove_editor'])
-            oldeditor = Extended_User.objects.get(
-                email=request.data['remove_editor'])
-            obj.shared_editors.remove(oldeditor)
-            k = 1
-        if 'remove_viewer' in request.data:
-            # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
-            obj.shared_viewers.remove(oldviewer)
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
-
-    def partial_update_editor(self, request, aid):
-        data = request.data
-
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
-        query = self.queryset.prefetch_related('shared_editors').filter(Q(archived=False) & Q(id=aid) & Q(
-            shared_editors=uid))
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        modifiable_attr = {'title', 'public', 'description',
-                           'last_updated_by', 'last_updated_at'}
-        k = 0
-        for key in request.data:
-            if hasattr(obj, key) and key in modifiable_attr:
-                # set last updated by/at automatically
-                setattr(obj, key, request.data[key])
-                k = 1
-        if 'shared_viewer' in request.data and request.data['shared_viewer'] != None:
-            # print("viewer", request.data['shared_viewer'])
-            newviewer = Extended_User.objects.get(
-                email=request.data['shared_viewer'])
-            obj.shared_viewers.add(newviewer)
-            k = 1
-        if 'remove_viewer' in request.data:
-            # print("viewer", request.data['remove_viewer'])
-            oldviewer = Extended_User.objects.get(
-                email=request.data['remove_viewer'])
-            obj.shared_viewers.remove(oldviewer)
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        obj.save()
-        serializer = self.serializer_class(obj)
-        return JsonResponse(serializer.data)
-
-    def partial_update_public(self, request, aid):
-        data = request.data
-
-        query = self.queryset.filter(id=aid)
-        if not query:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        obj = query.get()
-        modifiable_attr = {'peaks'}
-        k = 0
-        for key in request.data:
-            if hasattr(obj, key) and key in modifiable_attr:
-                setattr(obj, key, request.data[key])
-                k = 1
-
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-
-        obj.save()
-        return Response({'peaks created'})
-
-    def retrieve_public(self, request):
-        data = request.headers
-        # print(data)
-        query = self.queryset.filter(Q(archived=False) & Q(
-            public=True) & Q(url=data['Origin']))
-        serializer = AudioSerializer2(query, many=True)
-        return JsonResponse({"audio": serializer.data})
-
-    def retrieve_private_user(self, request):
-        data = request.headers  # FOR DEMONSTRATION
-        try:
-            decoded_token = auth.verify_id_token(
-                data['Authorization'])  # FOR DEMONSTRATION
-            uid = decoded_token['uid']
-        except:
-            return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
-        # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
-        query = self.queryset.prefetch_related('uploaded_by','shared_editors','shared_viewers').filter((Q(uploaded_by_id=uid) | (
-            Q(archived=False) & Q(shared_editors=uid)) | (
-            Q(archived=False) & Q(shared_viewers=uid)) | (
-            Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
-
-        if not query:
-            return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
-        serializer = AudioSerializer2(query, many=True)
-        # print(serializer.data)
-        return JsonResponse({"audio files": serializer.data})
+    #     query = self.queryset.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by__id=uid)
+    #                                  | (Q(shared_viewers__id=uid) & Q(archived=False))
+    #                                  | (Q(shared_editors__id=uid) & Q(archived=False))).distinct()
+    #     if not query:
+    #         return HttpResponse(status=404)
+    #     serializer = self.serializer_class(query, many=True)
+    #     return JsonResponse(serializer.data)  # TODO
 
 
 class AssociationViewSet(viewsets.ModelViewSet):
@@ -686,13 +719,24 @@ class AssociationViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def retrieve(self, request, aid, iid, timestep):
-        interpretation = Interpretation.objects.all().get(audio_ID_id=aid, id=iid)
+
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            uid = ""
+
+        interpretation = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID').get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
+                                                                                                                                                                            | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                                                                                                                                           | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                                                                                                                                            | (Q(public=True) & Q(archived=False)))))
 
         if not interpretation:
             return HttpResponse(status=404)
 
-        query = Content.objects.all().prefetch_related('audio_id','interpretation_id').filter(audio_id_id=aid,
-                                             interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
+        query = Content.objects.all().prefetch_related('audio_id', 'interpretation_id').filter(audio_id_id=aid,
+                                                                                               interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
         if not query:
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
@@ -878,8 +922,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         # print(request.data['associations'])
-        if not Interpretation.objects.prefetch_related('shared_editors','created_by','audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
-                                                                                | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
+        if not Interpretation.objects.prefetch_related('shared_editors', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
+                                                                                                                                             | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
             return HttpResponse(status=404)
 
         query = Content.objects.all().prefetch_related('interpretation_id').filter(
@@ -1001,39 +1045,39 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
             serializer = self.serializer_class(obj)
             return Response({'user created'})
 
-    def update(self, request):
-        data = request.data
+    # def update(self, request):
+    #     data = request.data
 
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-            user = Extended_User.objects.get(user_ID=uid)
-            assert(user)
-        except:
-            # print("bad")
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #         user = Extended_User.objects.get(user_ID=uid)
+    #         assert(user)
+    #     except:
+    #         # print("bad")
+    #         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.description = data['description']
-        user.display_name = data['display_name']
-        user.anonymous = data['anonymous']
-        user.save()
-        serializer = self.serializer_class(user)
-        return JsonResponse({"user": serializer.data})
+    #     user.description = data['description']
+    #     user.display_name = data['display_name']
+    #     user.anonymous = data['anonymous']
+    #     user.save()
+    #     serializer = self.serializer_class(user)
+    #     return JsonResponse({"user": serializer.data})
 
-    def retrieve(self, request):
-        data = request.data
+    # def retrieve(self, request):
+    #     data = request.data
 
-        try:
-            decoded_token = auth.verify_id_token(
-                request.headers['Authorization'])
-            uid = decoded_token['uid']
-            user = Extended_User.objects.get(user_ID=uid)
-            # assert(user)
-        except:
-            return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
+    #     try:
+    #         decoded_token = auth.verify_id_token(
+    #             request.headers['Authorization'])
+    #         uid = decoded_token['uid']
+    #         user = Extended_User.objects.get(user_ID=uid)
+    #         # assert(user)
+    #     except:
+    #         return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # if user.archived:
-        #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(user)
-        return JsonResponse(serializer.data)
+    #     # if user.archived:
+    #     #     return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+    #     serializer = self.serializer_class(user)
+    #     return JsonResponse(serializer.data)
