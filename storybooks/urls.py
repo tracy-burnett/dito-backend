@@ -80,18 +80,6 @@ extended_user_details = ExtendedUserViewSet.as_view({
 })
 
 
-# translations_detail = TranslationViewSet.as_view({
-#     'post': 'create',
-#     'patch': 'update',
-#     'get': 'retrieve',
-#     'delete': 'destroy'
-# })
-# translations_list = TranslationViewSet.as_view({
-#     'get': 'list_languages'
-# })
-
-
-
 urlpatterns = [
     path('', include(router.urls)),
 ]
@@ -102,8 +90,6 @@ urlpatterns.extend(format_suffix_patterns([
     path('audio/<aid>/editor/', audio_update_editor, name='audio_update_editor'),
     path('audio/<aid>/public/', audio_update_public, name='audio_update_public'),
     path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
-    # path('audio/<aid>/translations/<int:lid>/', translations_detail, name='translations-detail'),
-    # path('audio/<aid>/translations/', translations_list, name='translations-list'),
     path('content/<aid>/<iid>', associations_detail, name='associations-detail'),
     path('content/<aid>/<iid>/<int:timestep>/', associations_retrieve, name='associations-retrieve'),
     path('s3/presignedposturl', presignedposturl_detail, name='presignedposturl-detail'),
