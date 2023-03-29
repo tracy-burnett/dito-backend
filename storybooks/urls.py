@@ -12,6 +12,11 @@ router = routers.SimpleRouter()
 #router.register(r'interpretation', InterpretationViewSet)
 
 
+
+# WE HAVE 18 ENDPOINTS AT 14 URLs AS OF 03/29/23.
+
+
+
 presignedposturl_detail = UploadFileViewSet.as_view({
     'post': 'presignedposturl' # has auth.  returns correct fields verified 3/29/23.
 })
