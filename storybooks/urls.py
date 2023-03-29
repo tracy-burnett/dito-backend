@@ -70,7 +70,7 @@ associations_detail = AssociationViewSet.as_view({
 })
 
 associations_retrieve = AssociationViewSet.as_view({
-    'get': 'retrieve',       # NO AUTH REQUIRED.  returns correct fields verified 3/29/23.  but shouldn't auth be required for this?  FLAG!!!!
+    'get': 'retrieve',       # has auth.  returns correct fields verified 3/29/23.
 })
 
 extended_user_details = ExtendedUserViewSet.as_view({
