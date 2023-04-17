@@ -17,6 +17,7 @@ import re
 import secrets
 import datetime
 import copy
+# import sys
 
 
 # def index(request):
@@ -553,6 +554,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_owners(self, request, iid, aid):
+        print('printing to log')
+        # sys.stdout.flush()
 
         try:
             decoded_token = auth.verify_id_token(
