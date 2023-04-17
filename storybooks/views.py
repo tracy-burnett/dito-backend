@@ -17,7 +17,6 @@ import re
 import secrets
 import datetime
 import copy
-# import sys
 
 
 # def index(request):
@@ -554,21 +553,24 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
     def update_owners(self, request, iid, aid):
-        print('printing to log')
-        # sys.stdout.flush()
+        print('debugging endpoint')
 
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print('user authentication failed')
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
+        print('user authentication succeeded')
         query = self.queryset.prefetch_related('audio_ID', 'created_by').filter(
             Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
+            print('interpretation with the specified parameters not found')
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
+        print('interpretation located in database')
 
         # make a copy of the former version of the interpretation into the archive
 
@@ -576,16 +578,22 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                      latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
                                      spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
                                      last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
+        print('backup of old interpretation created')
         cpy.save()
+        print('backup of old interpretation saved')
         Interpretation_History.objects.get(
             interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
         Interpretation_History.objects.get(
             interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
+        print('specified which users were allowed to see and edit the OLD version of the interpretation')
 
         # edit the interpretation to reflect the new user entered version
 
         modifiable_attr = {'public', 'shared_editors', 'shared_viewers', 'audio_id',
                            'title', 'latest_text', 'archived', 'language_name', }
+
+        print('specified which attributes of the old interpretation we are allowed to change in the new interpretation')
+
 
         k = 0
         for key in request.data:
@@ -624,26 +632,43 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
+        print('updated the relevant attributes to create the new interpretation version')
+
         # print(obj)
         obj.version += 1
+        print('gave object a new version number')
+
         obj.last_updated_by = uid
+        print('specified which user created this new version')
+
         # print(obj)
         if obj.title == "" and obj.latest_text == "" and obj.language_name == "":
             obj.delete()
+            print('deleted the interpretation because new version is empty')
             return Response('interpretation deleted')
         else:
+            print('saved the new version')
             obj.save()
 
             if 'path' in locals():
+                print('beginning to update timestamps')
                 query = Content.objects.all().prefetch_related('interpretation_id').filter(
                     interpretation_id_id=iid).order_by('value_index')
+                
+                print('collected the old timestamps')
                 serializer = ContentSerializer(query, many=True)
+
+                print('set the timestamp serializer')
                 a = [entry['value'] for entry in serializer.data]
                 b = []
                 if obj.spaced_by:
+                    print('text has a tokenizer')
                     b = request.data['latest_text'].split(obj.spaced_by)
+                    print('text now split by tokenizer')
                 else:
+                    print('text has not tokenizer')
                     b = list(request.data['latest_text'])
+                    print('text now split by character')
 
                 # print(path)
 
@@ -652,12 +677,17 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 changed = []
 
                 def traverse_path(path):
+                    print('starting to review what changes to timestamps should be made')
                     i = 0
 
                     useful = [x for x in path if 'moved' in x and not x['bIndex']
                               == -1 and not x['aIndex'] == -1]
+                    print('refined the instructions')
+
                     while i < len(path):
+                        print('viewing next instruction')
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
+                            print('starting instructions for moved words')
                             # print(path[i]) # print instructions
                             for use in useful:
                                 if use['line'] == path[i]['line']:
@@ -694,7 +724,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 for obj in subtract:
                     obj.delete()
                 Content.objects.bulk_create(add)
+                print('all changes made')
 
+            print('success')
             return Response('interpretation updated')
 
     # def retrieve_all(self, request):
