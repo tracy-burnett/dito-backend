@@ -423,10 +423,16 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                      spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
                                      last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
         cpy.save()
-        Interpretation_History.objects.get(
-            interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-        Interpretation_History.objects.get(
-            interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
+        try:
+            Interpretation_History.objects.get(
+                interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+            print('specified which users were allowed to edit the OLD version of the interpretation')
+            Interpretation_History.objects.get(
+                interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
+            print('specified which users were allowed to see the OLD version of the interpretation')
+        except:
+            print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation')
+
 
         # edit the interpretation to reflect the new user entered version
 
@@ -581,11 +587,15 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         print('backup of old interpretation created')
         cpy.save()
         print('backup of old interpretation saved')
-        Interpretation_History.objects.get(
-            interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-        Interpretation_History.objects.get(
-            interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
-        print('specified which users were allowed to see and edit the OLD version of the interpretation')
+        try:
+            Interpretation_History.objects.get(
+                interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
+            print('specified which users were allowed to edit the OLD version of the interpretation')
+            Interpretation_History.objects.get(
+                interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
+            print('specified which users were allowed to see the OLD version of the interpretation')
+        except:
+            print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation')
 
         # edit the interpretation to reflect the new user entered version
 
