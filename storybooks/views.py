@@ -695,9 +695,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     print('refined the instructions')
 
                     while i < len(path):
-                        print('viewing next instruction')
                         if 'moved' in path[i] and path[i]['bIndex'] == -1:
-                            print('starting instructions for moved words')
                             # print(path[i]) # print instructions
                             for use in useful:
                                 if use['line'] == path[i]['line']:
@@ -724,6 +722,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
                         # print("finished path")
                         i += 1
+                    print('finished traversing the path')
                 traverse_path(path['lines'])
 
                 # print("changed, ", changed[0].__dict__)
