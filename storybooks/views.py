@@ -426,13 +426,10 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         try:
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-            print('specified which users were allowed to edit the OLD version of the interpretation')
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
-            print('specified which users were allowed to see the OLD version of the interpretation')
         except:
-            print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation')
-
+            print('there was probably a conflicting history in the database')
 
         # edit the interpretation to reflect the new user entered version
 
@@ -584,9 +581,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                      latest_text=obj.latest_text, archived=obj.archived, language_name=obj.language_name,
                                      spaced_by=obj.spaced_by, created_by=obj.created_by, created_at=obj.created_at,
                                      last_edited_by=obj.last_edited_by, last_edited_at=obj.last_edited_at, version=obj.version)
-        print('backup of old interpretation created')
+        print('backup of old interpretation created with version number', obj.version)
         cpy.save()
-        print('backup of old interpretation saved')
+        print('backup of old interpretation saved with version number', obj.version)
         try:
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
