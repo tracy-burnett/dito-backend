@@ -808,7 +808,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                                                                                           | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                                                           | (Q(public=True) & Q(archived=False)))))
             print(interpretation2)
-            interpretation = interpretation2.first()
+            interpretation = interpretation2.distinct().get()
             print(interpretation)
         except Exception as e:
             print('failed to acquire interpretation because', e)
