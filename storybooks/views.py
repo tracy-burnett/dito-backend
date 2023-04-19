@@ -788,14 +788,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
             print('created by', uid)
             print('NOW LOOKING FOR A MATCH IN:')
             for entry in interpretationset:
-                if aid == entry.audio_ID_id and iid == entry.id:
+                if aid == entry.audio_ID_id and iid == entry.id and entry.created_by_id == uid:
                     print(entry.audio_ID_id)
                     print(entry.id)
                     print(entry.created_by_id)
-                    print('type of uid is ', type(uid))
-                    print('type of database created_by_id is', type(entry.created_by_id))
-                    print('do they match?:')
-                    print(uid == entry.created_by_id)
+                    # print('type of uid is ', type(uid))
+                    # print('type of database created_by_id is', type(entry.created_by_id))
+                    # print('do they match?:')
+                    # print(uid == entry.created_by_id)
             # print(interpretationset)
             interpretation = interpretationset.get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
                                                                                                                                                                             | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
