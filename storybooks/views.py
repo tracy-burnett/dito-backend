@@ -783,7 +783,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
         
         try:
             interpretationset = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID')
-            print(interpretationset)
+            for entry in interpretationset:
+                if entry.audio_ID_id is aid:
+                    print(entry.id,entry.created_by_id)
+            # print(interpretationset)
             interpretation = interpretationset.get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
                                                                                                                                                                             | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                                                                                                                                            | (Q(shared_editors__user_ID=uid) & Q(archived=False))
