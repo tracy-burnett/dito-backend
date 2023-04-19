@@ -62,7 +62,8 @@ class DownloadFileViewSet(viewsets.ViewSet):
             print('public access audio files detected')
 
         if not query:
-            print('no audio files detected that this user or viewer should have access to')
+            print(
+                'no audio files detected that this user or viewer should have access to')
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         elif query:
             print('getting file url from S3')
@@ -552,7 +553,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-            print('access to interpretation granted for',uid)
+            print('access to interpretation granted for', uid)
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -597,10 +598,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         try:
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-            print('specified which users were allowed to edit the OLD version of the interpretation')
+            print(
+                'specified which users were allowed to edit the OLD version of the interpretation')
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
-            print('specified which users were allowed to see the OLD version of the interpretation')
+            print(
+                'specified which users were allowed to see the OLD version of the interpretation')
         except:
             print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation')
 
@@ -610,7 +613,6 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                            'title', 'latest_text', 'archived', 'language_name', }
 
         print('specified which attributes of the old interpretation we are allowed to change in the new interpretation')
-
 
         k = 0
         for key in request.data:
@@ -671,7 +673,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 print('beginning to update timestamps')
                 query = Content.objects.all().prefetch_related('interpretation_id').filter(
                     interpretation_id_id=iid).order_by('value_index')
-                
+
                 print('collected the old timestamps')
                 serializer = ContentSerializer(query, many=True)
 
@@ -694,7 +696,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 changed = []
 
                 def traverse_path(path):
-                    print('starting to review what changes to timestamps should be made')
+                    print(
+                        'starting to review what changes to timestamps should be made')
                     i = 0
 
                     useful = [x for x in path if 'moved' in x and not x['bIndex']
@@ -776,13 +779,14 @@ class AssociationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-            print('logged-in user',uid)
+            print('logged-in user', uid)
         except:
             uid = ""
             print('public viewer')
-        
+
         try:
-            interpretationset = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID')
+            interpretationset = Interpretation.objects.all().prefetch_related(
+                'shared_editors', 'shared_viewers', 'created_by', 'audio_ID')
             print('audio ID is', aid)
             print('interpretation id is', iid)
             print('created by', uid)
@@ -800,12 +804,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     print('uid', type(uid) == type(entry.created_by_id))
             # print(interpretationset)
             interpretation2 = interpretationset.filter(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
-                                                                                                                                                                            | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
-                                                                                                                                                                           | (Q(shared_editors__user_ID=uid) & Q(archived=False))
-                                                                                                                                                                            | (Q(public=True) & Q(archived=False)))))
-            print(interpretation2)       
+                                                                                          | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
+                                                                                          | (Q(shared_editors__user_ID=uid) & Q(archived=False))
+                                                                                          | (Q(public=True) & Q(archived=False)))))
+            print(interpretation2)
             interpretation = interpretation2.first()
-            print(interpretation) 
+            print(interpretation)
         except Exception as e:
             print('failed to acquire interpretation because', e)
 
@@ -829,7 +833,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print(len(interpretation.spaced_by))
         # if the interpretation is spaced, I need to duplicate each word and create a "value_index" representing the first character of the word and a "value_index" representing the last character in the word instead.
         print('some variables defined')
-        
+
         if len(interpretation.spaced_by) > 0:
             print("interpretation is spaced")
             all_words = Content.objects.all().filter(interpretation_id_id=iid,
