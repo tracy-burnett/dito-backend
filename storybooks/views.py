@@ -779,11 +779,15 @@ class AssociationViewSet(viewsets.ModelViewSet):
         except:
             uid = ""
             print('public viewer')
-
-        interpretation = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID').get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
+        
+        try:
+            interpretation = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID').get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
                                                                                                                                                                             | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                                                                                                                                            | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                                                                                                                                             | (Q(public=True) & Q(archived=False)))))
+        except:
+            print('failed to acquire interpretation')
+            
         print('interpretation acquired')
         if not interpretation:
             print('interpretation NOT acquired')
