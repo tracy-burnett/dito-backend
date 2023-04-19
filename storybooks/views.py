@@ -760,25 +760,31 @@ class AssociationViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def retrieve(self, request, aid, iid, timestep):
+        print('debugging content endpoint')
 
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
+            print('logged-in user')
         except:
             uid = ""
+            print('public viewer')
 
         interpretation = Interpretation.objects.all().prefetch_related('shared_editors', 'shared_viewers', 'created_by', 'audio_ID').get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
                                                                                                                                                                             | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                                                                                                                                            | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                                                                                                                                             | (Q(public=True) & Q(archived=False)))))
-
+        print('interpretation acquired')
         if not interpretation:
+            print('interpretation NOT acquired')
             return HttpResponse(status=404)
 
         query = Content.objects.all().prefetch_related('audio_id', 'interpretation_id').filter(audio_id_id=aid,
                                                                                                interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
+        print('associations acquired')
         if not query:
+            print('associations not acquired')
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
         a = timestep  # maximum number of time to group timestamps together for
@@ -788,14 +794,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print("test")
         # print(len(interpretation.spaced_by))
         # if the interpretation is spaced, I need to duplicate each word and create a "value_index" representing the first character of the word and a "value_index" representing the last character in the word instead.
+        print('some variables defined')
+        
         if len(interpretation.spaced_by) > 0:
-            # print("interpretation is spaced")
+            print("interpretation is spaced")
             all_words = Content.objects.all().filter(interpretation_id_id=iid,
                                                      audio_id_id=aid).order_by('value_index')
+            print("all_words is now defined")
             word_index = 0
             word_lengths_dict = {}
             summing_length = 0
             # print(all_words[0].audio_time)
+            print("more things are defined")
             while word_index < len(all_words):
                 if all_words[word_index].audio_time is not None:  # if it has a timestamp, then
                     # print(all_words[word_index].value, len(all_words[word_index].value))   # print the word and the length of the word
@@ -820,10 +830,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # print(summing_length)  # should be starting character of the next word
                 word_index += 1
             # print(word_lengths_dict)
+            print("while loop concluded")
         # this already works if the language is not spaced
 
         # print("else")
         m = 0
+        print("second while loop coming up")
         while m < len(query):
             obj = query[m]
             # print(obj)
@@ -834,18 +846,20 @@ class AssociationViewSet(viewsets.ModelViewSet):
             # else:
             #     associations_offsets.append(45)
             m += 1
-
+        print("second while loop concluded")
         # print("next three")
         # print(associations_times)
         # print(associations_chars)
         # print(associations_offsets)
 
         if len(interpretation.spaced_by) > 0:
+            print("interpretation is tokenized")
             new_array_times = []
             new_array_chars = []
             new_array_offsets = []
             # use word_lengths_dict to populate associations_times and associations_chars
             w = 0
+            print("another while loop coming up")
             while w < len(associations_times) and w < len(associations_chars):
 
                 # print(word_lengths_dict[associations_chars[w]])
@@ -863,12 +877,16 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 new_array_offsets.append(associations_offsets[w])
                 new_array_offsets.append(associations_offsets[w])
                 w += 1
+            print("this while loop also completed now")
             associations_times = new_array_times
             associations_chars = new_array_chars
             associations_offsets = new_array_offsets
+            print("some more things assigned")
         else:
             # double associations_times and associations_chars
+            print("inside of else statement")
             f = len(associations_times)-1
+            print("starting a for loop")
             for b in range(f+1):
                 # print(f,b)
                 # associations_times[f-b]-=associations_offsets[f-b]
@@ -878,7 +896,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 associations_chars.insert(f-b, associations_chars[f-b])
                 associations_offsets.insert(f-b, associations_offsets[f-b])
                 b += 1
-
+            print("for loop completed")
         # print(associations_times)
         # print(associations_chars)
         # print(associations_offsets)
@@ -895,6 +913,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         # print("timestep: ", timestep)
         # print(parentarray_times)
         # print(parentarray_chars)
+        print("lots of things assigned, and another while loop commencing")
 
         while parentarray_times:
             if max(parentarray_times[0])-min(parentarray_times[0]) > a:
@@ -950,6 +969,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_chars.pop(0)
                 parentarray_offsets.pop(0)
         # print(associations)
+        print("success!")
 
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
