@@ -799,11 +799,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     print('iid', type(uid) == type(entry.id))
                     print('uid', type(uid) == type(entry.created_by_id))
             # print(interpretationset)
-            interpretation = interpretationset.get(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
+            interpretation2 = interpretationset.filter(Q(audio_ID_id=aid) & Q(id=iid) & ((Q(created_by_id=uid)
                                                                                                                                                                             | (Q(shared_viewers__user_ID=uid) & Q(archived=False))
                                                                                                                                                                            | (Q(shared_editors__user_ID=uid) & Q(archived=False))
                                                                                                                                                                             | (Q(public=True) & Q(archived=False)))))
-            print(interpretation)        
+            print(interpretation2)       
+            interpretation = interpretation2.first()
+            print(interpretation) 
         except Exception as e:
             print('failed to acquire interpretation because', e)
 
