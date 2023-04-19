@@ -45,33 +45,24 @@ class DownloadFileViewSet(viewsets.ViewSet):
     serializer_class = AudioSerializer
 
     def presignedgeturl(self, request, pk=None):
-        print('debugging get audio file endpoint')
         audio_ID = request.data['audio_ID']
-        print('audio file is', audio_ID)
 
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             query = self.queryset.prefetch_related('shared_editors', 'shared_viewers', 'uploaded_by').filter((Q(uploaded_by=decoded_token['uid']) | (Q(archived=False) & Q(shared_editors=decoded_token['uid'])) | (
                 Q(archived=False) & Q(shared_viewers=decoded_token['uid'])) | Q(public=True) & Q(archived=False)) & Q(id=audio_ID)).distinct()
-            print('detected audios this user has access to')
+
         except:
-            print('detecting audio files that the public has access to')
             query = self.queryset.filter(
                 Q(public=True) & Q(archived=False) & Q(id=audio_ID))
-            print('public access audio files detected')
 
         if not query:
-            print(
-                'no audio files detected that this user or viewer should have access to')
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         elif query:
-            print('getting file url from S3')
             url = S3().get_file(audio_ID)
-            print('file url is', url)
             serializer = self.serializer_class(query[0])
             peaks = serializer.data['peaks']
-            print('success for audio file', serializer.data['id'])
 
             return Response({'url': url, 'peaks': peaks})
 
