@@ -788,7 +788,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             print('created by', uid)
             print('NOW LOOKING FOR A MATCH IN:')
             for entry in interpretationset:
-                if aid == entry.audio_ID_id:
+                if aid == entry.audio_ID_id and iid == entry.id:
                     print(entry.audio_ID_id)
                     print(entry.id)
                     print(entry.created_by_id)
