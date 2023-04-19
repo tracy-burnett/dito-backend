@@ -552,6 +552,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
+            print('access to interpretation granted for',uid)
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -775,7 +776,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-            print('logged-in user')
+            print('logged-in user',uid)
         except:
             uid = ""
             print('public viewer')
