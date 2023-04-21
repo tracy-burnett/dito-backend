@@ -461,12 +461,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
-        if key == 'instructions':
+        if 'instructions' in request.data:
             # this is the instructions for updating the content table
-            path = request.data[key]
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            path = request.data['instructions']
 
         # print(obj)
         obj.version += 1
@@ -634,12 +631,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
-        if key == 'instructions':
+        if 'instructions' in request.data:
             # this is the instructions for updating the content table
-            path = request.data[key]
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            path = request.data['instructions']
+            # k = 1
+            # print("k is 1")
+            # print(path)
 
 
 
@@ -719,6 +716,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     obj.delete()
                 Content.objects.bulk_create(add)
 
+            # print('success')
             return Response('interpretation updated')
 
     # def retrieve_all(self, request):
@@ -1008,6 +1006,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=200)
         except:
             association_dict = request.data['associations']
+            # print(association_dict)
 
             # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
             indices_array = [entry['value_index'] for entry in serializer.data]
@@ -1060,7 +1059,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             Content.objects.bulk_update(
                 changed, ['audio_time', 'audio_offset'])
 
-            # print("success")
+            # print("success content")
             return JsonResponse({}, status=200)
 
 
