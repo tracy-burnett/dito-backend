@@ -1086,8 +1086,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
         if Extended_User.objects.filter(user_ID=uid).exists():
-            user = Extended_User.objects.get(
-                Q(user_ID=uid) | Q(email=data['email']))
+            user = Extended_User.objects.filter(Q(user_ID=uid) | Q(email=data['email'])).distinct().get()
             if user:
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
