@@ -417,6 +417,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
+        try:
+            if obj.version is not request.data['editingversion']:
+                return Response('not editing current version')
+        except Exception as e:
+            print(e)
+
         # make a copy of the former version of the interpretation into the archive
 
         cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title,
@@ -455,12 +461,9 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
-        if key == 'instructions':
+        if 'instructions' in request.data:
             # this is the instructions for updating the content table
-            path = request.data[key]
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            path = request.data['instructions']
 
         # print(obj)
         obj.version += 1
@@ -544,7 +547,6 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
-            print('access to interpretation granted for', uid)
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -573,6 +575,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
+        try:
+            if obj.version is not request.data['editingversion']:
+                return Response('not editing current version')
+        except Exception as e:
+            print(e)
+
         # make a copy of the former version of the interpretation into the archive
 
         cpy = Interpretation_History(interpretation_ID=obj.id, public=obj.public, audio_ID=obj.audio_ID, title=obj.title,
@@ -583,12 +591,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         try:
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_editors.set(obj.shared_editors.all())
-            print(
-                'specified which users were allowed to edit the OLD version of the interpretation')
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
-            print(
-                'specified which users were allowed to see the OLD version of the interpretation')
         except Exception as e:
             print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e)
 
@@ -627,12 +631,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
-        if key == 'instructions':
+        if 'instructions' in request.data:
             # this is the instructions for updating the content table
-            path = request.data[key]
-            k = 1
-        if k == 0:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            path = request.data['instructions']
+            # k = 1
+            # print("k is 1")
+            # print(path)
 
 
 
@@ -712,6 +716,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                     obj.delete()
                 Content.objects.bulk_create(add)
 
+            # print('success')
             return Response('interpretation updated')
 
     # def retrieve_all(self, request):
@@ -959,9 +964,20 @@ class AssociationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         # print(request.data['associations'])
-        if not Interpretation.objects.prefetch_related('shared_editors', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
-                                                                                                                                             | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)):
-            return HttpResponse(status=404)
+        interpretation = Interpretation.objects.prefetch_related('shared_editors', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
+                                                                                                                                             | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid))
+        if not interpretation:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        
+        # print(interpretation.get().version)
+        # print(request.data['editingversion'])
+
+        try:
+            if interpretation.get().version is not request.data['editingversion']:
+                print("not a match")
+                return JsonResponse({'error': 'not editing current version'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
 
         query = Content.objects.all().prefetch_related('interpretation_id').filter(
             interpretation_id_id=iid).order_by('value_index')
@@ -971,12 +987,13 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
         serializer = ContentSerializer(query, many=True)
 
+
         try:
             new_offset = request.data['offset']
-            print(request.data['duration'])
+            # print(request.data['duration'])
             for entry in query:
-                print(entry.audio_time)
-                print(new_offset)
+                # print(entry.audio_time)
+                # print(new_offset)
                 if isinstance(entry.audio_time, int):
                     if (entry.audio_time+new_offset+entry.audio_offset) < (request.data['duration']/10) and (entry.audio_time+new_offset-entry.audio_offset) > 0:
                         query[entry.value_index].audio_time += new_offset
@@ -986,9 +1003,10 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         return HttpResponse(status=400)
 
             Content.objects.bulk_update(changed, ['audio_time'])
-            return HttpResponse(status=200)
+            return JsonResponse({}, status=200)
         except:
             association_dict = request.data['associations']
+            # print(association_dict)
 
             # for some reason, the later line "query[key].audio_time = association_dict[key]" won't work without this line, even though indices_array is never referenced.  Is this a bug?
             indices_array = [entry['value_index'] for entry in serializer.data]
@@ -1041,7 +1059,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
             Content.objects.bulk_update(
                 changed, ['audio_time', 'audio_offset'])
 
-            return HttpResponse(status=200)
+            # print("success content")
+            return JsonResponse({}, status=200)
 
 
 class ExtendedUserViewSet(viewsets.ModelViewSet):
@@ -1067,8 +1086,7 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
         if Extended_User.objects.filter(user_ID=uid).exists():
-            user = Extended_User.objects.get(
-                Q(user_ID=uid) | Q(email=data['email']))
+            user = Extended_User.objects.filter(Q(user_ID=uid) | Q(email=data['email'])).distinct().get()
             if user:
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
