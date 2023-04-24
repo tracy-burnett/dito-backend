@@ -969,13 +969,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
         if not interpretation:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         
-        # print(interpretation.get().version)
-        # print(request.data['editingversion'])
+        print(interpretation.get().version)
+        print(request.data['editingversion'])
+
+
 
         try:
-            if interpretation.get().version is not request.data['editingversion']:
+            intobj=interpretation.get()
+            if intobj.version is not request.data['editingversion']:
                 print("not a match")
                 return JsonResponse({'error': 'not editing current version'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                intobj.version = intobj.version + 1
         except Exception as e:
             print(e)
 
@@ -1003,6 +1008,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                         return HttpResponse(status=400)
 
             Content.objects.bulk_update(changed, ['audio_time'])
+            intobj.save()
             return JsonResponse({}, status=200)
         except:
             association_dict = request.data['associations']
@@ -1060,6 +1066,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 changed, ['audio_time', 'audio_offset'])
 
             # print("success content")
+            intobj.save()
             return JsonResponse({}, status=200)
 
 
