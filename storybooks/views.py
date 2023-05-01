@@ -967,13 +967,15 @@ class AssociationViewSet(viewsets.ModelViewSet):
         print('user id is ' + uid)
         # print(request.data['associations'])
         interpretation = Interpretation.objects.prefetch_related('shared_editors', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
-                                                                                                                                             | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid))
+                                                                                                                                             | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)).distinct()
 
         print('interpretation is', interpretation)
         if not interpretation:
             print('not interpretation')
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         
+
+
         print(interpretation.get().version)
         print(request.data['editingversion'])
 
