@@ -374,7 +374,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 Q(public=True) & Q(archived=False)))
 
         if not query:
-            return HttpResponse(status=404)
+            return JsonResponse({"interpretations": "none"})
         # serializer = self.serializer_class(query, many=True)
 
         query1 = []
