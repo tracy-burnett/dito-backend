@@ -191,11 +191,44 @@ class AudioViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
+        if 'remove_editor' in request.data and request.data['remove_editor'] == uid:
+            # print("editor", request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(
+                user_ID=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k = 1
         if k == 0:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
         return JsonResponse(serializer.data)
+    
+    def partial_update_viewer(self, request, aid):
+
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = self.queryset.prefetch_related('shared_viewers').filter(Q(archived=False) & Q(id=aid) & Q(
+            shared_viewers=uid)).distinct()
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+
+        k = 0
+        if 'remove_viewer' in request.data and request.data['remove_viewer'] == uid:
+            # print("viewer", request.data['remove_viewer'])
+            oldviewer = Extended_User.objects.get(
+                user_ID=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            k = 1
+        if k == 0:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+        obj.save()
+        return JsonResponse({'aid': aid})
 
     def partial_update_public(self, request, aid):
         data = request.data
@@ -400,6 +433,34 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializer = InterpretationSerializerBrief(query)
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
+    def update_viewers(self, request, iid, aid):
+        try:
+            decoded_token = auth.verify_id_token(
+                request.headers['Authorization'])
+            uid = decoded_token['uid']
+        except:
+            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = self.queryset.prefetch_related('audio_ID', 'shared_viewers').filter(
+            Q(audio_ID_id=aid) & Q(shared_viewers__user_ID=uid) & Q(id=iid) & Q(archived=False)).distinct()
+
+        if not query:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        obj = query.get()
+
+        # edit the interpretation to reflect the new user entered version
+
+        if 'remove_viewer' in request.data and request.data['remove_viewer'] == uid:
+            oldviewer = Extended_User.objects.get(
+                user_ID=request.data['remove_viewer'])
+            obj.shared_viewers.remove(oldviewer)
+            obj.save()
+
+            return Response('interpretation updated')
+        else:
+            return Response('bad request')
+
+
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
 
     def update_editors(self, request, iid, aid):
@@ -461,9 +522,19 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 user_ID=request.data['remove_viewer'])
             obj.shared_viewers.remove(oldviewer)
             k = 1
+        if 'remove_editor' in request.data and request.data['remove_editor'] == uid:
+            # print("editor", request.data['remove_editor'])
+            oldeditor = Extended_User.objects.get(
+                user_ID=request.data['remove_editor'])
+            obj.shared_editors.remove(oldeditor)
+            k = 1
         if 'instructions' in request.data:
             # this is the instructions for updating the content table
             path = request.data['instructions']
+            k = 1
+
+        if k == 0:
+            return Response('bad request')
 
         # print(obj)
         obj.version += 1
@@ -634,9 +705,12 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         if 'instructions' in request.data:
             # this is the instructions for updating the content table
             path = request.data['instructions']
-            # k = 1
+            k = 1
             # print("k is 1")
             # print(path)
+
+        if k == 0:
+            return Response('bad request')
 
 
 
