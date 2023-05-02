@@ -38,6 +38,10 @@ audio_update_editor = AudioViewSet.as_view({
     'patch':'partial_update_editor'        # has auth.  returns correct fields verified 3/29/23.
 })
 
+audio_update_viewer = AudioViewSet.as_view({
+    'patch':'partial_update_viewer'        # created 5/2/23.
+})
+
 audio_update_public = AudioViewSet.as_view({
     'patch':'partial_update_public'         # no auth.    returns correct fields verified 3/29/23.
 })
@@ -59,6 +63,7 @@ interpretations_editor = InterpretationViewSet.as_view({
 
 interpretations_viewer = InterpretationViewSet.as_view({
     'get': 'retrieve_viewers',          # has auth.  returns correct fields verified 3/29/23.
+    'patch': 'update_viewers',          # created 5/2/2023.
 })
 
 interpretations_owner = InterpretationViewSet.as_view({
@@ -93,6 +98,7 @@ urlpatterns.extend(format_suffix_patterns([
     path('audio/', audio_list, name='audio_list'),
     path('audio/<aid>/owner/', audio_update_owner, name='audio_update_owner'),
     path('audio/<aid>/editor/', audio_update_editor, name='audio_update_editor'),
+    path('audio/<aid>/viewer/', audio_update_viewer, name='audio_update_viewer'),
     path('audio/<aid>/public/', audio_update_public, name='audio_update_public'),
     path('audio/user/', audio_retrieve_private_user, name='audio_retrieve_private_user'),
     path('content/<aid>/<iid>', associations_detail, name='associations-detail'),
