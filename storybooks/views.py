@@ -167,7 +167,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('shared_editors').filter(Q(archived=False) & Q(id=aid) & Q(
-            shared_editors=uid))
+            shared_editors=uid)).distinct()
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
@@ -411,7 +411,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('audio_ID', 'shared_editors').filter(
-            Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False))
+            Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False)).distinct()
 
         if not query:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -955,29 +955,25 @@ class AssociationViewSet(viewsets.ModelViewSet):
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
-        print('in endpoint')
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
-            print('not logged in')
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
-        print('user id is ' + uid)
         # print(request.data['associations'])
         interpretation = Interpretation.objects.prefetch_related('shared_editors', 'created_by', 'audio_ID').filter(Q(audio_ID_id=aid, id=iid)).filter((Q(public=True) & Q(archived=False))
                                                                                                                                              | (Q(shared_editors=uid) & Q(archived=False)) | Q(created_by_id=uid)).distinct()
 
-        print('interpretation is', interpretation)
+
         if not interpretation:
-            print('not interpretation')
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         
 
 
-        print(interpretation.get().version)
-        print(request.data['editingversion'])
+        # print(interpretation.get().version)
+        # print(request.data['editingversion'])
 
 
 
