@@ -15,6 +15,7 @@ from bisect import bisect_left
 import ast
 import re
 import secrets
+import string
 import datetime
 import copy
 
@@ -34,7 +35,8 @@ class UploadFileViewSet(viewsets.ViewSet):
         except:
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         ext = request.data['ext']
-        audio_ID = secrets.token_urlsafe(8) + ext
+        alphabet = string.ascii_letters + string.digits
+        audio_ID = ''.join(secrets.choice(alphabet) for i in range(11)) + ext
         url = S3().get_presigned_url(audio_ID)
 
         return Response({'url': url, 'audio_ID': audio_ID})
@@ -309,7 +311,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
             return HttpResponse(status=404)
 
-        newinterpretationid = secrets.token_urlsafe(8)
+        alphabet = string.ascii_letters + string.digits
+        newinterpretationid = ''.join(secrets.choice(alphabet) for i in range(11))
         try:
             obj = Interpretation(id=newinterpretationid, public=data['public'],
                                  # shared_editors=data.get('shared_editors', None),
