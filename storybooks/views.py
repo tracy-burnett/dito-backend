@@ -16,7 +16,7 @@ import ast
 import re
 import secrets
 import string
-import datetime
+# import datetime
 import copy
 
 
@@ -29,7 +29,7 @@ import copy
 # If somebody posts an audio_ID to /s3/ they will receive a URL to download the audio file with that ID.
 class UploadFileViewSet(viewsets.ViewSet):
     def presignedposturl(self, request, pk=None):
-        print("in presignedposturl endpoint")
+        # print("in presignedposturl endpoint")
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -81,7 +81,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
 # presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
     def create(self, request):
-        print("creating new entry in audio table")
+        # print("creating new entry in audio table")
         data = request.data
         # print(request.headers['Authorization'])
         try:
@@ -93,7 +93,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
         # get url from s3 and user from firebase
         obj = Audio(id=data['id'], url=request.headers['Origin'], title=data['title'], description=data['description'],
-                    uploaded_by_id=uid, uploaded_at=datetime.datetime.now(), last_updated_by_id=uid)
+                    uploaded_by_id=uid, last_updated_by_id=uid)
         obj.save()
         serializer = self.serializer_class(obj)
         # return JsonResponse('{"audio": serializer.data}')
@@ -300,7 +300,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, aid):  # updated by skysnolimit 5/9/22
-        print("creating new interpretation")
+        # print("creating new interpretation")
         data = request.data
         try:
             decoded_token = auth.verify_id_token(
