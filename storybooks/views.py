@@ -29,6 +29,7 @@ import copy
 # If somebody posts an audio_ID to /s3/ they will receive a URL to download the audio file with that ID.
 class UploadFileViewSet(viewsets.ViewSet):
     def presignedposturl(self, request, pk=None):
+        print("in presignedposturl endpoint")
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
@@ -80,6 +81,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
 # presumably, somebody posts two fields, url and title, to the URL, then it creates a new audio object in the database.
     def create(self, request):
+        print("creating new entry in audio table")
         data = request.data
         # print(request.headers['Authorization'])
         try:
@@ -298,6 +300,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, aid):  # updated by skysnolimit 5/9/22
+        print("creating new interpretation")
         data = request.data
         try:
             decoded_token = auth.verify_id_token(
