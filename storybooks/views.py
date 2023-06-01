@@ -138,7 +138,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 if serializeddata[m]["id"] in newintdict:
                     serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
 
-        print("LOGGER:","somebody is viewing the Revitalize (public) storybooks list at", data['Origin'])
+        # print("LOGGER:","somebody is viewing the Revitalize (public) storybooks list at", data['Origin'])
         return JsonResponse({"audio": serializeddata})
 
     def partial_update_owner(self, request, aid):
@@ -314,7 +314,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 data['Authorization'])  # FOR DEMONSTRATION
             uid = decoded_token['uid']
         except:
-            print("LOGGER:","no authenticated user detected for which to load storybooks at",request.headers['Origin'])
+            # print("LOGGER:","no authenticated user detected for which to load storybooks at",request.headers['Origin'])
             return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
         query = self.queryset.prefetch_related('uploaded_by', 'shared_editors', 'shared_viewers').filter((Q(uploaded_by_id=uid) | (
@@ -369,7 +369,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                     serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
 
 
-        print("LOGGER:","an individual user loaded the storybooks they have access to at",request.headers['Origin'])
+        # print("LOGGER:","an individual user loaded the storybooks they have access to at",request.headers['Origin'])
         return JsonResponse({"audio files": serializeddata})
 
 
