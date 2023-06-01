@@ -67,7 +67,7 @@ class InterpretationSerializerBrief(serializers.ModelSerializer):
 
     class Meta:
         model = Interpretation
-        fields = ['title','latest_text','language_name','spaced_by']
+        fields = ['title','latest_text','language_name','spaced_by','audio_ID']
 
 class InterpretationSerializer2(serializers.ModelSerializer):
     created_by = ExtendedUserSerializer2(read_only=True) 

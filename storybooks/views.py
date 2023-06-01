@@ -105,7 +105,32 @@ class AudioViewSet(viewsets.ModelViewSet):
         query = self.queryset.filter(Q(archived=False) & Q(
             public=True) & Q(url=data['Origin']))
         serializer = AudioSerializerPublic(query, many=True)
-        return JsonResponse({"audio": serializer.data})
+        serializeddata=serializer.data
+
+        for m in range(len(serializeddata)):
+            serializeddata[m]["searchablestring"] = ""
+
+        try:
+            query = Interpretation.objects.filter(Q(archived=False) & Q(
+            public=True))
+        except Exception as e:
+            print(e)
+        
+        if query:
+            serializerint = InterpretationSerializerBrief(query, many=True)
+
+            newintdict = {}
+            for l in range(len(serializerint.data)):
+                if serializerint.data[l]["audio_ID"] in newintdict:
+                    newintdict[serializerint.data[l]["audio_ID"]] += serializerint.data[l]["title"]+serializerint.data[l]["latest_text"]+serializerint.data[l]["language_name"]
+                else:
+                    newintdict[serializerint.data[l]["audio_ID"]] = serializerint.data[l]["title"]+serializerint.data[l]["latest_text"]+serializerint.data[l]["language_name"]
+
+            for m in range(len(serializeddata)):
+                if serializeddata[m]["id"] in newintdict:
+                    serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
+
+        return JsonResponse({"audio": serializeddata})
 
     def partial_update_owner(self, request, aid):
         data = request.data
@@ -287,6 +312,33 @@ class AudioViewSet(viewsets.ModelViewSet):
         serializer2 = AudioSerializer3(query2, many=True)
 
         serializeddata = serializer1.data + serializer2.data
+        for m in range(len(serializeddata)):
+            serializeddata[m]["searchablestring"] = ""
+
+        try:
+            query = Interpretation.objects.prefetch_related('shared_editors', 'shared_viewers','created_by').filter(Q(created_by=uid)
+                                     | (Q(shared_viewers=uid) & Q(archived=False))
+                                     | (Q(shared_editors=uid) & Q(archived=False))).distinct()
+        except Exception as e:
+            print(e)
+        
+        if query:
+            serializerint = InterpretationSerializerBrief(query, many=True)
+
+
+            newintdict = {}
+            for l in range(len(serializerint.data)):
+                if serializerint.data[l]["audio_ID"] in newintdict:
+                    newintdict[serializerint.data[l]["audio_ID"]] += serializerint.data[l]["title"]+serializerint.data[l]["latest_text"]+serializerint.data[l]["language_name"]
+                else:
+                    newintdict[serializerint.data[l]["audio_ID"]] = serializerint.data[l]["title"]+serializerint.data[l]["latest_text"]+serializerint.data[l]["language_name"]
+                
+
+            for m in range(len(serializeddata)):
+                if serializeddata[m]["id"] in newintdict:
+                    serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
+
+
 
         return JsonResponse({"audio files": serializeddata})
 
