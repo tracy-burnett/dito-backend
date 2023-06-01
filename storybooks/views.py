@@ -33,12 +33,15 @@ class UploadFileViewSet(viewsets.ViewSet):
         try:
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
-        except:
+        except Exception as e:
+            print("LOGGER:",e)
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         ext = request.data['ext']
         alphabet = string.ascii_letters + string.digits
         audio_ID = ''.join(secrets.choice(alphabet) for i in range(11)) + ext
         url = S3().get_presigned_url(audio_ID)
+
+        print("LOGGER:","uploading", audio_ID,"to", request.headers['Origin'])
 
         return Response({'url': url, 'audio_ID': audio_ID})
 
@@ -61,12 +64,14 @@ class DownloadFileViewSet(viewsets.ViewSet):
                 Q(public=True) & Q(archived=False) & Q(id=audio_ID))
 
         if not query:
+            print("LOGGER:","audio file",audio_ID,"at",request.headers['Origin'],"not found")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         elif query:
             url = S3().get_file(audio_ID)
             serializer = self.serializer_class(query[0])
             peaks = serializer.data['peaks']
 
+            print("LOGGER:","loading", audio_ID,"at",request.headers['Origin'])
             return Response({'url': url, 'peaks': peaks})
 
 
@@ -89,6 +94,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","unauthenticated user cannot save information for audio",data['id'],"at",request.headers['Origin'])
             return Response('no valid user logged in')
 
         # get url from s3 and user from firebase
@@ -97,6 +103,8 @@ class AudioViewSet(viewsets.ModelViewSet):
         obj.save()
         serializer = self.serializer_class(obj)
         # return JsonResponse('{"audio": serializer.data}')
+        print("LOGGER:","saved starter information for", data['id'],"for",request.headers['Origin'])
+
         return JsonResponse(serializer.data)
 
     def retrieve_public(self, request):
@@ -114,7 +122,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             query = Interpretation.objects.filter(Q(archived=False) & Q(
             public=True))
         except Exception as e:
-            print(e)
+            print("LOGGER:",e)
         
         if query:
             serializerint = InterpretationSerializerBrief(query, many=True)
@@ -130,6 +138,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 if serializeddata[m]["id"] in newintdict:
                     serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
 
+        print("LOGGER:","somebody is viewing the Revitalize (public) storybooks list at", data['Origin'])
         return JsonResponse({"audio": serializeddata})
 
     def partial_update_owner(self, request, aid):
@@ -140,11 +149,13 @@ class AudioViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","user could not be authenticated trying to edit",aid,"at",request.headers['Origin'],"as owner")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related(
             'uploaded_by').filter(Q(uploaded_by=uid) & Q(id=aid))
         if not query:
+            print("LOGGER:","audio",aid,"could not be found at",request.headers['Origin'],"for specified owner")
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
@@ -180,9 +191,12 @@ class AudioViewSet(viewsets.ModelViewSet):
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if k == 0:
+            print("LOGGER:","no valid updates could be processed for owner of",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
+
+        print("LOGGER:","the owner of",aid,"just edited it at",request.headers['Origin'])
         return JsonResponse(serializer.data)
 
     def partial_update_editor(self, request, aid):
@@ -193,11 +207,13 @@ class AudioViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","user could not be authenticated trying to edit",aid,"at",request.headers['Origin'],"as editor")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('shared_editors').filter(Q(archived=False) & Q(id=aid) & Q(
             shared_editors=uid)).distinct()
         if not query:
+            print("LOGGER:","audio",aid,"could not be found at",request.headers['Origin'],"for specified editor")
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
         modifiable_attr = {'title', 'public', 'description',
@@ -227,9 +243,12 @@ class AudioViewSet(viewsets.ModelViewSet):
             obj.shared_editors.remove(oldeditor)
             k = 1
         if k == 0:
+            print("LOGGER:","no valid updates could be processed for editor of",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
         serializer = self.serializer_class(obj)
+        
+        print("LOGGER:","an editor of",aid,"just edited it at",request.headers['Origin'])
         return JsonResponse(serializer.data)
     
     def partial_update_viewer(self, request, aid):
@@ -239,11 +258,13 @@ class AudioViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","user could not be authenticated trying to edit",aid,"at",request.headers['Origin'],"as viewer")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('shared_viewers').filter(Q(archived=False) & Q(id=aid) & Q(
             shared_viewers=uid)).distinct()
         if not query:
+            print("LOGGER:","audio",aid,"could not be found at",request.headers['Origin'],"for specified viewer")
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
@@ -255,8 +276,11 @@ class AudioViewSet(viewsets.ModelViewSet):
             obj.shared_viewers.remove(oldviewer)
             k = 1
         if k == 0:
+            print("LOGGER:","no valid updates could be processed for editor of",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         obj.save()
+        
+        print("LOGGER:","a viewer of",aid,"just edited it at",request.headers['Origin'])
         return JsonResponse({'aid': aid})
 
     def partial_update_public(self, request, aid):
@@ -264,6 +288,7 @@ class AudioViewSet(viewsets.ModelViewSet):
 
         query = self.queryset.filter(id=aid)
         if not query:
+            print("LOGGER:","audio",aid,"could not be found for",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
         modifiable_attr = {'peaks'}
@@ -274,9 +299,12 @@ class AudioViewSet(viewsets.ModelViewSet):
                 k = 1
 
         if k == 0:
+            print("LOGGER:","no valid updates without authentication could be processed for",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         obj.save()
+
+        print("LOGGER:","peaks were just generated for",aid,"at",request.headers['Origin'])
         return Response({'peaks created'})
 
     def retrieve_private_user(self, request):
@@ -286,6 +314,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                 data['Authorization'])  # FOR DEMONSTRATION
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","no authenticated user detected for which to load storybooks at",request.headers['Origin'])
             return JsonResponse({"login expired; try refreshing the app or logging in again": status.HTTP_400_BAD_REQUEST})
         # author=Extended_User.objects.get(user_ID=uid) # FOR DEMONSTRATION
         query = self.queryset.prefetch_related('uploaded_by', 'shared_editors', 'shared_viewers').filter((Q(uploaded_by_id=uid) | (
@@ -294,6 +323,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             Q(archived=False) & Q(public=True))) & Q(url=data['Origin'])).distinct()  # FOR DEMONSTRATION
 
         if not query:
+            print("LOGGER:","no storybooks found to be accessible for authenticated user at",request.headers['Origin'])
             return JsonResponse({"no storybooks found": status.HTTP_400_BAD_REQUEST})
 
         # serializer = AudioSerializer2(query, many=True)
@@ -320,7 +350,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                                      | (Q(shared_viewers=uid) & Q(archived=False))
                                      | (Q(shared_editors=uid) & Q(archived=False))).distinct()
         except Exception as e:
-            print(e)
+            print("LOGGER:",e)
         
         if query:
             serializerint = InterpretationSerializerBrief(query, many=True)
@@ -339,7 +369,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                     serializeddata[m]["searchablestring"] += newintdict[serializeddata[m]["id"]]
 
 
-
+        print("LOGGER:","an individual user loaded the storybooks they have access to at",request.headers['Origin'])
         return JsonResponse({"audio files": serializeddata})
 
 
@@ -359,11 +389,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","unauthenticated user cannot create an interpretation for audio",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         if not Audio.objects.prefetch_related('shared_editors', 'shared_viewers', 'uploaded_by').filter(Q(id=aid)).filter((Q(public=True) & Q(archived=False))
                                                                                                                           | (Q(shared_editors=uid) & Q(archived=False)) | (
                 Q(archived=False) & Q(shared_viewers=uid)) | Q(uploaded_by_id=uid)).distinct():
+            print("LOGGER:","audio",aid,"not found for authenticated user at",request.headers['Origin'])
             return HttpResponse(status=404)
 
         alphabet = string.ascii_letters + string.digits
@@ -378,6 +410,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                                  spaced_by=data.get('spaced_by', None),
                                  created_by_id=uid, last_edited_by_id=uid)
         except:
+            print("LOGGER:","authenticated user could not create new interpretation for audio",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         text_array = []
@@ -414,6 +447,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         Content.objects.bulk_create(words)
 
         serializer = self.serializer_class(obj)
+
+        print("LOGGER:","new interpretation created for",aid,"at",request.headers['Origin'])
         return JsonResponse({"interpretation": serializer.data})
 
     def retrieve_audios(self, request, aid):
@@ -432,6 +467,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 Q(public=True) & Q(archived=False)))
 
         if not query:
+            print("LOGGER:","no interpretations found for authenticated or unauthenticated user viewing",aid,"at",request.headers['Origin'])
             return JsonResponse({"interpretations": "none"})
         # serializer = self.serializer_class(query, many=True)
 
@@ -451,6 +487,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         serializeddata = serializer1.data + serializer2.data
 
         # print(serializer.data)
+        print("LOGGER:","interpretations for",aid,"retrieved by authenticated user at",request.headers['Origin'])
         return JsonResponse({"interpretations": serializeddata})
 
     def retrieve_editors(self, request, iid, aid):
@@ -462,15 +499,19 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","could not authenticate user trying to load",iid,"for audio",aid,"as an editor")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.get(
             Q(audio_ID_id=aid) & Q(shared_editors=uid) & Q(archived=False) & Q(id=iid))
         # print(query)
         if not query:
+            print("LOGGER:","interpretation",iid,"for audio",aid,"could not be loaded for authenticated user as editor at",request.headers['Origin'])
             return HttpResponse(status=404)
 
         serializer = InterpretationSerializerBrief(query)
+
+        print("LOGGER:","interpretation",iid,"for audio",aid,"just retrieved by an editor at",request.headers['Origin'])
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     def retrieve_viewers(self, request, iid, aid):
@@ -487,8 +528,11 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         # print(query)
         if not query:
+            print("LOGGER:","interpretation",iid,"for audio",aid,"could not be loaded for authenticated or unauthenticated user as viewer at",request.headers['Origin'])
             return HttpResponse(status=404)
         serializer = InterpretationSerializerBrief(query)
+
+        print("LOGGER:","interpretation",iid,"for audio",aid,"just retrieved by a viewer at",request.headers['Origin'])
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     def update_viewers(self, request, iid, aid):
@@ -497,12 +541,14 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","could not authenticate user trying to update",iid,"for audio",aid,"as a viewer")
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('audio_ID', 'shared_viewers').filter(
             Q(audio_ID_id=aid) & Q(shared_viewers__user_ID=uid) & Q(id=iid) & Q(archived=False)).distinct()
 
         if not query:
+            print("LOGGER:","interpretation",iid,"for audio",aid,"could not be located for editing by authenticated user as viewer at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
@@ -514,9 +560,36 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             obj.shared_viewers.remove(oldviewer)
             obj.save()
 
+            print("LOGGER:","a viewer just removed themselves from interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
             return Response('interpretation updated')
         else:
+            print("LOGGER:","interpretation",iid,"of audio",aid,"failed to be edited by viewer at",request.headers['Origin'])
             return Response('bad request')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
@@ -527,20 +600,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","could not authenticate user trying to edit interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.prefetch_related('audio_ID', 'shared_editors').filter(
             Q(audio_ID_id=aid) & Q(shared_editors__user_ID=uid) & Q(id=iid) & Q(archived=False)).distinct()
 
         if not query:
+            print("LOGGER:","could not load interpretation",iid,"of audio",aid,"for authenticated user as editor at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
         try:
             if obj.version is not request.data['editingversion']:
+                print("LOGGER:","authenticated user was prevented from editing out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'],"as editor")
                 return Response('not editing current version')
         except Exception as e:
-            print(e)
+            print("LOGGER:",e)
 
         # make a copy of the former version of the interpretation into the archive
 
@@ -555,7 +631,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
         except Exception as e:
-            print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e)
+            print("LOGGER:",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e)
 
         # edit the interpretation to reflect the new user entered version
 
@@ -592,6 +668,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             k = 1
 
         if k == 0:
+            print("LOGGER:","no valid updates could be processed for editor of interpretation",iid,"of",aid,"at",request.headers['Origin'])
             return Response('bad request')
 
         # print(obj)
@@ -600,6 +677,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(obj)
         if obj.title == "" and obj.latest_text == "" and obj.language_name == "":
             obj.delete()
+            print("LOGGER:","interpretation",iid,"of audio",aid,"deleted by editor at",request.headers['Origin'])
             return Response('interpretation deleted')
         else:
             obj.save()
@@ -664,6 +742,8 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 for obj in subtract:
                     obj.delete()
                 Content.objects.bulk_create(add)
+            
+            print("LOGGER:","interpretation",iid,"of audio",aid,"updated by editor at",request.headers['Origin'])
             return Response('interpretation updated')
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 5/11/22
@@ -677,14 +757,18 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","user could not be authenticated to view interpretation",iid,"of audio",aid,"as owner at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         query = self.queryset.get(
             Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         # print(query)
         if not query:
+            print("LOGGER:","interpretation",iid,"of audio",aid,"could not be located for owner to view at",request.headers['Origin'])
             return HttpResponse(status=404)
         serializer = InterpretationSerializerBrief(query)
+        
+        print("LOGGER:","owner retrieved interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
         return JsonResponse({"interpretation": serializer.data}, json_dumps_params={'ensure_ascii': False})
 
     # UPDATED TO WORK BY SKYSNOLIMIT08 ON 6/9/22
@@ -695,20 +779,23 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","user could not be authenticated to update interpretation",iid,"of audio",aid,"as owner at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
 
         query = self.queryset.prefetch_related('audio_ID', 'created_by').filter(
             Q(audio_ID_id=aid) & Q(created_by_id=uid) & Q(id=iid))
         if not query:
+            print("LOGGER:","interpretation",iid,"of audio",aid,"could not be located for owner to update at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         obj = query.get()
 
         try:
             if obj.version is not request.data['editingversion']:
+                print("LOGGER:","authenticated user was prevented from editing out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'],"as owner")
                 return Response('not editing current version')
         except Exception as e:
-            print(e)
+            print("LOGGER:",e)
 
         # make a copy of the former version of the interpretation into the archive
 
@@ -723,7 +810,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
         except Exception as e:
-            print('failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e)
+            print("LOGGER:",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e)
 
         # edit the interpretation to reflect the new user entered version
 
@@ -768,6 +855,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             # print(path)
 
         if k == 0:
+            print("LOGGER:","no valid updates could be processed for owner of interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
             return Response('bad request')
 
 
@@ -780,6 +868,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
         # print(obj)
         if obj.title == "" and obj.latest_text == "" and obj.language_name == "":
             obj.delete()
+            print("LOGGER:","interpretation",iid,"of audio",aid,"deleted by owner at",request.headers['Origin'])
             return Response('interpretation deleted')
         else:
             obj.save()
@@ -849,6 +938,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 Content.objects.bulk_create(add)
 
             # print('success')
+            print("LOGGER:","interpretation",iid,"of audio",aid,"updated by owner at",request.headers['Origin'])
             return Response('interpretation updated')
 
     # def retrieve_all(self, request):
@@ -896,16 +986,18 @@ class AssociationViewSet(viewsets.ModelViewSet):
             interpretation = interpretation2.distinct().get()
 
         except Exception as e:
-            print('failed to acquire interpretation because', e)
+            print("LOGGER:",'failed to acquire interpretation because', e)
 
 
         if not interpretation:
+            print("LOGGER:","could not verify that interpretation",iid,"of audio",aid,"exists at",request.headers['Origin'],"to see timestamps for")
             return HttpResponse(status=404)
 
         query = Content.objects.all().prefetch_related('audio_id', 'interpretation_id').filter(audio_id_id=aid,
                                                                                                interpretation_id_id=iid).exclude(audio_time=None).order_by('audio_time')
 
         if not query:
+            print("LOGGER:","loaded no/empty timestamp information for interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
             return JsonResponse({"associations": {}}, json_dumps_params={'ensure_ascii': False})
 
         a = timestep  # maximum number of time to group timestamps together for
@@ -1084,6 +1176,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_offsets.pop(0)
         # print(associations)
 
+        print("LOGGER:","loaded existing timestamp information for interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
         return JsonResponse({"associations": associations}, json_dumps_params={'ensure_ascii': False})
 
     def update(self, request, aid, iid):  # UPDATED 6/9/22 BY SKYSNOLIMIT08 TO WORK
@@ -1092,6 +1185,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","no user could be authenticated to update timestamp information for interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
         # print(request.data['associations'])
@@ -1100,6 +1194,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
 
         if not interpretation:
+            print("LOGGER:","could not verify that interpretation",iid,"of audio",aid,"exists at",request.headers['Origin'],"to update timestamps for")
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         
 
@@ -1112,12 +1207,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
         try:
             intobj=interpretation.get()
             if intobj.version is not request.data['editingversion']:
-                print("not a match")
+                print("LOGGER:","authenticated user was prevented from updating timestamps of out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
                 return JsonResponse({'error': 'not editing current version'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 intobj.version = intobj.version + 1
         except Exception as e:
-            print(e)
+            print("LOGGER:",e)
 
         query = Content.objects.all().prefetch_related('interpretation_id').filter(
             interpretation_id_id=iid).order_by('value_index')
@@ -1140,10 +1235,12 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
                         changed.append(query[entry.value_index])
                     else:
+                        print("LOGGER:","offset for interpretation",iid,"of audio",aid,"could not be updated due to being out of range at",request.headers['Origin'])
                         return HttpResponse(status=400)
 
             Content.objects.bulk_update(changed, ['audio_time'])
             intobj.save()
+            print("LOGGER:","offset for interpretation",iid,"of audio",aid,"has been updated by authenticated user at",request.headers['Origin'])
             return JsonResponse({}, status=200)
         except:
             association_dict = request.data['associations']
@@ -1202,6 +1299,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
 
             # print("success content")
             intobj.save()
+            print("LOGGER:","timestamps within interpretation",iid,"of audio",aid,"has been updated by authenticated user at",request.headers['Origin'])
             return JsonResponse({}, status=200)
 
 
@@ -1224,12 +1322,14 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
                 request.headers['Authorization'])
             uid = decoded_token['uid']
         except:
+            print("LOGGER:","could not authenticate user to create user information in app at",request.headers['Origin'])
             return JsonResponse({'error': 'Firebase authentication failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         # check if object already exists - create should only work if there isn't already an extended_user for uid
         if Extended_User.objects.filter(user_ID=uid).exists():
             user = Extended_User.objects.filter(Q(user_ID=uid) | Q(email=data['email'])).distinct().get()
             if user:
+                print("LOGGER:","could not create new user information in app at",request.headers['Origin'],"because information for that user already exists")
                 return JsonResponse({'error': 'user already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             obj = Extended_User(user_ID=uid,
@@ -1240,6 +1340,8 @@ class ExtendedUserViewSet(viewsets.ModelViewSet):
 
             obj.save()
             serializer = self.serializer_class(obj)
+
+            print("LOGGER:","created new user information in app at",request.headers['Origin'])
             return Response({'user created'})
 
     # def update(self, request):
