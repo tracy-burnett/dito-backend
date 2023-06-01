@@ -1207,7 +1207,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
         try:
             intobj=interpretation.get()
             if intobj.version is not request.data['editingversion']:
-                print("LOGGER:","authenticated user was prevented from updating timestamps of out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
+                print("LOGGER:","authenticated user was prevented from updating timestamps of out-of-date version",request.data['editingversion'],"instead of current version",intobj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'])
                 return JsonResponse({'error': 'not editing current version'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 intobj.version = intobj.version + 1
