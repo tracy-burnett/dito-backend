@@ -28,6 +28,10 @@ class Language(models.Model):
     oCreateNewInterpretation = models.CharField(max_length=255, default="Create New Interpretation")
     oUploadInterpretationFile = models.CharField(max_length=255, default="Upload Inter-pretation File")
     oAddAnotherConsole = models.CharField(max_length=255, default="Add Another Console")
+    nGetPageLink = models.CharField(max_length=255, default="Get Page Link")
+    nGetLatestAppVersion = models.CharField(max_length=255, default="Get Latest App Version")
+    nLogin = models.CharField(max_length=255, default="Login")
+    nLogout = models.CharField(max_length=255, default="Logout")
 
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
