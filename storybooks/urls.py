@@ -30,6 +30,10 @@ audio_list = AudioViewSet.as_view({
     'get':'retrieve_public'      # no auth required.  returns correct fields verified 3/29/23.
 })
 
+language_data = LanguageViewSet.as_view({
+    'post':'get_prompts',   
+})
+
 audio_update_owner = AudioViewSet.as_view({
     'patch':'partial_update_owner'    # has auth.  returns correct fields verified 3/29/23.
 })
@@ -95,6 +99,7 @@ urlpatterns = [
 ]
 
 urlpatterns.extend(format_suffix_patterns([
+    path('language/', language_data, name='language_data'),
     path('audio/', audio_list, name='audio_list'),
     path('audio/<aid>/owner/', audio_update_owner, name='audio_update_owner'),
     path('audio/<aid>/editor/', audio_update_editor, name='audio_update_editor'),
