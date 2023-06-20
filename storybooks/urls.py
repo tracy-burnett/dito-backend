@@ -31,7 +31,7 @@ audio_list = AudioViewSet.as_view({
 })
 
 language_data = LanguageViewSet.as_view({
-    'post':'get_prompts',             # has auth.  returns correct fields verified 3/29/23.
+    'post':'get_prompts',   
 })
 
 audio_update_owner = AudioViewSet.as_view({
