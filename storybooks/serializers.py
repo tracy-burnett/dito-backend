@@ -4,6 +4,11 @@ from rest_framework import serializers
 from storybooks.s3 import *
 
 
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = '__all__'
+
 class ExtendedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Extended_User

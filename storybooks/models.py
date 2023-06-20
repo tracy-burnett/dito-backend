@@ -1,6 +1,34 @@
 from django.db import models
 
 
+class Language(models.Model):
+    name = models.CharField(max_length=255, primary_key=True)
+    bAdjust = models.CharField(max_length=255, default="Adjust")
+    bClose = models.CharField(max_length=255, default="Close")
+    bInterpretation = models.CharField(max_length=255, default="Interpretation")
+    bViewing = models.CharField(max_length=255, default="Viewing")
+    bDownload = models.CharField(max_length=255, default="Download")
+    bScribing = models.CharField(max_length=255, default="Scribing")
+    bEditing = models.CharField(max_length=255, default="Editing")
+    bRefining = models.CharField(max_length=255, default="Refining")
+    bStudying = models.CharField(max_length=255, default="Studying")
+    bResetSensitivity = models.CharField(max_length=255, default="Reset Sensitivity")
+    bNewPrompt = models.CharField(max_length=255, default="New Prompt")
+    bClearNew = models.CharField(max_length=255, default="Clear New")
+    bNewPhrase = models.CharField(max_length=255, default="New Phrase")
+    sPlaybackSpeed = models.CharField(max_length=255, default="playback speed")
+    sZoom = models.CharField(max_length=255, default="zoom")
+    sChangeFontSize = models.CharField(max_length=255, default="change font size")
+    sScribeLessMore = models.CharField(max_length=255, default="scribe less / more")
+    sHighlightLessMore = models.CharField(max_length=255, default="highlight less / more")
+    sPhraseLength = models.CharField(max_length=255, default="phrase length")
+    cClearSelection = models.CharField(max_length=255, default="Clear Selection")
+    cRepeatOnOff = models.CharField(max_length=255, default="Repeat On / Off")
+    cAutoscrollOnOff = models.CharField(max_length=255, default="Autoscroll On / Off")
+    oCreateNewInterpretation = models.CharField(max_length=255, default="Create New Interpretation")
+    oUploadInterpretationFile = models.CharField(max_length=255, default="Upload Inter-pretation File")
+    oAddAnotherConsole = models.CharField(max_length=255, default="Add Another Console")
+
 class Extended_User(models.Model):
     # The default for Django Models CharField is 255, which should be enough for both user_ID and display_name
     email = models.CharField(max_length=255)
@@ -28,16 +56,6 @@ class Audio(models.Model):
     class Meta:
         verbose_name = "audio file"
         verbose_name_plural = "audio files"
-
-
-# class Language(models.Model):
-#     name = models.CharField(max_length=255)
-#     spaced = models.BooleanField()
-
-#     class Meta:
-#         verbose_name = "language"
-#         verbose_name_plural = "languages"
-
 
 class Interpretation(models.Model):
 
@@ -106,34 +124,6 @@ class Interpretation_History(models.Model):
     class Meta:
         verbose_name = "interpretation history"
         verbose_name_plural = "interpretation history"
-
-
-# class Translation(models.Model):
-#     title = models.CharField(default="Untitled Storybook", max_length=255)
-#     audio_id = models.CharField(max_length=255, primary_key=True)
-#     published = models.BooleanField(default=False)
-#     text     = models.TextField(null=True)
-#     language = models.ForeignKey(
-#         Language, related_name="translation_language", null=True, on_delete=models.SET_NULL)
-#     author_id = models.CharField(max_length=255)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     last_updated_by = models.CharField(max_length=255)
-
-#     class Meta:
-#         verbose_name = "translation"
-#         verbose_name_plural = "translations"
-
-
-# class Story(models.Model):
-#     translation = models.ForeignKey(Translation, on_delete=models.CASCADE, default=0)
-#     word = models.CharField(max_length=255)
-#     index = models.IntegerField()
-#     timestamp = models.IntegerField(null=True)
-
-#     class Meta:
-#         verbose_name = "story"
-#         verbose_name_plural = "stories"
 
 
 

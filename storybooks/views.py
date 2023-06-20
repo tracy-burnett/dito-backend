@@ -81,6 +81,30 @@ class DownloadFileViewSet(viewsets.ViewSet):
                 print("LOGGER:","loading", audio_ID,"for unauthenticated user at",request.headers['Origin'], file=sys.stdout)
             return Response({'url': url, 'peaks': peaks})
 
+class LanguageViewSet(viewsets.ModelViewSet):
+    """
+    Audio API
+    """
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+    # this overrides project-level permission in settings.py
+    permission_classes = [permissions.AllowAny]
+
+    def get_prompts(self, request):
+        data=request.data
+        # print(data)
+        query = self.queryset.get(Q(name=data['language']))
+        if not query:
+            print("LOGGER:","failed to find prompt information for language",data['language'],"at",request.headers['Origin'], file=sys.stdout)
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(query)
+        serializeddata=serializer.data
+        
+        
+        print("LOGGER:","somebody has changed to viewing", request.headers['Origin'],"in language",data['language'], file=sys.stdout)
+
+        return JsonResponse({"languageprompts": serializeddata})
+
 
 class AudioViewSet(viewsets.ModelViewSet):
     """
