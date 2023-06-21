@@ -35,7 +35,7 @@ class UploadFileViewSet(viewsets.ViewSet):
             decoded_token = auth.verify_id_token(
                 request.headers['Authorization'])
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
             return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
         ext = request.data['ext']
         alphabet = string.ascii_letters + string.digits
@@ -153,7 +153,7 @@ class AudioViewSet(viewsets.ModelViewSet):
             query = Interpretation.objects.filter(Q(archived=False) & Q(
             public=True))
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
         
         if query:
             serializerint = InterpretationSerializerBrief(query, many=True)
@@ -381,7 +381,7 @@ class AudioViewSet(viewsets.ModelViewSet):
                                      | (Q(shared_viewers=uid) & Q(archived=False))
                                      | (Q(shared_editors=uid) & Q(archived=False))).distinct()
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
         
         if query:
             serializerint = InterpretationSerializerBrief(query, many=True)
@@ -659,7 +659,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 print("LOGGER:","user",uid,"was prevented from editing out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'],"as editor", file=sys.stdout)
                 return Response('not editing current version')
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
 
         # make a copy of the former version of the interpretation into the archive
 
@@ -674,7 +674,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
         except Exception as e:
-            print("LOGGER:",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e, file=sys.stdout)
+            print("LOGGER: exception,",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e, file=sys.stdout)
 
         # edit the interpretation to reflect the new user entered version
 
@@ -838,7 +838,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
                 print("LOGGER:","user",uid,"was prevented from editing out-of-date version",request.data['editingversion'],"instead of current version",obj.version,"of interpretation",iid,"of audio",aid,"at",request.headers['Origin'],"as owner", file=sys.stdout)
                 return Response('not editing current version')
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
 
         # make a copy of the former version of the interpretation into the archive
 
@@ -853,7 +853,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
             Interpretation_History.objects.get(
                 interpretation_ID=iid, version=obj.version).shared_viewers.set(obj.shared_viewers.all())
         except Exception as e:
-            print("LOGGER:",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e, file=sys.stdout)
+            print("LOGGER: exception,",'failed to specify which users were allowed to see or which were allowed to edit the old interpretation because', e, file=sys.stdout)
 
         # edit the interpretation to reflect the new user entered version
 
@@ -1029,7 +1029,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             interpretation = interpretation2.distinct().get()
 
         except Exception as e:
-            print("LOGGER:",'failed to acquire interpretation because', e, file=sys.stdout)
+            print("LOGGER: exception,",'failed to acquire interpretation because', e, file=sys.stdout)
 
 
         if not interpretation:
@@ -1255,7 +1255,7 @@ class AssociationViewSet(viewsets.ModelViewSet):
             else:
                 intobj.version = intobj.version + 1
         except Exception as e:
-            print("LOGGER:",e, file=sys.stdout)
+            print("LOGGER: exception,",e, file=sys.stdout)
 
         query = Content.objects.all().prefetch_related('interpretation_id').filter(
             interpretation_id_id=iid).order_by('value_index')
