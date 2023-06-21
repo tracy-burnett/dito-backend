@@ -2,7 +2,7 @@
 
  - 06/20/2023: Sample translation workflow
    - update Language model with new categories on local computer
-   - update frontend code on local computer to use the new translations
+   - update frontend code on local computer to use the new translations (and/or make new language(s) available for selecting)
    - run python manage.py makemigrations and then python manage.py migrate and test the changes
    - push the backend code to github and merge it to main in a pull request
    - verify that heroku has finished deploying the new code
