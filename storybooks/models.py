@@ -3,6 +3,7 @@ from django.db import models
 
 class Language(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    code = models.CharField(max_length=255, default="en")
     bScribing = models.CharField(max_length=255, default="Scribing")
     bEditing = models.CharField(max_length=255, default="Editing")
     bViewing = models.CharField(max_length=255, default="Viewing")
