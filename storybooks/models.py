@@ -3,6 +3,7 @@ from django.db import models
 
 class Language(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    code = models.CharField(max_length=255, default="en")
     bScribing = models.CharField(max_length=255, default="Scribing")
     bEditing = models.CharField(max_length=255, default="Editing")
     bViewing = models.CharField(max_length=255, default="Viewing")
@@ -29,7 +30,6 @@ class Language(models.Model):
     oCreateNewInterpretation = models.CharField(max_length=255, default="Create New Interpretation")
     oUploadInterpretationFile = models.CharField(max_length=255, default="Upload Inter-pretation File")
     oAddAnotherConsole = models.CharField(max_length=255, default="Add Another Console")
-    nGetPageLink = models.CharField(max_length=255, default="Get Page Link")
     nGetLatestAppVersion = models.CharField(max_length=255, default="Get Latest App Version")
     nLogin = models.CharField(max_length=255, default="Login")
     nLogout = models.CharField(max_length=255, default="Logout")
