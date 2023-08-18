@@ -326,12 +326,8 @@ class AudioViewSet(viewsets.ModelViewSet):
         k = 0
         for key in request.data:
             if hasattr(obj, key) and key in modifiable_attr:
-                if key == "peaks":
-                    setattr(obj, key, json.dumps(request.data[key]))
-                    k = 1
-                else:
-                    setattr(obj, key, request.data[key])
-                    k = 1
+                setattr(obj, key, request.data[key])
+                k = 1
 
         if k == 0:
             print("LOGGER:","no valid updates without authentication could be processed for",aid,"at",request.headers['Origin'], file=sys.stdout)
