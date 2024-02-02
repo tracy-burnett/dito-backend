@@ -1,5 +1,17 @@
 # Xygil Backend
 
+ - 06/20/2023: Sample translation workflow
+   - update Language model with new categories on local computer
+   - update frontend code on local computer to use the new translations (and/or make new language(s) available for selecting)
+   - run python manage.py makemigrations and then python manage.py migrate and test the changes
+   - push the backend code to github and merge it to main in a pull request
+   - verify that heroku has finished deploying the new code
+   - "heroku run python manage.py migrate --app ditotranslationtool"
+   - log in to api.dito.live/admin/ using a superuser with a capital letter as the first character
+   - enter the new translations in for each language for the new categories you've made in the model
+   - push the new frontend code
+   - verify that Netlify has deployed the new frontend code
+   - verify that the translations are displaying as expected
  - 11/08/2022: Main branch code auto-deploys to api.dito.live.  Migrations must be made locally and pushed to the repository and the build/deploy needs to finish on Heroku, after which skysnolimit08 needs to run heroku run python manage.py migrate --app ditotranslationtool to bring things up to speed on Heroku after database format changes.
  - For future reference on database upgrades with Heroku Postgres: https://gist.github.com/simonw/50e14b9a3e829355d6d43f0f12f91e74
 
