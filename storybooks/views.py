@@ -1174,8 +1174,8 @@ class AssociationViewSet(viewsets.ModelViewSet):
                     j += 1
                     # print(j)
                 # print(times_differences)
-                difference_index = times_differences.index(
-                    max(times_differences))
+                # for each array, in its first subarray, find the place of the largest gap where nothing is associated and split it there into two subarrays
+                difference_index = times_differences.index(max(times_differences))
                 associations_times_new = parentarray_times[0][:difference_index+1]
                 associations_chars_new = parentarray_chars[0][:difference_index+1]
                 associations_offsets_new = parentarray_offsets[0][:difference_index+1]
@@ -1185,9 +1185,24 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 parentarray_times.insert(0, associations_times_new)
                 parentarray_chars.insert(0, associations_chars_new)
                 parentarray_offsets.insert(0, associations_offsets_new)
+                # print(parentarray_times)
+                # print(parentarray_chars)
             elif max(parentarray_times[0])-min(parentarray_times[0]) <= a:
-                entry = str(
-                    min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))
+                # if this character interval is offset with any of the character intervals
+                # in the existing associations object, then merge it with those prior entries and delete them
+                # prior to adding this new one.
+                firstcheckstart = min(parentarray_chars[0])
+                firstcheckend = max(parentarray_chars[0])
+                # print(associations)
+                keystomerge=[]
+                valuestomerge=[]
+                for key, value in associations.items():
+                    secondcheckstart=int(value[0].split('-')[0])
+                    secondcheckend=int(value[0].split('-')[1])
+                    if (firstcheckstart < secondcheckstart and firstcheckend > secondcheckstart and firstcheckend < secondcheckend) or (firstcheckstart > secondcheckstart and firstcheckstart < secondcheckend and firstcheckend > secondcheckend):
+                        keystomerge.append(key)
+                        valuestomerge.append(value)
+
                 # print(entry)
                 # print(parentarray_times[0])
                 # if str(min(parentarray_times[0])) == str(max(parentarray_times[0])):
@@ -1211,8 +1226,39 @@ class AssociationViewSet(viewsets.ModelViewSet):
                 # if len(unique_audio_times)==1:
                 #     parentarray_times[0][0] -= parentarray_offsets[0][0]
                 #     parentarray_times[0][len(parentarray_times[0])-1] += parentarray_offsets[0][0]
-                associations[str(min(mintimes))+"-" +
-                             str(max(maxtimes))] = [entry]
+
+
+                newentry_mintime = min(mintimes)
+                newentry_maxtime = max(maxtimes)
+                newentry_minchar = min(parentarray_chars[0])
+                newentry_maxchar = max(parentarray_chars[0])
+                # mix the ones to be merged together with the new entry
+                for timestamps in keystomerge:
+                    firsttimestamp=int(timestamps.split('-')[0])
+                    secondtimestamp=int(timestamps.split('-')[1])
+                    # print(firsttimestamp)
+                    # print(secondtimestamp)
+                    newentry_mintime=min(newentry_mintime, firsttimestamp)
+                    newentry_maxtime = max(newentry_maxtime, secondtimestamp)
+                    # remove the former entry that we are merging into the new entry
+                    del associations[timestamps]
+
+                for characters in valuestomerge:
+                    firstcharacter=int(characters[0].split('-')[0])
+                    secondcharacter=int(characters[0].split('-')[1])      
+                    # print(firstcharacter)
+                    # print(secondcharacter)
+                    newentry_minchar = min(newentry_minchar, firstcharacter)   
+                    newentry_maxchar = max(newentry_maxchar, secondcharacter)           
+
+
+
+
+                entry = str(
+                    newentry_minchar)+"-"+str(newentry_maxchar)
+                # add the new entry
+                associations[str(newentry_mintime)+"-" +
+                             str(newentry_maxtime)] = [entry]
                 # associations[str(min(parentarray_chars[0]))+"-"+str(max(parentarray_chars[0]))].append(entry)
                 parentarray_times.pop(0)
                 parentarray_chars.pop(0)
