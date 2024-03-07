@@ -9,10 +9,16 @@ This is the back end repo for Dito (dialect interpretation and translation onlin
 
 Visit [Little Horse Crosses River](https://yakaloco.dito.live/storybook/S65cMnPPpJA.m4a?open=aQ_XB5yrA6QkB8X4sUIHyc) to see a sample project created by an undergraduate student team using Dito.
 
+Dito uses Django, a Python framework.
+
 ## User Interface Demo Videos
 
 [Part 1](https://www.dropbox.com/s/6b0wnzr2kygpxli/points%201-3.mp4?dl=0 "Demo Video Part 1") (7:31)  
 [Part 2](https://www.dropbox.com/s/2j9l6w8c251x838/points%204-6.mp4?dl=0 "Demo Video Part 2") (10:44)
+
+## Status
+
+Dito is live and can be [used/sampled online](dev.dito.live "Dito"), and Tracy Burnett offers unique subdomains to users for larger projects.  Tracy Burnett makes Dito free to users as a tool for revitalizing low-resource languages, especially those with no dedicated orthography/written script.  However, Tracy Burnett reserves the right to terminate these services at any point.
 
 ## Update Notes
  - 06/20/2023: Sample workflow for converting the user interface into other languages
