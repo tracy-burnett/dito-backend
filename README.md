@@ -1,6 +1,21 @@
-# Xygil Backend
+# Dialect Interpretation and Translation Backend
 
- - 06/20/2023: Sample translation workflow
+This is the back end repo for Dito (dialect interpretation and translation online), a project by Tracy Burnett.  Dito -
+- lets public and private teams collaboratively annotate audio data
+- includes an auto-segmenter for transcribing audio data
+- calculates explicit phrase alignment between written translations
+- auto-highlights nested aligned phrases simultaneously in multiple written translations
+- uses phrase alignment information to automatically generate language lessons
+
+Visit [Little Horse Crosses River](https://yakaloco.dito.live/storybook/S65cMnPPpJA.m4a?open=aQ_XB5yrA6QkB8X4sUIHyc) to see a sample project created by an undergraduate student team using Dito.
+
+## User Interface Demo Videos
+
+[Part 1](https://www.dropbox.com/s/6b0wnzr2kygpxli/points%201-3.mp4?dl=0 "Demo Video Part 1") (7:31)  
+[Part 2](https://www.dropbox.com/s/2j9l6w8c251x838/points%204-6.mp4?dl=0 "Demo Video Part 2") (10:44)
+
+## Update Notes
+ - 06/20/2023: Sample workflow for converting the user interface into other languages
    - update Language model with new categories on local computer
    - update frontend code on local computer to use the new translations (and/or make new language(s) available for selecting)
    - run python manage.py makemigrations and then python manage.py migrate and test the changes
@@ -13,10 +28,10 @@
    - verify that Netlify has deployed the new frontend code
    - verify that the translations are displaying as expected
  - 11/08/2022: Main branch code auto-deploys to api.dito.live.  Migrations must be made locally and pushed to the repository and the build/deploy needs to finish on Heroku, after which skysnolimit08 needs to run heroku run python manage.py migrate --app ditotranslationtool to bring things up to speed on Heroku after database format changes.
+- 6/16/2022: if you ever need to reset your local database, try running pipenv shell, then running python manage.py migrate storybooks zero, then running python manage.py makemigrations, and finally running python manage.py migrate.
  - For future reference on database upgrades with Heroku Postgres: https://gist.github.com/simonw/50e14b9a3e829355d6d43f0f12f91e74
 
-## Update Notes
-- 6/16/2022: if you ever need to reset your local database, try running pipenv shell, then running python manage.py migrate storybooks zero, then running python manage.py makemigrations, and finally running python manage.py migrate.
+# Project Setup
 
 ### Prerequisites
 
@@ -138,7 +153,7 @@ $ pipenv shell
 ```
 Now, navigate to http://localhost:8000 and you should see the server running!
 
-# Models
+# Models   (ALL TEXT BELOW THIS POINT IS OUTDATED)
 ## `Extended_User`
 
 ```python
@@ -197,7 +212,7 @@ class Story:
 ```
 
 
-## Xygil API
+##  API  (OUTDATED)
 
 # Extended Users 
 Create, update, and retrieve 
@@ -281,8 +296,8 @@ Is probably not safe and code needs to be deprecated and replaced with Django Au
 
 ```json
 {
-    "email": "example@xygil.net",
-    "password": "xygilxygil123"
+    "email": "example@dito.live",
+    "password": "ditodito123"
 }
 ```
 
