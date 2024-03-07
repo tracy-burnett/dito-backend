@@ -19,7 +19,7 @@ Dito backend was created using Django, a Python framework.  The [views.py](https
 
 ## Status
 
-Dito is live and can be [used/sampled online](dev.dito.live "Dito"), and Tracy Burnett offers unique subdomains to users for larger projects.  Tracy Burnett makes Dito free to users as a tool for revitalizing low-resource languages, especially those with no dedicated orthography/written script.  However, Tracy Burnett reserves the right to terminate these services at any point.
+Dito is live and can be [used/sampled online](https://dev.dito.live "Dito"), and Tracy Burnett offers unique subdomains to users for larger projects.  Tracy Burnett makes Dito free to users as a tool for revitalizing low-resource languages, especially those with no dedicated orthography/written script.  However, Tracy Burnett reserves the right to terminate these services at any point.
 
 ## Update Notes
  - 06/20/2023: Sample workflow for converting the user interface into other languages
