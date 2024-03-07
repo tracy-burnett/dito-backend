@@ -14,8 +14,8 @@ Dito backend was created using Django, a Python framework.  The [views.py](https
 
 ## User Interface Demo Videos
 
-[Part 1](https://www.dropbox.com/s/6b0wnzr2kygpxli/points%201-3.mp4?dl=0 "Demo Video Part 1") (7:31)  
-[Part 2](https://www.dropbox.com/s/2j9l6w8c251x838/points%204-6.mp4?dl=0 "Demo Video Part 2") (10:44)
+[Part 1](https://www.dropbox.com/scl/fi/qpckg5la7yd9254k1gmn7/points-1-3-Audio-Leveled.mp4?rlkey=o1lq8m5nzbuleywbgxa2v8e2v&dl=0 "Demo Video Part 1") (7:31)  
+[Part 2](https://www.dropbox.com/scl/fi/ehfri9kken39v2y40eg7g/points-4-6-Audio-Leveled.mp4?rlkey=i2424wnwi3uhlhang3epz7d1g&dl=0 "Demo Video Part 2") (10:44)
 
 ## Status
 
