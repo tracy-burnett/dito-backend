@@ -7,9 +7,10 @@ This is the back end repo for Dito (dialect interpretation and translation onlin
 - auto-highlights nested aligned phrases simultaneously in multiple written translations
 - uses phrase alignment information to automatically generate language lessons
 
+Visit [Rain Story](https://dev.dito.live/storybook/8F43-Wdn_gU.wav?open=7h70ZiG6bwEavy1PMVUL8w) to see a sample project created for a software demonstration (video below) of Dito.  
 Visit [Little Horse Crosses River](https://yakaloco.dito.live/storybook/S65cMnPPpJA.m4a?open=aQ_XB5yrA6QkB8X4sUIHyc) to see a sample project created by an undergraduate student team using Dito.
 
-Dito uses Django, a Python framework.
+Dito backend was created using Django, a Python framework.  The [views.py](https://github.com/skysnolimit08/dito-backend/blob/main/storybooks/views.py) file contains the most handwritten code.
 
 ## User Interface Demo Videos
 
