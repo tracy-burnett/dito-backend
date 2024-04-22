@@ -40,10 +40,15 @@ class UploadFileViewSet(viewsets.ViewSet):
         ext = request.data['ext']
         alphabet = string.ascii_letters + string.digits
         audio_ID = ''.join(secrets.choice(alphabet) for i in range(11)) + ext
+
+        # check if object already exists - create should only work if there isn't already an audio for audio_ID
+        while Audio.objects.filter(id=audio_ID).exists():
+            existingaudio = Audio.objects.filter(Q(id=audio_ID)).distinct().get()
+            if existingaudio:
+                audio_ID = ''.join(secrets.choice(alphabet) for i in range(11)) + ext
+
         url = S3().get_presigned_url(audio_ID)
-
         print("LOGGER: user",decoded_token['uid'],"is uploading", audio_ID,"to", request.headers['Origin'], file=sys.stdout)
-
         return Response({'url': url, 'audio_ID': audio_ID})
 
 
@@ -431,6 +436,13 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         alphabet = string.ascii_letters + string.digits
         newinterpretationid = ''.join(secrets.choice(alphabet) for i in range(11))
+
+        # check if object already exists - create should only work if there isn't already an interpretation for newinterpretationid
+        while Interpretation.objects.filter(id=newinterpretationid).exists():
+            existinginterpretation = Interpretation.objects.filter(Q(id=newinterpretationid)).distinct().get()
+            if existinginterpretation:
+                newinterpretationid = ''.join(secrets.choice(alphabet) for i in range(11))
+
         try:
             obj = Interpretation(id=newinterpretationid, public=data['public'],
                                  # shared_editors=data.get('shared_editors', None),
@@ -479,7 +491,7 @@ class InterpretationViewSet(viewsets.ModelViewSet):
 
         serializer = self.serializer_class(obj)
 
-        print("LOGGER:","user",uid,"created new interpretation for",aid,"at",request.headers['Origin'], file=sys.stdout)
+        print("LOGGER:","user",uid,"created new interpretation",newinterpretationid,"for audio",aid,"at",request.headers['Origin'], file=sys.stdout)
         return JsonResponse({"interpretation": serializer.data})
 
     def retrieve_audios(self, request, aid):
